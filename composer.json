@@ -20,6 +20,9 @@
         }
     },
 
-    "minimum-stability": "dev"
+    "repositories": [{
+      "type": "vcs",
+      "url": "https://github.com/diancloud/supertable"
+    }],
   },
 }
