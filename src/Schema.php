@@ -4,7 +4,7 @@
  *
  * CLASS 
  *
- * 	   SuperTable 
+ * 	   Schema 
  *
  * USEAGE: 
  *
@@ -12,14 +12,11 @@
  * 
  */
 
-namespace TuanDuiMao;
+namespace Tuanduimao;
 
-/**
- * SuperTable
- */
-class SuperTable {
+class Schema {
 	
 	function __construct() {
+		# code...
 	}
-	
 }

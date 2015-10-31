@@ -1,34 +1,25 @@
 {
-  "name": "tuanduimao/supertable",
-  "description": "An Talbe With Free Scheme",
-  "keywords": ["search","supertable", "elasticsearch"],
-  "homepage": "http://www.tuanduimao.com/",
-  "type": "library",
-  "license": "MIT",
-  "authors": [
-    {
-      "name": "TuanDuiMao.com"
-    }
-  ],
-  "require": {
-    "php": ">=5.3.9",
-    "elasticsearch/elasticsearch": "~1.0",
-    "ext-curl": "*"
+    "name": "tuanduimao/supertable",
+    "description": "an table builder",
+    "require": {
+        "elasticsearch/elasticsearch": "~1.0"
+    },
+    "homepage": "https://github.com/diancloud/supertable",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "TuanDuiMao",
+            "email": "TuanDuiMao@diancloud.com"
+        }
+    ],
+
+    "autoload": {
+        "psr-4": {
+          "Tuanduimao\\Supertable\\": "src/"
+        }
+    },
+
+    "minimum-stability": "dev"
   },
-  "require-dev": {
-  },
-  "autoload": {
-    "psr-4": {
-      "tuanduimao\\supertable\\": "src/"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {}
-  },
-  "repositories": [
-    {
-      "type": "vcs",
-      "url": "https://github.com/diancloud/supertable"
-    }
-  ]
 }
