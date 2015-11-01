@@ -83,7 +83,7 @@ class Table {
 			$sheet = $this->_schema->getSheetByName( $sheet_plug, $allow_null );
 		}
 
-		$this->_sheet_id = $sheet['_spt_id'];
+		$this->_sheet_id = $sheet['primary'];
 		$this->_sheet_plug = $sheet_plug;
 		$this->_sheet = $sheet;
 		return $this->_sheet;
@@ -206,7 +206,17 @@ class Table {
 		return $this->selectSheet( $this->_sheet_id );
 	}
 	
+
+	// 类型相关操作
 	
+	public function type( $name, $data, $opts ) {
+		
+		return (new Type())
+			 ->setPath( $this->C('path') )
+			 ->load( $name, $data, $opts );
+	}
+
+
 	// 数据相关操作
 
 

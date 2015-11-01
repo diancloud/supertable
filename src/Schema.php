@@ -52,7 +52,7 @@ class Schema {
 
 	
 
-	
+
 	/**
 	 * 根据ID读取一个数据表 (Sheet)
 	 * @param  [type]  $id         [description]
@@ -129,14 +129,13 @@ class Schema {
 	private function db_init() {
 		$table = $this->_table;
 		$engine = $this->_conf['db']['engine'];
-		$class_name = "Tuanduimao\\Supertable\\Database\\{$engine}";
+		$class_name = "\\Tuanduimao\\Supertable\\Database\\{$engine}";
 		if ( !class_exists($class_name) ) {
 			throw new Exception("$class_name not exists!");
 		}
 		$this->_db = new $class_name( $table, $this->_conf['db']['options'] );
 		return $this;
 	}
-
 
 	function get( $id ) {
 

@@ -163,6 +163,8 @@ class Mysql {
 		}
 		$data['_spt_schema_json'] = json_decode($data['_spt_schema_json'], true);
 		$data['_spt_schema_json']  =  ( $data['_spt_schema_json']  == null )? array(): $data['_spt_schema_json'];
+		$data['primary'] = $data[$primary_field];
+
 		return $data;
 	}
 
@@ -175,6 +177,8 @@ class Mysql {
 	function getSchemaByName( $schema_name, $allow_null=true ) {
 
 		$table_name = $this->getDB('master')->real_escape_string( $this->_table['schema']);
+		$primary_field = $this->_schema_table['primary']['COLUMN_NAME'];
+
 		$sql = $this->prepare("SELECT * from `$table_name` WHERE `_spt_name`=?s LIMIT 1", $schema_name);
 		$data = $this->getLine( $sql, 'slave' );
 
@@ -185,6 +189,7 @@ class Mysql {
 
 		$data['_spt_schema_json'] = json_decode($data['_spt_schema_json'], true);
 		$data['_spt_schema_json']  =  ( $data['_spt_schema_json']  == null )? array(): $data['_spt_schema_json'];
+		$data['primary'] = $data[$primary_field];
 		return $data;
 	}
 
@@ -284,6 +289,7 @@ class Mysql {
 	// ================================================  以下MySQL特有
 
 	private function _filter( & $data, $scheme_table ) {
+		unset($scheme_table['primary']);
 		foreach ( $data as $field=>$value ) {
 			if ( !isset($scheme_table[$field]) ) {
 				unset($data[$field]);
