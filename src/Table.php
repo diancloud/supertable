@@ -47,7 +47,7 @@ class Table {
 		}
 	}
 
-	// 表格相关操作
+	// === 数据表(Sheet)相关操作 CRUD ==========================
 	
 	/**
 	 * 根据ID/NAME选中一个数据表(Sheet), 如果数据表不存在则创建
@@ -72,7 +72,7 @@ class Table {
 	 * 读取一个数据表 (Sheet)
 	 * @param  [type]  $sheet_plug ID或NAME
 	 * @param  boolean $allow_null 如果为true, 如果Sheet不存在，返回null。 默认为 false 抛出异常
-	 * @return [type]              返回 sheet 结果
+	 * @return [mix]    如果 $allow_null 为true, 且Sheet不存在，返回null, 返回数据表结构数组。
 	 */
 	public function getSheet( $sheet_plug, $allow_null=false ) {
 
@@ -90,13 +90,12 @@ class Table {
 	}
 
 
-	// 创建一个表格
 	/**
 	 * 创建一个数据表 (Sheet)
-	 * @param  [type]  $name        数据表名，默认为NULL，自动生成 (由字符、数字和下划线组成，且开头必须为字符)
+	 * @param  [string]  $name        数据表名，默认为NULL，自动生成 (由字符、数字和下划线组成，且开头必须为字符)
 	 * @param  array   $data        扩展数据 (如果有自定字段，则填写这些字段的数值)
 	 * @param  boolean $create_only 为true返回刚创建的数据表ID，默认为false，选中新创建的数据表
-	 * @return [type]               [description]
+	 * @return [mix]                $create_only 为true返回刚创建的数据表ID; $create_only 为false，选中新创建的数据表, 返回 $this
 	 */
 	public function createSheet( $name=null, $data = array(), $create_only=false ) {
 		$name = ($name==null) ? $this->_table['data'] . '_'. time() . rand(10000,99999):$name;
@@ -125,13 +124,22 @@ class Table {
 	}
 
 
-	// 数据表结构相关操作 CRUD
+	// === 数据表列结构 (Sheet Column) 相关操作 CRUD ==========================
 	
-	// 添加一列
+	/**
+	 * 为当前数据表添加一列
+	 * @param String $column_name 列名称 (由字符、数字和下划线组成，且开头必须为字符)
+	 * @param Type   $type        数据类型 (参考) @see \Tuanduimao\supertable\Type
+	 * @return $this
+	 */
 	public function addColumn( $column_name, Type $type ) {
 
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		if (!preg_match('/^([a-zA-Z]{1})([a-zA-Z0-9\_])/', $column_name) ) {
+			throw new Exception("列名称格式不正确，由字符、数字和下划线组成，且开头必须为字符。(column_name= $column_name) ");
 		}
 
 		$this->_schema->addField( $this->_sheet_id, $column_name, $type );
@@ -139,40 +147,66 @@ class Table {
 	}
 
 
-	// 更新一列
+	/**
+	 * 修改当前数据表 $column_name 列结构
+	 * @param String $column_name 列名称 (由字符、数字和下划线组成，且开头必须为字符)
+	 * @param Type   $type        数据类型 (参考) @see \Tuanduimao\supertable\Type
+	 * @return $this
+	 */
 	public function alterColumn( $column_name, Type $type ) {
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
+
+		if (!preg_match('/^([a-zA-Z]{1})([a-zA-Z0-9\_])/', $column_name) ) {
+			throw new Exception("列名称格式不正确，由字符、数字和下划线组成，且开头必须为字符。(column_name= $column_name) ");
+		}
+
 
 		$this->_schema->alterField( $this->_sheet_id, $column_name, $type );
 		return $this->selectSheet( $this->_sheet_id );
 	}
 
 
-	// 替换一列 （ 如不存在则创建 )
+	/**
+	 * 替换当前数据表 $column_name 列结构（ 如果列不存在则创建)
+	 * @param String $column_name 列名称 (由字符、数字和下划线组成，且开头必须为字符)
+	 * @param Type   $type        数据类型 (参考) @see \Tuanduimao\supertable\Type
+	 * @return $this
+	 */
 	public function replaceColumn( $column_name, Type $type ) {
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		if (!preg_match('/^([a-zA-Z]{1})([a-zA-Z0-9\_])/', $column_name) ) {
+			throw new Exception("列名称格式不正确，由字符、数字和下划线组成，且开头必须为字符。(column_name= $column_name) ");
 		}
 
 		$this->_schema->replaceField( $this->_sheet_id, $column_name, $type );
 		return $this->selectSheet( $this->_sheet_id );
 	}
 
-	// 删除一列
+	/**
+	 * 删除当前数据表 $column_name 列
+	 * @param String $column_name 列名称 (由字符、数字和下划线组成，且开头必须为字符)
+	 * @param Type   $type        数据类型 (参考) @see \Tuanduimao\supertable\Type
+	 * @return $this
+	 */
 	public function dropColumn( $column_name, $allow_not_exists=false ) {
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		if (!preg_match('/^([a-zA-Z]{1})([a-zA-Z0-9\_])/', $column_name) ) {
+			throw new Exception("列名称格式不正确，由字符、数字和下划线组成，且开头必须为字符。(column_name= $column_name) ");
 		}
 
 		$this->_schema->dropField( $this->_sheet_id, $column_name, $allow_not_exists );
 		return $this->selectSheet( $this->_sheet_id );
 	}
 	
-
-
-
+	
 	// 数据相关操作
 
 
