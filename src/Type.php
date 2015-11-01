@@ -110,6 +110,12 @@ class Type {
 	}
 
 
+
+	public function validation( & $value ) {
+		return true;
+	}
+
+
 	/**
 	 * 渲染代码
 	 * @return [type] [description]
@@ -316,6 +322,19 @@ class Type {
 		$message = str_replace('{screen_name}', $input['screen_name'], $message );
 		$message = str_replace('{name}', $name, $message );
 		return $message;
+	}
+
+	protected function _message( $name, $data =array() ) {
+		$message = $this->_data_message[$name];
+
+		foreach ($data as $key => $val ) {
+			$message = str_replace('{'.$key.'}', $val, $message );
+		}
+		return $message;
+	}
+
+	protected function cleanError() {
+		$this->errors = array();
 	}
 
 

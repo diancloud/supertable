@@ -28,6 +28,8 @@ class Table {
 	private $_type = null;
 	private $_mc = null;
 
+
+	public $errors = array();
 	protected $_conf = array();
 
 	protected $_schema = null;
@@ -57,7 +59,7 @@ class Table {
 	public function sheet() {
 		return $this->_sheet;
 	}
-	
+
 	/**
 	 * 根据ID/NAME选中一个数据表(Sheet), 如果数据表不存在则创建
 	 * @param  [type] $sheet_plug Sheet ID/NAME
@@ -135,7 +137,6 @@ class Table {
 
 	// === 数据表列结构 (Sheet Column) 相关操作 CRUD ==========================
 	
-
 	/**
 	 * 读取当前数据表 $column_name 列结构
 	 * @param  [type] $column_name [description]
@@ -238,6 +239,68 @@ class Table {
 	}
 	
 
+
+
+	// === 数据 (Data) 相关操作 CRUD ==========================
+	/**
+	 * 在当前的数据表(Sheet)中，插入一行数据
+	 * @param  [type] $data [description]
+	 * @return [type]       [description]
+	 */
+	public function create( $data ) {
+	
+		// 根据数据结构，检查数据是否合法
+		if ( $this->validation( $data ) === false ) {
+			return false;
+		}
+
+
+		// $this->_search->createData( $data );
+		// $this->_db->createData( $data );
+
+	}
+
+
+
+	public function update( $data ) {
+	}
+
+	public function delete( $data ) {
+	}
+
+	public function getLine( $data ) {
+	}
+
+	public function getData( $options ) {
+	}
+
+
+	/**
+	 * 校验数据是否合法
+	 * @param  [type] $data [description]
+	 * @return [type]       [description]
+	 */
+	public function validation( $data ) {
+		
+		$this->errors = array();
+
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		$errflag = false;
+		foreach ($this->_sheet['columns'] as $name=>$type ) {
+			if ( !$type->validation( $data[$name] ) ) {
+				$errflag = true;
+				$this->errors = array_merge($type->errors, $this->errors);
+			}
+		}
+
+		return !$errflag;
+	}
+
+
+
 	// 类型相关操作
 	
 	public function type( $name=null, $data=array(), $option=array() ) {
@@ -321,21 +384,7 @@ class Table {
 
 	}
 
-	//===== 数据 CRUD
-	public function create( $data ) {
-	}
 
-	public function update( $data ) {
-	}
-
-	public function delete( $data ) {
-	}
-
-	public function getLine( $data ) {
-	}
-
-	public function getData( $options ) {
-	}
 
 
 

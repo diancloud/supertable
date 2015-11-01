@@ -194,9 +194,6 @@ class Mysql {
 	}
 
 
-
-
-
 	/**
 	 * API: 根据ID更新一个数据结构
 	 * @param  [type] $schema_id [description]
@@ -245,7 +242,7 @@ class Mysql {
 		if ( !isset($data['_spt_schema_json'][$name]) ) {
 			throw new Exception("$name not exists!");
 		}
-		
+
 		return $data['_spt_schema_json'][$name];
 	}
 
@@ -303,6 +300,10 @@ class Mysql {
 		return  $this->updateSchema( $schema_id, $data );
 	}
 
+
+
+	//数据插入
+	
 
 
 	// ================================================  以下MySQL特有

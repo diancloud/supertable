@@ -13,6 +13,7 @@
 
 Namespace Tuanduimao\Supertable\Types;
 use Tuanduimao\Supertable\Type;
+use Tuanduimao\Supertable\Validation;
 use \Exception as Exception;
 
 class InlineText extends Type {
@@ -93,10 +94,9 @@ class InlineText extends Type {
 
 		$data_message = array(
 			'required' =>  '请填写{screen_name}',
-			'maxlength' => '{screen_name}真实姓名姓名不能超过 {maxlength} 字',
-			'minlength' => '{screen_name}至少 {minlength} 字',
+			'maxlength' => '{screen_name}不能超过{maxlength}个字',
+			'minlength' => '{screen_name}至少{minlength}个字',
 		);
-
 
 		parent::__construct( $data, $option );
 		$this->setDataInput( $data_input );
@@ -104,5 +104,50 @@ class InlineText extends Type {
 	
 	}
 
+
+	/**
+	 * 重载数据校验函数
+	 * @param  [type] $value [description]
+	 * @return [type]        [description]
+	 */
+	public function validation( & $value ) {
+		
+		$this->cleanError();
+		
+
+		$value = strval($value);
+		$errflag = false;
+
+		// 校验是否必填
+		if( $this->_option['required'] && ($value === null  || $value === "") ) {
+			$message = $this->_message('required', array('screen_name'=>$this->_option['screen_name']) );
+			array_push($this->errors, array('required'=>$message) );
+			return false;
+		}
+
+		$check = new Validation();
+
+		// 校验最小值
+		if ( !$check->minwlength($value, $this->_data['minlength']) ) {
+			$message = $this->_message('minlength', array(
+				'screen_name'=>$this->_option['screen_name'],
+				'minlength'=>$this->_data['minlength'],
+			));
+			array_push($this->errors, array('minlength'=>$message) );
+			$errflag = true;
+		}
+
+		// 校验最大值
+		if ( !$check->maxwlength($value, $this->_data['maxlength']) ) {
+			$message = $this->_message('maxlength', array(
+				'screen_name'=>$this->_option['screen_name'],
+				'maxlength'=>$this->_data['maxlength'],
+			));
+			array_push($this->errors, array('maxlength'=>$message) );
+			$errflag = true;
+		}
+
+		return !$errflag;
+	}
 
 }
