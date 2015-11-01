@@ -33,6 +33,8 @@ class Table {
 	protected $_index  = array('index' => null, 'type'=>null );
 
 	protected $_sheet_id = null;
+	protected $_sheet_plug = null;
+	protected $_sheet = null;
 	protected $_support_types = array();
 
 	protected $_attrs = array();
@@ -46,28 +48,84 @@ class Table {
 	}
 
 	// 表格相关操作
-	public function selectSheet( $sheet_id ) {
-		$this->_sheet_id = $sheet_id;
+	
+	/**
+	 * 根据ID/NAME选中一个数据表(Sheet), 如果数据表不存在则创建
+	 * @param  [type] $sheet_plug Sheet ID/NAME
+	 * @param  array  $data       扩展数据 (如果有自定字段，则填写这些字段的数值)，默认为array()
+	 * @return [type]             $this
+	 */
+	public function selectSheet( $sheet_plug, $data = array() ) {
+		if ( $this->getSheet( $sheet_plug, true ) === null ) {
+			$name = $sheet_plug;
+			if ( is_numeric($sheet_plug) ) {
+				$name = null;
+			}
+			$sheet_id = $this->createSheet( $name, $data, true );
+			$this->getSheet( $sheet_id );
+		}
 		return $this;
 	}
+
+
+	/**
+	 * 读取一个数据表 (Sheet)
+	 * @param  [type]  $sheet_plug ID或NAME
+	 * @param  boolean $allow_null 如果为true, 如果Sheet不存在，返回null。 默认为 false 抛出异常
+	 * @return [type]              返回 sheet 结果
+	 */
+	public function getSheet( $sheet_plug, $allow_null=false ) {
+
+		$sheet = array();
+		if ( is_numeric($sheet_plug) ) {
+			$sheet = $this->_schema->getSheetByID( $sheet_plug, $allow_null);
+		} else {
+			$sheet = $this->_schema->getSheetByName( $sheet_plug, $allow_null );
+		}
+
+		$this->_sheet_id = $sheet['_spt_id'];
+		$this->_sheet_plug = $sheet_plug;
+		$this->_sheet = $sheet;
+		return $this->_sheet;
+	}
+
+
+	// 创建一个表格
+	/**
+	 * 创建一个数据表 (Sheet)
+	 * @param  [type]  $name        数据表名，默认为NULL，自动生成 (由字符、数字和下划线组成，且开头必须为字符)
+	 * @param  array   $data        扩展数据 (如果有自定字段，则填写这些字段的数值)
+	 * @param  boolean $create_only 为true返回刚创建的数据表ID，默认为false，选中新创建的数据表
+	 * @return [type]               [description]
+	 */
+	public function createSheet( $name=null, $data = array(), $create_only=false ) {
+		$name = ($name==null) ? $this->_table['data'] . '_'. time() . rand(10000,99999):$name;
+		if (!preg_match('/^([a-zA-Z]{1})([a-zA-Z0-9\_])/', $name) ) {
+			throw new Exception("数据表名称格式不正确，由字符、数字和下划线组成，且开头必须为字符。(name= $name) ");
+		}
+
+		$sheet_id = $this->_schema->createSheet( $name, $data );
+		if ( $create_only) {
+			return $sheet_id;
+		}
+
+		return $this->selectSheet( $sheet_id );
+	}
+
+
+
+
+	// 删除一个表格
+	public function deleteSheet( $removedata = false ) {
+	}
+
 
 	// 读取所有表格
 	public function getSheetList() {
 	}
 
-	// 创建一个表格
-	public function createSheet( $data = array() ) {
-		$sheet_id = $this->_schema->create( $data );
-		return $this->selectSheet( $sheet_id );
-	}
 
-
-	// 删除一个表格
-	public function deleteSheet( $removedata = false ) {
-
-	}
-
-	// 数据表结构相关操作
+	// 数据表结构相关操作 CRUD
 	
 	// 添加一列
 	public function addColumn( $column_name, Type $type ) {

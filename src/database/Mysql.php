@@ -64,6 +64,12 @@ class Mysql {
 			'orhas' => 'PRIMARY KEY',
 		),
 
+		'_spt_name' => array(
+			'type' => 'VARCHAR',
+			'index' => array('UNIQUE KEY'),
+			'length' => 150,
+		),
+
 		'_spt_schema_json' => array(
 			'type' => 'TEXT',
 			'allow_null' => true,
@@ -129,13 +135,13 @@ class Mysql {
 	 * API: 创建一个新的数据结构记录，成功返回主键ID
 	 * @return Int 数据表主键ID
 	 */
-	function createSchema( $extData = array() ) {
+	function createSchema( $name, $extData = array() ) {
 		$table = $this->_table;
 		$this->_filter( $extData, $this->_schema_table );
 		$data = array_merge($extData, array(
-			'_spt_schema_json' => '{}'
+			'_spt_schema_json' => '{}',
+			'_spt_name' => $name
 		));
-
 		return $this->_create($table['schema'], $data, $this->_schema_table );
 	}
 
@@ -145,20 +151,46 @@ class Mysql {
 	 * @return [type]            [description]
 	 */
 	function getSchema( $schema_id, $allow_null=true ) {
-		$table_name = $this->_table['schema'];
-		$table_name = $this->getDB('master')->real_escape_string($table_name);
+		$table_name = $this->getDB('master')->real_escape_string( $this->_table['schema']);
 		$primary_field = $this->_schema_table['primary']['COLUMN_NAME'];
 
 		$sql = $this->prepare("SELECT * from `$table_name` WHERE `$primary_field`=?s LIMIT 1", $schema_id);
 		$data = $this->getLine( $sql, 'slave' );
 
-		if ( $data == null && !$allow_null ) {
+		if ( $data == null ) {
+			if ($allow_null) return null;
 			throw new Exception("$schema_id 不存在 (SQL=$sql) ");
 		}
 		$data['_spt_schema_json'] = json_decode($data['_spt_schema_json'], true);
 		$data['_spt_schema_json']  =  ( $data['_spt_schema_json']  == null )? array(): $data['_spt_schema_json'];
 		return $data;
 	}
+
+
+	/**
+	 * API: 根据Name读取一个数据结构
+	 * @param  [type] $schema_id [description]
+	 * @return [type]            [description]
+	 */
+	function getSchemaByName( $schema_name, $allow_null=true ) {
+
+		$table_name = $this->getDB('master')->real_escape_string( $this->_table['schema']);
+		$sql = $this->prepare("SELECT * from `$table_name` WHERE `_spt_name`=?s LIMIT 1", $schema_name);
+		$data = $this->getLine( $sql, 'slave' );
+
+		if ( $data == null ) {
+			if ($allow_null) return null;
+			throw new Exception("$schema_id 不存在 (SQL=$sql) ");
+		}
+
+		$data['_spt_schema_json'] = json_decode($data['_spt_schema_json'], true);
+		$data['_spt_schema_json']  =  ( $data['_spt_schema_json']  == null )? array(): $data['_spt_schema_json'];
+		return $data;
+	}
+
+
+
+
 
 	/**
 	 * API: 根据ID更新一个数据结构

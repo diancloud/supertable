@@ -32,12 +32,37 @@ class Schema {
 	}
 
 	/**
-	 * 创建一个新的数据结构
+	 * 创建一个新的数据表(Sheet)
 	 * @return [type] [description]
 	 */
-	public function create( $data = array() ) {
-		return $this->_db->createSchema( $data = array() );
+	public function createSheet( $name, $data = array() ) {
+		return $this->_db->createSchema( $name, $data = array() );
 	}
+
+
+	/**
+	 *  根据Name读取一个数据表 (Sheet)
+	 * @param  [type]  $name       [description]
+	 * @param  boolean $allow_null 如果为true, 如果Sheet不存在，返回null。 默认为 false 抛出异常
+	 * @return [type]              [description]
+	 */
+	public function getSheetByName( $name, $allow_null=false ) {
+		return $this->_db->getSchemaByName( $name, $allow_null );
+	}
+
+	
+
+	
+	/**
+	 * 根据ID读取一个数据表 (Sheet)
+	 * @param  [type]  $id         [description]
+	 * @param  boolean $allow_null 如果为true, 如果Sheet不存在，返回null。 默认为 false 抛出异常
+	 * @return [type]              [description]
+	 */
+	public function getSheetByID( $id, $allow_null=false ) {
+		return $this->_db->getSchema( $id, $allow_null );
+	}
+
 
 	
 	/**
