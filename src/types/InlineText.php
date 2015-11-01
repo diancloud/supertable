@@ -19,8 +19,6 @@ class InlineText extends Type {
 	
 	function __construct( $data=array(), $option=array() ) {
 		
-
-
 		$data_input = array(
 			'maxlength' => array(
 				'screen_name' =>  '最大字数',
@@ -52,7 +50,7 @@ class InlineText extends Type {
 					'min'=>1,
 					'max'=>50,
 				),
-				
+
 				'message' => array(
 					'digits' => '{screen_name}({name})格式不正确，请输入数字',
 					'min' => '{screen_name}({name})数值不能少于{value}',

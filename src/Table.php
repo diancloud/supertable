@@ -126,6 +126,7 @@ class Table {
 
 	// === 数据表列结构 (Sheet Column) 相关操作 CRUD ==========================
 	
+
 	/**
 	 * 为当前数据表添加一列
 	 * @param String $column_name 列名称 (由字符、数字和下划线组成，且开头必须为字符)
@@ -213,7 +214,7 @@ class Table {
 		
 		return (new Type())
 			 ->setPath( $this->C('path') )
-			 ->load( $name, $data, $opts );
+			 ->load( $name, $data, $opts )->setPath( $this->C('path') );
 	}
 
 
