@@ -21,34 +21,55 @@ use \Exception as Exception;
 class Type {
 	
 	protected $_data_input = array();
+	protected $_data_message = array();
 	protected $_data = array();
 	protected $_option = array();
 	public $errors = array();
 
 	private $_path;
-	private $instance;
+	private $_instance;
 
 
 
 
-	function __construct( $data=array(), $option=array(), $data_input=array() ) {
+	function __construct( $data=array(), $option=array() ) {
 		$this->setData($data);
 		$this->setOption( $option );
-		$this->setDataInput( $data_input );
 	}
 
 
 	public function setData( $data ) {
 		$this->_data = $data;
+		return $this;
 	}
+
+	public function bindField( $schema_id, $field_name ) {
+
+		if (!preg_match('/^([a-zA-Z]{1})([a-zA-Z0-9\_])/', $field_name) ) {
+			throw new Exception("字段名称不正确，由字符、数字和下划线组成，且开头必须为字符。(column_name= $column_name) ");
+		}
+		$this->_option['schema_id'] = $schema_id;
+		$this->_option['field_name'] = $field_name;
+		
+		return $this;
+	}
+
 
 	public function setOption( $option ) {
 		$this->_option = $option;
+		return $this;
 	}
 
-	public function setDataInput( $data_input ) {
+	protected function setDataInput( $data_input ) {
 		$this->_data_input = $data_input;
+		return $this;
 	}
+
+	protected function setDataMessage( $data_message ) {
+		$this->_data_message = $data_message;
+		return $this;
+	}
+
 
 	/**
 	 * 设定自定义类型路径信息
@@ -173,7 +194,7 @@ class Type {
 
 	public function dataValidationJSCODE() {
 	}
-	
+
 
 	/**
 	 * 渲染模板
@@ -200,10 +221,7 @@ class Type {
 			}
 		}
 
-
-
 		ob_start();
-
 		$html = "";
 		@extract( $data );
 		if ( file_exists($view_file) ) {
@@ -226,8 +244,7 @@ class Type {
 
 	public function toArray() {
 		return array(
-			'name' => $this->_name,
-			'type' => get_class($this),
+			'type' => @end(@explode('\\', get_class($this))),
 			'option' => $this->_option,
 			'data' => $this->_data,
 		);

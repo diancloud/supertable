@@ -20,16 +20,19 @@ use Tuanduimao\Supertable\Type;
 class Schema {
 
 	private $_db = null;
+	private $_type = null;
+	private $_mc = null;
 	private $_table = array('schema' => null, 'data'=>null );
 	private $_conf = array('db'=>null, 'mc'=>false);
 
-	function __construct( $table, $db_conf, $mc_conf=false) {
+	function __construct( $table, $db, $type, $mc) {
 		$this->_table = $table;
-		$this->_conf['db'] = $db_conf;
-		$this->_conf['mc'] = $mc_conf;
-		$this->db_init();
+		$this->_db = $db;
+		$this->_type = $type;
+		$this->_mc = $mc;
 		$this->_checkTable();
 	}
+
 
 	/**
 	 * 创建一个新的数据表(Sheet)
@@ -47,10 +50,9 @@ class Schema {
 	 * @return [type]              [description]
 	 */
 	public function getSheetByName( $name, $allow_null=false ) {
-		return $this->_db->getSchemaByName( $name, $allow_null );
+		$sheet =  $this->_db->getSchemaByName( $name, $allow_null );
+		return $this->_formatSheet( $sheet );
 	}
-
-	
 
 
 	/**
@@ -60,18 +62,28 @@ class Schema {
 	 * @return [type]              [description]
 	 */
 	public function getSheetByID( $id, $allow_null=false ) {
-		return $this->_db->getSchema( $id, $allow_null );
+		$sheet = $this->_db->getSchema( $id, $allow_null );
+		return $this->_formatSheet( $sheet );
 	}
 
+	/**
+	 * 读取一个字段
+	 * @param [type] $name [description]
+	 * @param Type   $type [description]
+	 */
+	public function getField( $schema_id, $name ) {
+		$type =  $this->_db->getField( $schema_id, $name );
+		return $this->_typeObj($type);
+	}
 
-	
 	/**
 	 * 增加一个新字段 
 	 * @param [type] $name [description]
 	 * @param Type   $type [description]
 	 */
 	public function addField( $schema_id, $name, Type $type ) {
-		return $this->_db->addField( $schema_id, $name, $type->toArray() );
+
+		return $this->_db->addField( $schema_id, $name, $type->bindField($schema_id, $name)->toArray() );
 	}
 
 	/**
@@ -80,8 +92,9 @@ class Schema {
 	 * @param Type   $type [description]
 	 */
 	public function alterField( $schema_id, $name, Type $type ) {
-		return $this->_db->alterField( $schema_id, $name, $type->toArray() );
+		return $this->_db->alterField( $schema_id, $name, $type->bindField($schema_id, $name)->toArray() );
 	}
+
 
 	/**
 	 * 替换一个新字段 （如不存在则创建 ）
@@ -89,7 +102,7 @@ class Schema {
 	 * @param Type   $type [description]
 	 */
 	public function replaceField( $schema_id, $name, Type $type ) {
-		return $this->_db->replaceField( $schema_id, $name, $type->toArray() );
+		return $this->_db->replaceField( $schema_id, $name, $type->bindField($schema_id, $name)->toArray() );
 	}
 
 	
@@ -118,6 +131,33 @@ class Schema {
 	private function _checkTable( $table=null ) {
 		$table = ($table == null) ? $this->_table : $table;
 		$this->_db->checktable();
+	}
+
+
+	private function _formatSheet( & $data ) {
+		$data['name'] = $data['_spt_name'];
+		$data['create_at'] = $data['_spt_create_at'];
+		$data['update_at'] = $data['_spt_update_at'];
+		$data['is_deleted'] =$data['_spt_is_deleted'];
+
+		foreach ($data['_spt_schema_json'] as $field=>$type ) {
+			$data['columns'][$field] = $this->_typeObj( $type );
+		}
+
+		return $data;
+	}
+
+
+	private function _typeObj( $type_schema ) {
+		if ( !is_array($type_schema['data']) ||
+			 !is_array($type_schema['option']) ||
+			 !isset($type_schema['type']) 
+			) {
+
+			print_r( $type_schema );
+			throw new Exception(" _typeObj 返回结果错误");
+		}
+		return $this->_type->load($type_schema['type'], $type_schema['data'], $type_schema['option']);
 	}
 
 

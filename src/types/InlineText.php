@@ -90,8 +90,17 @@ class InlineText extends Type {
 				),
 			),
 		);
-		
-		parent::__construct( $data, $option, $data_input );
+
+		$data_message = array(
+			'required' =>  '请填写{screen_name}',
+			'maxlength' => '{screen_name}真实姓名姓名不能超过 {maxlength} 字',
+			'minlength' => '{screen_name}至少 {minlength} 字',
+		);
+
+
+		parent::__construct( $data, $option );
+		$this->setDataInput( $data_input );
+		$this->setDataMessage( $data_message );
 	
 	}
 

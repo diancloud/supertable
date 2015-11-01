@@ -24,6 +24,10 @@ use Tuanduimao\Supertable\Type;
  */
 class Table {
 	
+	private $_db = array();
+	private $_type = null;
+	private $_mc = null;
+
 	protected $_conf = array();
 
 	protected $_schema = null;
@@ -44,10 +48,15 @@ class Table {
 		
 		if ( is_array($conf) ) {
 			$this->_conf = $conf;
+			$this->_type = $this->type();
 		}
 	}
 
 	// === 数据表(Sheet)相关操作 CRUD ==========================
+	
+	public function sheet() {
+		return $this->_sheet;
+	}
 	
 	/**
 	 * 根据ID/NAME选中一个数据表(Sheet), 如果数据表不存在则创建
@@ -128,6 +137,26 @@ class Table {
 	
 
 	/**
+	 * 读取当前数据表 $column_name 列结构
+	 * @param  [type] $column_name [description]
+	 * @return [Type] 返回Type对象
+	 */
+	public function getColumn( $column_name ) {
+
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		if (!preg_match('/^([a-zA-Z]{1})([a-zA-Z0-9\_])/', $column_name) ) {
+			throw new Exception("列名称格式不正确，由字符、数字和下划线组成，且开头必须为字符。(column_name= $column_name) ");
+		}
+
+		return $this->_schema->getField( $this->_sheet_id, $column_name );
+	}
+
+
+
+	/**
 	 * 为当前数据表添加一列
 	 * @param String $column_name 列名称 (由字符、数字和下划线组成，且开头必须为字符)
 	 * @param Type   $type        数据类型 (参考) @see \Tuanduimao\supertable\Type
@@ -147,6 +176,7 @@ class Table {
 		return $this->selectSheet( $this->_sheet_id );
 	}
 
+	
 
 	/**
 	 * 修改当前数据表 $column_name 列结构
@@ -210,17 +240,22 @@ class Table {
 
 	// 类型相关操作
 	
-	public function type( $name, $data, $opts ) {
+	public function type( $name=null, $data=array(), $option=array() ) {
+		
+		if ( $name == null ) {
+			if ( is_a($this->_type, "Tuanduimao\Supertable\Type") ) {
+				return $this->_type;
+			}
+			return (new Type())->setPath( $this->C('path') );
+		}
 		
 		return (new Type())
 			 ->setPath( $this->C('path') )
-			 ->load( $name, $data, $opts )->setPath( $this->C('path') );
+			 ->load( $name, $data, $option )->setPath( $this->C('path') );
 	}
 
 
 	// 数据相关操作
-
-
 
 
 	/**
@@ -243,11 +278,11 @@ class Table {
 
 		$options['data'] = $this->C('database/options/table_prefix') . $options['data'];
 		$this->_table = $options;
-		$this->_schema = new Schema( $this->_table , $this->C('database'), $this->C('memcached') );
-
+		$this->_dbInit();
+		$this->type();
+		$this->_schema = new Schema( $this->_table, $this->_db, $this->_type, $this->_mc );
 		return $this;
 	}
-
 
 
 	protected function bindSE( $options ) {
@@ -301,6 +336,27 @@ class Table {
 
 	public function getData( $options ) {
 	}
+
+
+
+	// ====== 以下部分为私有函数
+
+
+	/**
+	 * 连接数据库，并创建数据库对象
+	 * @return [type] [description]
+	 */
+	private function _dbInit() {
+		$table = $this->_table;
+		$engine = $this->C('database/engine');
+		$class_name = "\\Tuanduimao\\Supertable\\Database\\{$engine}";
+		if ( !class_exists($class_name) ) {
+			throw new Exception("$class_name not exists!");
+		}
+		$this->_db = new $class_name( $table, $this->C('database/options') );
+		return $this;
+	}
+
 
 
 }

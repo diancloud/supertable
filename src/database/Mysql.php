@@ -233,6 +233,25 @@ class Mysql {
 	}
 
 	/**
+	 * API: 读取一个字段
+	 * @param  [type] $schema_id [description]
+	 * @param  [type] $name      [description]
+	 * @param  [type] $value     [description]
+	 * @return [type]            [description]
+	 */
+	function getField( $schema_id, $name ) {
+
+		$data = $this->getSchema( $schema_id, false );
+		if ( !isset($data['_spt_schema_json'][$name]) ) {
+			throw new Exception("$name not exists!");
+		}
+		
+		return $data['_spt_schema_json'][$name];
+	}
+
+
+
+	/**
 	 * API: 更新一个字段
 	 * @param  [type] $schema_id [description]
 	 * @param  [type] $name      [description]
