@@ -325,7 +325,7 @@ class Table {
 	/**
 	 * 绑定数据表
 	 * 
-	 * @param  Array  $option 数据库结构数组
+	 * @param  Array  $option 数据表配置
 	 *         		  $option['data'] 数据存储数据表 （ 如不存在自动创建 ） 
 	 *         		  $option['schema'] 数据结构数据表（ 如不存在自动创建 ） 
 	 *                           	
@@ -371,7 +371,7 @@ class Table {
 	/**
 	 * 绑定搜索引擎
 	 * 
-	 * @param  Array    $option
+	 * @param  Array    $option 搜索引擎索引和类型配置
 	 *         			$option['index'] 索引名称（选填）(相当于关系型数据的 database name)
 	 *         							 默认为绑定数据表名称 ( data table name )
 	 *         							 @see bindDB  
