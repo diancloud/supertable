@@ -20,14 +20,19 @@ use Tuanduimao\Supertable\Type;
 class Schema {
 
 	private $_db = null;
+	private $_search = null;
+
+
 	private $_type = null;
 	private $_mc = null;
 	private $_table = array('schema' => null, 'data'=>null );
 	private $_conf = array('db'=>null, 'mc'=>false);
 
-	function __construct( $table, $db, $type, $mc) {
+	function __construct( $table, $db, $search, $type, $mc) {
 		$this->_table = $table;
 		$this->_db = $db;
+		$this->_search = $search;
+		
 		$this->_type = $type;
 		$this->_mc = $mc;
 		$this->_checkTable();
@@ -118,8 +123,6 @@ class Schema {
 	}
 
 
-
-
 	//=========
 	
 
@@ -161,21 +164,6 @@ class Schema {
 	}
 
 
-
-	/**
-	 * 连接数据库，并创建数据库对象
-	 * @return [type] [description]
-	 */
-	private function db_init() {
-		$table = $this->_table;
-		$engine = $this->_conf['db']['engine'];
-		$class_name = "\\Tuanduimao\\Supertable\\Database\\{$engine}";
-		if ( !class_exists($class_name) ) {
-			throw new Exception("$class_name not exists!");
-		}
-		$this->_db = new $class_name( $table, $this->_conf['db']['options'] );
-		return $this;
-	}
 
 	function get( $id ) {
 

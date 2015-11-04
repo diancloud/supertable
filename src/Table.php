@@ -318,41 +318,111 @@ class Table {
 	}
 
 
-	// 数据相关操作
 
+
+	// === 对象初始化 相关操作 ==========================
 
 	/**
 	 * 绑定数据表
-	 * @param  [type] $options [description]
-	 * @return [type]          [description]
+	 * 
+	 * @param  Array  $option 数据库结构数组
+	 *         		  $option['data'] 数据存储数据表 （ 如不存在自动创建 ） 
+	 *         		  $option['schema'] 数据结构数据表（ 如不存在自动创建 ） 
+	 *                           	
+	 *         		  EG:  $conf = array(...'database'=>array('table_prefix'=>"prefix_") ...)
+	 *         		  
+	 *         		  	   $this->bindDB( $option )
+	 * 						    ->bindSE()
+	 * 						    ->init();
+	 * 						        
+	 * 					   $this->selectSheet('customer_boss');
+	 * 					   
+	 *         		  	   $option = array('data'=>'customer', 'schema'=>"customer_typelist")
+	 *         		  	   数据存储表: prefix_customer ( 存放具体客户数据，如 {name:"张三", mobile:"13611281054"...} )
+	 *         		  	   数据结构表: prefix_customer_typelist ( 存放字段结构数据，如 {"customer_boss":{"姓名":"InlineText", "手机号码":"InlineText" ...}} )
+	 *         		  	   
+	 *         		  	   $option = array('data'=>'customer')  自动创建一张 prefix_customer_supertable 数据表，用来存储数据结构
+	 *         		  	   数据存储表: prefix_customer
+	 *         		  	   数据结构表: prefix_customer_supertable
+	 *         		  	   
+	 *         		  	   
+	 * @return Table  $table Table对象
+	 * @see  data 数据表结构参考  schema 数据表结构参考
 	 */
-	protected function bindDB( $options ) {
+	protected function bindDB( $option ) {
 		
-		if ( !isset($options['data']) ) {
-			return false;
+		if ( !isset($option['data']) ) {
+			throw new Exception("please enter data Table name at least !");
 		}
 
 		// Schema 表
-		if ( !isset($options['schema']) ) {
-			$options['schema'] = $this->C('database/options/table_prefix') . $options['data'] . '_supertable';
+		if ( !isset($option['schema']) ) {
+			$option['schema'] = $this->C('database/options/table_prefix') . $option['data'] . '_supertable';
 		} else {
-			$options['schema'] = $this->C('database/options/table_prefix') . $options['schema'];
+			$option['schema'] = $this->C('database/options/table_prefix') . $option['schema'];
 		}
 
-		$options['data'] = $this->C('database/options/table_prefix') . $options['data'];
-		$this->_table = $options;
+		$option['data'] = $this->C('database/options/table_prefix') . $option['data'];
+		$this->_table = $option;
+		return $this;
+	}
+
+
+	/**
+	 * 绑定搜索引擎
+	 * 
+	 * @param  Array    $option
+	 *         			$option['index'] 索引名称（选填）(相当于关系型数据的 database name)
+	 *         							 默认为绑定数据表名称 ( data table name )
+	 *         							 @see bindDB  
+	 *         							 
+	 *         			$option['type']  类型名称前缀（选填） ( 相当于关系型数据的 table name ) 
+	 *         							 Type名称结构:  "{$option['type']}$sheet_name"
+	 *         							 @see selectSheet 
+	 *
+	 * 					EG:  $conf = array(...'database'=>array('table_prefix'=>"prefix_") ...) 
+	 * 					
+	 * 						 $this->bindDB( array( 'data'=>'customer', 'schema'=>'customer_type') )
+	 * 						      ->bindSE( $option )
+	 * 						      ->init();
+	 * 						 $this->selectSheet('customer_boss');
+	 * 						
+	 * 						 $option = array()
+	 * 						 索引名称 Index: 'prefix_customer' ( $this->_table['data'] )
+	 * 						 类型名称  Type: 'prefix_customer_boss' ( $this->_sheet['name'] )
+	 *
+	 * 						 $option = array('index'=>'app_customer')
+	 * 						 索引名称 Index: 'app_customer'
+	 * 						 类型名称  Type: 'prefix_customer_boss' ( $this->_sheet['name'] )
+	 * 						 
+	 * 						 $option = array('index'=>'app_customer', 'type'=>'cust_')
+	 * 						 索引名称 Index: 'app_customer'
+	 * 						 类型名称  Type: 'cust_customer_boss' ( "cust_{$this->_sheet['name']}" )
+	 *         			
+	 * @return Table  $table Table对象
+	 */
+	protected function bindSE( $option = array() ) {
+		$this->_index = $option;
+		return $this;
+	}
+
+
+	/**
+	 * 系统初始化：( 在 bindDB 和 bindSE之后调用 )
+	 * 		1）创建数据库对象
+	 * 		2) 创建搜索引擎对象
+	 * 		3）创建类型对象
+	 * 		4) 创建 schema 对象
+	 * @return [type] [description]
+	 */
+	protected function init() {
 		$this->_dbInit();
+		$this->_searchInit();
 		$this->type();
-		$this->_schema = new Schema( $this->_table, $this->_db, $this->_type, $this->_mc );
-		return $this;
+		$this->_schema = new Schema( $this->_table,  $this->_db, $this->_search, $this->_type, $this->_mc );
 	}
 
 
-	protected function bindSE( $options ) {
-		$this->_index = $options;
-		$this->_search = new SEClient( $this->C('search/options') );
-		return $this;
-	}
 
 	protected function C($name) {
 
@@ -373,6 +443,8 @@ class Table {
 	}
 
 
+
+
 	//===== 属性操作
 	public function get() {
 	}
@@ -386,10 +458,7 @@ class Table {
 
 
 
-
-
 	// ====== 以下部分为私有函数
-
 
 	/**
 	 * 连接数据库，并创建数据库对象
@@ -402,10 +471,32 @@ class Table {
 		if ( !class_exists($class_name) ) {
 			throw new Exception("$class_name not exists!");
 		}
-		$this->_db = new $class_name( $table, $this->C('database/options') );
+		$this->_db = new $class_name( $table, $this->C('database/option') );
 		return $this;
 	}
 
+	/**
+	 * 连接索引库，并创建对象
+	 * 
+	 * @return [type] [description]
+	 */
+	private function _searchInit() {
+		
+		if ( count($this->_db) == 0 ) {
+			throw new Exception("Please create database connection use _dbInit() first !");
+		}
+
+		$table = $this->_table;
+		$engine = $this->C('search/engine');
+		$class_name = "\\Tuanduimao\\Supertable\\SearchEngine\\{$engine}";
+		if ( !class_exists($class_name) ) {
+			throw new Exception("$class_name not exists!");
+		}
+
+		$this->_search = new $class_name( $this->_table, $this->_index, $this->C('search/option'), $this->_db );
+
+		return $this;
+	}
 
 
 }
