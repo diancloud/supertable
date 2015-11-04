@@ -12,7 +12,7 @@
  * 
  */
 
-Namespace Tuanduimao\Supertable\Database;
+Namespace Tuanduimao\Supertable\Storage;
 use \Mysqli as Mysqli;
 use \Exception as Exception;
 
