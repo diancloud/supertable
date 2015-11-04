@@ -219,6 +219,8 @@ class Table {
 		return $this->selectSheet( $this->_sheet_id );
 	}
 
+	
+
 	/**
 	 * 删除当前数据表 $column_name 列
 	 * @param String $column_name 列名称 (由字符、数字和下划线组成，且开头必须为字符)
