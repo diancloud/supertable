@@ -109,7 +109,7 @@ class Mysql {
 	 * @return 返回数据对象
 	 * 
 	 */
-	function checktable() {
+	function checkbucket() {
 		 
 		 $table = $this->_table;
 

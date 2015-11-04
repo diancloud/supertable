@@ -35,7 +35,7 @@ class Table {
 	protected $_schema = null;
 	protected $_search = null;
 
-	protected $_table  = array('schema' => null, 'data'=>null );
+	protected $_bucket  = array('schema' => null, 'data'=>null );
 	protected $_index  = array('index' => null, 'type'=>null );
 
 	protected $_sheet_id = null;
@@ -48,6 +48,10 @@ class Table {
 
 	function __construct( $conf = null ) {
 		
+		if ($conf !== null && !is_array($conf) ) {
+			throw new Exception("Please Check Configure (conf=".var_export($conf,true).")");
+		}
+
 		if ( is_array($conf) ) {
 			$this->_conf = $conf;
 			$this->_type = $this->type();
@@ -109,7 +113,7 @@ class Table {
 	 * @return [mix]                $create_only 为true返回刚创建的数据表ID; $create_only 为false，选中新创建的数据表, 返回 $this
 	 */
 	public function createSheet( $name=null, $data = array(), $create_only=false ) {
-		$name = ($name==null) ? $this->_table['data'] . '_'. time() . rand(10000,99999):$name;
+		$name = ($name==null) ? $this->_bucket['data'] . '_'. time() . rand(10000,99999):$name;
 		if (!preg_match('/^([a-zA-Z]{1})([a-zA-Z0-9\_])/', $name) ) {
 			throw new Exception("数据表名称格式不正确，由字符、数字和下划线组成，且开头必须为字符。(name= $name) ");
 		}
@@ -323,33 +327,33 @@ class Table {
 	// === 对象初始化 相关操作 ==========================
 
 	/**
-	 * 绑定数据表(数据存储)
+	 * 绑定数据存储空间
 	 * 
-	 * @param  Array  $option 数据表配置
-	 *         		  $option['data'] 数据存储数据表 （ 如不存在自动创建 ） 
-	 *         		  $option['schema'] 数据结构数据表（ 如不存在自动创建 ） 
+	 * @param  Array  $option 存储空间配置
+	 *         		  $option['data'] 存储空间名称 
+	 *         		  $option['schema'] 数据结构存储空间名称 (选填)
 	 *                           	
-	 *         		  EG:  $conf = array(...'storage'=>array('table_prefix'=>"prefix_") ...)
+	 *         		  EG:  $conf = array(...'storage'=>array('prefix'=>"prefix_") ...)
 	 *         		  
-	 *         		  	   $this->bindTable( $option )
+	 *         		  	   $this->bindBucket( $option )
 	 * 						    ->bindIndex()
 	 * 						    ->init();
 	 * 						        
 	 * 					   $this->selectSheet('customer_boss');
 	 * 					   
 	 *         		  	   $option = array('data'=>'customer', 'schema'=>"customer_typelist")
-	 *         		  	   数据存储表: prefix_customer ( 存放具体客户数据，如 {name:"张三", mobile:"13611281054"...} )
-	 *         		  	   数据结构表: prefix_customer_typelist ( 存放字段结构数据，如 {"customer_boss":{"姓名":"InlineText", "手机号码":"InlineText" ...}} )
+	 *         		  	   数据存储空间: prefix_customer ( 存放具体客户数据，如 {name:"张三", mobile:"13611281054"...} )
+	 *         		  	   数据结构存储空间: prefix_customer_typelist ( 存放字段结构数据，如 {"customer_boss":{"姓名":"InlineText", "手机号码":"InlineText" ...}} )
 	 *         		  	   
 	 *         		  	   $option = array('data'=>'customer')  自动创建一张 prefix_customer_supertable 数据表，用来存储数据结构
-	 *         		  	   数据存储表: prefix_customer
-	 *         		  	   数据结构表: prefix_customer_supertable
+	 *         		  	   数据存储空间: prefix_customer
+	 *         		  	   数据结构存储空间: prefix_customer_supertable
 	 *         		  	   
 	 *         		  	   
-	 * @return Table  $table Table对象
-	 * @see  data 数据表结构参考  schema 数据表结构参考
+	 * @return Table  $this Table对象
+	 * @see  数据存储空间
 	 */
-	protected function bindTable( $option ) {
+	protected function bindBucket( $option ) {
 		
 		if ( !isset($option['data']) ) {
 			throw new Exception("please enter data Table name at least !");
@@ -357,13 +361,13 @@ class Table {
 
 		// Schema 表
 		if ( !isset($option['schema']) ) {
-			$option['schema'] = $this->C('storage/options/table_prefix') . $option['data'] . '_supertable';
+			$option['schema'] = $this->C('storage/prefix') . $option['data'] . '_supertable';
 		} else {
-			$option['schema'] = $this->C('storage/options/table_prefix') . $option['schema'];
+			$option['schema'] = $this->C('storage/prefix') . $option['schema'];
 		}
 
-		$option['data'] = $this->C('storage/options/table_prefix') . $option['data'];
-		$this->_table = $option;
+		$option['data'] = $this->C('storage/prefix') . $option['data'];
+		$this->_bucket = $option;
 		return $this;
 	}
 
@@ -372,23 +376,23 @@ class Table {
 	 * 绑定索引(搜索引擎)
 	 * 
 	 * @param  Array    $option 搜索引擎索引和类型配置
-	 *         			$option['index'] 索引名称（选填）(相当于关系型数据的 storage name)
-	 *         							 默认为绑定数据表名称 ( data table name )
-	 *         							 @see bindTable  
+	 *         			$option['index'] 索引名称（选填）(相当于关系型数据库的[数据库名称] )
+	 *         							 默认为绑定存储空间名称
+	 *         							 @see bindBucket  
 	 *         							 
-	 *         			$option['type']  类型名称前缀（选填） ( 相当于关系型数据的 table name ) 
-	 *         							 Type名称结构:  "{$option['type']}$sheet_name"
+	 *         			$option['type']  类型名称前缀（选填） ( 相当于关系型数据的[数据表名称] ) 
+	 *         							 类型名称结构: "{$conf['storage']['prefix']}{$option['type']}$sheet_name"
 	 *         							 @see selectSheet 
 	 *
-	 * 					EG:  $conf = array(...'storage'=>array('table_prefix'=>"prefix_") ...) 
+	 * 					EG:  $conf = array(...'storage'=>array('prefix'=>"prefix_") ...) 
 	 * 					
-	 * 						 $this->bindTable( array( 'data'=>'customer', 'schema'=>'customer_type') )
+	 * 						 $this->bindBucket( array( 'data'=>'customer', 'schema'=>'customer_type') )
 	 * 						      ->bindIndex( $option )
 	 * 						      ->init();
 	 * 						 $this->selectSheet('customer_boss');
 	 * 						
 	 * 						 $option = array()
-	 * 						 索引名称 Index: 'prefix_customer' ( $this->_table['data'] )
+	 * 						 索引名称 Index: 'prefix_customer' ( $this->_bucket['data'] )
 	 * 						 类型名称  Type: 'prefix_customer_boss' ( $this->_sheet['name'] )
 	 *
 	 * 						 $option = array('index'=>'app_customer')
@@ -399,16 +403,20 @@ class Table {
 	 * 						 索引名称 Index: 'app_customer'
 	 * 						 类型名称  Type: 'cust_customer_boss' ( "cust_{$this->_sheet['name']}" )
 	 *         			
-	 * @return Table  $table Table对象
+	 * @return Table  $bucket Table对象
 	 */
 	protected function bindIndex( $option = array() ) {
+
+		$option['index'] = (isset($option['index']))?$option['index']:$this->_bucket['data'];
+		$option['type'] = (isset($option['type']))?$option['type']:"";
+		
 		$this->_index = $option;
 		return $this;
 	}
 
 
 	/**
-	 * 系统初始化：( 在 bindTable 和 bindIndex之后调用 )
+	 * 系统初始化：( 在 bindBucket 和 bindIndex之后调用 )
 	 * 		1）创建数据库对象
 	 * 		2) 创建搜索引擎对象
 	 * 		3）创建类型对象
@@ -419,7 +427,7 @@ class Table {
 		$this->_dbInit();
 		$this->_searchInit();
 		$this->type();
-		$this->_schema = new Schema( $this->_table,  $this->_db, $this->_search, $this->_type, $this->_mc );
+		$this->_schema = new Schema( $this->_bucket,  $this->_db, $this->_search, $this->_type, $this->_mc );
 	}
 
 
@@ -465,13 +473,13 @@ class Table {
 	 * @return [type] [description]
 	 */
 	private function _dbInit() {
-		$table = $this->_table;
+		$bucket = $this->_bucket;
 		$engine = $this->C('storage/engine');
-		$class_name = "\\Tuanduimao\\Supertable\\storage\\{$engine}";
+		$class_name = "\\Tuanduimao\\Supertable\\Storage\\{$engine}";
 		if ( !class_exists($class_name) ) {
 			throw new Exception("$class_name not exists!");
 		}
-		$this->_db = new $class_name( $table, $this->C('storage/option') );
+		$this->_db = new $class_name( $bucket, $this->C('storage/option') );
 		return $this;
 	}
 
@@ -486,14 +494,14 @@ class Table {
 			throw new Exception("Please create storage connection use _dbInit() first !");
 		}
 
-		$table = $this->_table;
+		$bucket = $this->_bucket;
 		$engine = $this->C('search/engine');
 		$class_name = "\\Tuanduimao\\Supertable\\SearchEngine\\{$engine}";
 		if ( !class_exists($class_name) ) {
 			throw new Exception("$class_name not exists!");
 		}
 
-		$this->_search = new $class_name( $this->_table, $this->_index, $this->C('search/option'), $this->_db );
+		$this->_search = new $class_name( $this->_bucket, $this->_index, $this->C('search/option'), $this->_db );
 
 		return $this;
 	}

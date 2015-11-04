@@ -1,6 +1,6 @@
 <?php
 /**
- * SuperTable 基类
+ * Superbucket 基类
  *
  * CLASS 
  *
@@ -12,9 +12,9 @@
  * 
  */
 
-namespace Tuanduimao\Supertable;
+namespace Tuanduimao\Superbucket;
 use \Exception as Exception;
-use Tuanduimao\Supertable\Type;
+use Tuanduimao\Superbucket\Type;
 
 
 class Schema {
@@ -25,17 +25,17 @@ class Schema {
 
 	private $_type = null;
 	private $_mc = null;
-	private $_table = array('schema' => null, 'data'=>null );
+	private $_bucket = array('schema' => null, 'data'=>null );
 	private $_conf = array('db'=>null, 'mc'=>false);
 
-	function __construct( $table, $db, $search, $type, $mc) {
-		$this->_table = $table;
+	function __construct( $bucket, $db, $search, $type, $mc) {
+		$this->_bucket = $bucket;
 		$this->_db = $db;
 		$this->_search = $search;
 		
 		$this->_type = $type;
 		$this->_mc = $mc;
-		$this->_checkTable();
+		$this->_checkbucket();
 	}
 
 
@@ -128,12 +128,12 @@ class Schema {
 
 	/**
 	 * 检查数据表结构
-	 * @param  [type] $table [description]
+	 * @param  [type] $bucket [description]
 	 * @return [type]        [description]
 	 */
-	private function _checkTable( $table=null ) {
-		$table = ($table == null) ? $this->_table : $table;
-		$this->_db->checktable();
+	private function _checkbucket( $bucket=null ) {
+		$bucket = ($bucket == null) ? $this->_bucket : $bucket;
+		$this->_db->checkbucket();
 	}
 
 
