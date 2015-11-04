@@ -13,7 +13,6 @@
  */
 
 namespace Tuanduimao\Supertable;
-use Elasticsearch\Client as SEClient;
 use \Exception as Exception;
 use Tuanduimao\Supertable\Schema;
 use Tuanduimao\Supertable\Type;
@@ -24,7 +23,7 @@ use Tuanduimao\Supertable\Type;
  */
 class Table {
 	
-	private $_db = array();
+	private $_stor = array();
 	private $_type = null;
 	private $_mc = null;
 
@@ -107,10 +106,10 @@ class Table {
 
 	/**
 	 * 创建一个数据表 (Sheet)
-	 * @param  [string]  $name        数据表名，默认为NULL，自动生成 (由字符、数字和下划线组成，且开头必须为字符)
+	 * @param  string  $name      数据表名，默认为NULL，自动生成 (由字符、数字和下划线组成，且开头必须为字符)
 	 * @param  array   $data        扩展数据 (如果有自定字段，则填写这些字段的数值)
 	 * @param  boolean $create_only 为true返回刚创建的数据表ID，默认为false，选中新创建的数据表
-	 * @return [mix]                $create_only 为true返回刚创建的数据表ID; $create_only 为false，选中新创建的数据表, 返回 $this
+	 * @return mix               $create_only 为true返回刚创建的数据表ID; $create_only 为false，选中新创建的数据表, 返回 $this
 	 */
 	public function createSheet( $name=null, $data = array(), $create_only=false ) {
 		$name = ($name==null) ? $this->_bucket['data'] . '_'. time() . rand(10000,99999):$name;
@@ -125,8 +124,6 @@ class Table {
 
 		return $this->selectSheet( $sheet_id );
 	}
-
-
 
 
 	// 删除一个表格
@@ -158,7 +155,6 @@ class Table {
 
 		return $this->_schema->getField( $this->_sheet_id, $column_name );
 	}
-
 
 
 	/**
@@ -252,18 +248,20 @@ class Table {
 	 * @return [type]       [description]
 	 */
 	public function create( $data ) {
-	
+
 		// 根据数据结构，检查数据是否合法
 		if ( $this->validation( $data ) === false ) {
 			return false;
 		}
 
+		// 数据入库
+		$data_id = $this->_stor->createData( $data );
 
-		// $this->_search->createData( $data );
-		// $this->_db->createData( $data );
-
+		$data_index = $data;
+		
+		// 添加索引
+		$this->_search->createData( $this->_sheet['name'], $data_id, $data );
 	}
-
 
 
 	public function update( $data ) {
@@ -409,7 +407,7 @@ class Table {
 
 		$option['index'] = (isset($option['index']))?$option['index']:$this->_bucket['data'];
 		$option['type'] = (isset($option['type']))?$option['type']:"";
-		
+
 		$this->_index = $option;
 		return $this;
 	}
@@ -424,12 +422,11 @@ class Table {
 	 * @return [type] [description]
 	 */
 	protected function init() {
-		$this->_dbInit();
+		$this->_storInit();
 		$this->_searchInit();
 		$this->type();
-		$this->_schema = new Schema( $this->_bucket,  $this->_db, $this->_search, $this->_type, $this->_mc );
+		$this->_schema = new Schema( $this->_bucket,  $this->_stor, $this->_search, $this->_type, $this->_mc );
 	}
-
 
 
 	protected function C($name) {
@@ -465,23 +462,23 @@ class Table {
 	}
 
 
-
 	// ====== 以下部分为私有函数
 
 	/**
 	 * 连接数据库，并创建数据库对象
 	 * @return [type] [description]
 	 */
-	private function _dbInit() {
+	private function _storInit() {
 		$bucket = $this->_bucket;
 		$engine = $this->C('storage/engine');
 		$class_name = "\\Tuanduimao\\Supertable\\Storage\\{$engine}";
 		if ( !class_exists($class_name) ) {
 			throw new Exception("$class_name not exists!");
 		}
-		$this->_db = new $class_name( $bucket, $this->C('storage/option') );
+		$this->_stor = new $class_name( $bucket, $this->C('storage/option') );
 		return $this;
 	}
+
 
 	/**
 	 * 连接索引库，并创建对象
@@ -490,18 +487,18 @@ class Table {
 	 */
 	private function _searchInit() {
 		
-		if ( count($this->_db) == 0 ) {
-			throw new Exception("Please create storage connection use _dbInit() first !");
+		if ( count($this->_stor) == 0 ) {
+			throw new Exception("Please create storage connection use _storInit() first !");
 		}
 
 		$bucket = $this->_bucket;
 		$engine = $this->C('search/engine');
-		$class_name = "\\Tuanduimao\\Supertable\\SearchEngine\\{$engine}";
+		$class_name = "\\Tuanduimao\\Supertable\\Search\\{$engine}";
 		if ( !class_exists($class_name) ) {
 			throw new Exception("$class_name not exists!");
 		}
 
-		$this->_search = new $class_name( $this->_bucket, $this->_index, $this->C('search/option'), $this->_db );
+		$this->_search = new $class_name( $this->_bucket, $this->_index, $this->C('search/option'), $this->_stor );
 
 		return $this;
 	}

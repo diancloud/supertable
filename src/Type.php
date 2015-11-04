@@ -20,6 +20,8 @@ use \Exception as Exception;
 
 class Type {
 	
+	
+	protected $_data_format = 'string';
 	protected $_data_input = array();
 	protected $_data_message = array();
 	protected $_data = array();
@@ -68,6 +70,10 @@ class Type {
 	protected function setDataMessage( $data_message ) {
 		$this->_data_message = $data_message;
 		return $this;
+	}
+
+	protected function setDataFormat( $data_format ) {
+		$this->_data_format = $data_format;
 	}
 
 
@@ -242,14 +248,12 @@ class Type {
 
 	public function toJSON() {
 		
-		if ( !$this->_dataInputValidation() ) {
-			print_r($this->errors );
-		}
 		return json_encode($this->toArray());
 	}
 
 	public function toArray() {
 		return array(
+			'format' => $this->_data_format,
 			'type' => @end(@explode('\\', get_class($this))),
 			'option' => $this->_option,
 			'data' => $this->_data,

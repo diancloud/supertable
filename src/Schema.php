@@ -12,27 +12,26 @@
  * 
  */
 
-namespace Tuanduimao\Superbucket;
+namespace Tuanduimao\Supertable;
 use \Exception as Exception;
-use Tuanduimao\Superbucket\Type;
+use Tuanduimao\Supertable\Type;
 
 
 class Schema {
 
-	private $_db = null;
+	private $_stor = null;
 	private $_search = null;
 
 
 	private $_type = null;
 	private $_mc = null;
 	private $_bucket = array('schema' => null, 'data'=>null );
-	private $_conf = array('db'=>null, 'mc'=>false);
 
-	function __construct( $bucket, $db, $search, $type, $mc) {
+	function __construct( $bucket, $stor, $search, $type, $mc) {
 		$this->_bucket = $bucket;
-		$this->_db = $db;
+		$this->_stor = $stor;
 		$this->_search = $search;
-		
+
 		$this->_type = $type;
 		$this->_mc = $mc;
 		$this->_checkbucket();
@@ -40,12 +39,32 @@ class Schema {
 
 
 	/**
-	 * 创建一个新的数据表(Sheet)
-	 * @return [type] [description]
+	 * 创建一个空数据表(Sheet)
+	 * 
+	 * === $id: $name ==========
+	 * null | null | null | ...
+	 * =========================
+	 * null | null | null | ...
+	 * -------------------------
+	 * null | null | null | ...
+	 * -------------------------
+	 * 
+	 * @return Int Sheet ID 
 	 */
 	public function createSheet( $name, $data = array() ) {
-		return $this->_db->createSchema( $name, $data = array() );
+		
+		// 创建空数据表结构
+		$id = $this->_stor->createSchema( $name, $data = array() );
+
+		// 创建新的索引类型
+		if ( $this->_search->createType( $name ) === false ) {
+			$this->_stor->deleteSchema( $name );
+			throw new Exception("Search Error: " . $this->_search->error() );	
+		}
+
+		return $id;
 	}
+
 
 
 	/**
@@ -55,7 +74,7 @@ class Schema {
 	 * @return [type]              [description]
 	 */
 	public function getSheetByName( $name, $allow_null=false ) {
-		$sheet =  $this->_db->getSchemaByName( $name, $allow_null );
+		$sheet =  $this->_stor->getSchemaByName( $name, $allow_null );
 		return $this->_formatSheet( $sheet );
 	}
 
@@ -67,29 +86,50 @@ class Schema {
 	 * @return [type]              [description]
 	 */
 	public function getSheetByID( $id, $allow_null=false ) {
-		$sheet = $this->_db->getSchema( $id, $allow_null );
+		$sheet = $this->_stor->getSchema( $id, $allow_null );
 		return $this->_formatSheet( $sheet );
 	}
 
 	/**
 	 * 读取一个字段
+	 * 
 	 * @param [type] $name [description]
 	 * @param Type   $type [description]
 	 */
 	public function getField( $schema_id, $name ) {
-		$type =  $this->_db->getField( $schema_id, $name );
+		$type =  $this->_stor->getField( $schema_id, $name );
 		return $this->_typeObj($type);
 	}
 
 	/**
 	 * 增加一个新字段 
+	 * 
+	 * === ID:$schema_id  ==================
+	 * + $name(Type) | null | null | ...
+	 * =================================
+	 *   null        | null | null | ...
+	 * ---------------------------------
+	 *   null        | null | null | ...
+	 * ---------------------------------
+	 * 
 	 * @param [type] $name [description]
-	 * @param Type   $type [description]
+	 * @param  Int sheet_id
 	 */
 	public function addField( $schema_id, $name, Type $type ) {
 
-		return $this->_db->addField( $schema_id, $name, $type->bindField($schema_id, $name)->toArray() );
+		$schema_id = $this->_stor->addField( $schema_id, $name, $type->bindField($schema_id, $name)->toArray() );
+		$newSchema = $this->_stor->getSchema( $schema_id );
+
+		// 更新索引
+		if ( $this->_search->updateType( $newSchema['_spt_name'], $newSchema['_spt_schema_json'] ) === false ) {
+			$this->_stor->rollbackField( $schema_id, $name );
+			throw new Exception("Search Error: " . $this->_search->error() );	
+		}
+
+		return $schema_id;
 	}
+
+
 
 	/**
 	 * 修改一个新字段 
@@ -97,7 +137,17 @@ class Schema {
 	 * @param Type   $type [description]
 	 */
 	public function alterField( $schema_id, $name, Type $type ) {
-		return $this->_db->alterField( $schema_id, $name, $type->bindField($schema_id, $name)->toArray() );
+
+		$schema_id = $this->_stor->alterField( $schema_id, $name, $type->bindField($schema_id, $name)->toArray() );
+		$newSchema = $this->_stor->getSchema( $schema_id );
+
+		// 更新索引
+		if ( $this->_search->updateType( $newSchema['_spt_name'], $newSchema['_spt_schema_json'] ) === false ) {
+			$this->_stor->rollbackField( $schema_id, $name );
+			throw new Exception("Search Error: " . $this->_search->error() );	
+		}
+
+		return $schema_id;
 	}
 
 
@@ -107,7 +157,17 @@ class Schema {
 	 * @param Type   $type [description]
 	 */
 	public function replaceField( $schema_id, $name, Type $type ) {
-		return $this->_db->replaceField( $schema_id, $name, $type->bindField($schema_id, $name)->toArray() );
+		$schema_id = $this->_stor->replaceField( $schema_id, $name, $type->bindField($schema_id, $name)->toArray() );
+
+		$newSchema = $this->_stor->getSchema( $schema_id );
+
+		// 更新索引
+		if ( $this->_search->updateType( $newSchema['_spt_name'], $newSchema['_spt_schema_json'] ) === false ) {
+			$this->_stor->rollbackField( $schema_id, $name );
+			throw new Exception("Search Error: " . $this->_search->error() );	
+		}
+
+		return $schema_id;
 	}
 
 	
@@ -119,7 +179,16 @@ class Schema {
 	 * @return [type]                    [description]
 	 */
 	public function dropField( $schema_id, $name, $allow_not_exists=false ) {
-		return $this->_db->dropField( $schema_id, $name, $allow_not_exists );
+		$schema_id = $this->_stor->dropField( $schema_id, $name, $allow_not_exists );
+		$newSchema = $this->_stor->getSchema( $schema_id );
+
+		// 更新索引
+		if ( $this->_search->updateType( $newSchema['_spt_name'], $newSchema['_spt_schema_json'] ) === false ) {
+			$this->_stor->rollbackField( $schema_id, $name );
+			throw new Exception("Search Error: " . $this->_search->error() );	
+		}
+
+		return $schema_id;
 	}
 
 
@@ -133,11 +202,16 @@ class Schema {
 	 */
 	private function _checkbucket( $bucket=null ) {
 		$bucket = ($bucket == null) ? $this->_bucket : $bucket;
-		$this->_db->checkbucket();
+		$this->_stor->checkbucket();
 	}
 
 
 	private function _formatSheet( & $data ) {
+		if( !is_array($data) ) {
+			return $data;
+		}
+
+
 		$data['name'] = $data['_spt_name'];
 		$data['create_at'] = $data['_spt_create_at'];
 		$data['update_at'] = $data['_spt_update_at'];
@@ -164,8 +238,4 @@ class Schema {
 	}
 
 
-
-	function get( $id ) {
-
-	}
 }

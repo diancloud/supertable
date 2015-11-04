@@ -1,10 +1,10 @@
 <?php
 /**
- * SuperTable 基类
+ * Storage 接口: MySQL
  *
  * CLASS 
  *
- * 	   Schema 
+ * 	   Tuanduimao\Supertable\Storage\Mysql 
  *
  * USEAGE: 
  *
@@ -145,6 +145,18 @@ class Mysql {
 		return $this->_create($table['schema'], $data, $this->_schema_table );
 	}
 
+
+	/**
+	 * API: 删除一个数据结构记录
+	 * @param  [type]  $name             [description]
+	 * @param  boolean $allow_not_exists [description]
+	 * @return [type]                    [description]
+	 */
+	function deleteSchema( $name, $allow_not_exists=false ) {
+		echo "delete $name";
+	}
+
+
 	/**
 	 * API: 根据ID读取一个数据结构
 	 * @param  [type] $schema_id [description]
@@ -198,7 +210,7 @@ class Mysql {
 	 * API: 根据ID更新一个数据结构
 	 * @param  [type] $schema_id [description]
 	 * @param  [type] $data      [description]
-	 * @return [type]            [description]
+	 * @return $schema_id
 	 */
 	function updateSchema( $schema_id, $data ) {
 
@@ -211,6 +223,14 @@ class Mysql {
 		return $schema_id;
 	}
 
+
+	/**
+	 * API: 回滚操作
+	 * @return [type] [description]
+	 */
+	function rollbackField( $sheet_id, $name ) {
+		echo "rollback field";
+	}
 
 	
 	/**
@@ -303,9 +323,15 @@ class Mysql {
 
 
 	//数据插入
+	// ===== 数据操作
+
+	function createData( $data ) {
+		$table_name = $this->_table['data'];
+		$data['_spt_data_json'] = json_encode( $data );
+		$this->_filter( $data, $this->_data_table );
+		return $this->_create($table_name, $data, $this->_data_table );
+	}
 	
-
-
 	// ================================================  以下MySQL特有
 
 	private function _filter( & $data, $scheme_table ) {

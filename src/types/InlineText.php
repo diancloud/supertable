@@ -101,6 +101,7 @@ class InlineText extends Type {
 		parent::__construct( $data, $option );
 		$this->setDataInput( $data_input );
 		$this->setDataMessage( $data_message );
+		$this->setDataFormat('string');
 	
 	}
 
@@ -123,6 +124,8 @@ class InlineText extends Type {
 			$message = $this->_message('required', array('screen_name'=>$this->_option['screen_name']) );
 			array_push($this->errors, array('required'=>$message) );
 			return false;
+		} else if ( $value === null || $value === "" ) {
+			return true;
 		}
 
 		$check = new Validation();
