@@ -259,6 +259,9 @@ class Mysql {
 		if ( isset($data['_spt_schema_json'][$name]) ) {
 			throw new Exception("$name is exists! please run update() or replace() method!");
 		}
+
+		//+ 版本号
+		$value['_version'] = 1;
 		$data['_spt_schema_json'][$name] = $value;
 		$data['_spt_schema_revision'] = "increase";
 		return  $this->updateSchema( $schema_id, $data );
@@ -297,10 +300,13 @@ class Mysql {
 			throw new Exception("$name not exists! please run createField() or putField() method!");
 		}
 
-		if ( json_encode($data['_spt_schema_json'][$name]) == json_encode($value)) {
+		$oldValue = $data['_spt_schema_json'][$name];unset($oldValue['_version']);
+		if ( json_encode($oldValue) == json_encode($value)) {
 			throw new Exception("$name not change, nothing done! ");
 		}
 
+		// 更新字段版本号
+		$value['_version'] = intval($data['_spt_schema_json'][$name]['_version']) + 1;
 		$data['_spt_schema_json'][$name] = $value;
 		$data['_spt_schema_revision'] = "increase";
 		return  $this->updateSchema( $schema_id, $data );
@@ -317,10 +323,13 @@ class Mysql {
 	function putField( $schema_id, $name, $value ) {
 
 		$data = $this->getSchema( $schema_id, false );
-		if ( json_encode($data['_spt_schema_json'][$name]) == json_encode($value)) {
+		$oldValue = $data['_spt_schema_json'][$name];unset($oldValue['_version']);
+		if ( json_encode($oldValue) == json_encode($value)) {
 			return array('errno'=>0, 'error'=>'$name not change, nothing done!', 'schema_id'=>$schema_id );
 		}
 
+		// 更新字段版本号
+		$value['_version'] = intval($data['_spt_schema_json'][$name]['_version']) + 1;
 		$data['_spt_schema_json'][$name] = $value;
 		$data['_spt_schema_revision'] = "increase";
 		return  $this->updateSchema( $schema_id, $data );
@@ -346,7 +355,6 @@ class Mysql {
 				throw new Exception("$name not exists! no need drop!");
 			}
 		}
-		
 
 		unset($data['_spt_schema_json'][$name]);
 		$data['_spt_schema_revision'] = "increase";
