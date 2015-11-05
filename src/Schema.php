@@ -104,7 +104,7 @@ class Schema {
 	/**
 	 * 增加一个新字段 
 	 * 
-	 * === ID:$schema_id  ==================
+	 * === ID:$schema_id  ==============
 	 * + $name(Type) | null | null | ...
 	 * =================================
 	 *   null        | null | null | ...
@@ -118,9 +118,9 @@ class Schema {
 	public function addField( $schema_id, $name, Type $type ) {
 
 		$schema_id = $this->_stor->addField( $schema_id, $name, $type->bindField($schema_id, $name)->toArray() );
-		$newSchema = $this->_stor->getSchema( $schema_id );
 
 		// 更新索引
+		$newSchema = $this->_stor->getSchema( $schema_id );
 		if ( $this->_search->updateType( $newSchema['_spt_name'], $newSchema['_spt_schema_json'] ) === false ) {
 			$this->_stor->rollbackField( $schema_id, $name );
 			throw new Exception("Search Error: " . $this->_search->error() );	
@@ -128,7 +128,6 @@ class Schema {
 
 		return $schema_id;
 	}
-
 
 
 	/**
@@ -139,9 +138,9 @@ class Schema {
 	public function alterField( $schema_id, $name, Type $type ) {
 
 		$schema_id = $this->_stor->alterField( $schema_id, $name, $type->bindField($schema_id, $name)->toArray() );
-		$newSchema = $this->_stor->getSchema( $schema_id );
 
 		// 更新索引
+		$newSchema = $this->_stor->getSchema( $schema_id );
 		if ( $this->_search->updateType( $newSchema['_spt_name'], $newSchema['_spt_schema_json'] ) === false ) {
 			$this->_stor->rollbackField( $schema_id, $name );
 			throw new Exception("Search Error: " . $this->_search->error() );	
@@ -156,12 +155,17 @@ class Schema {
 	 * @param [type] $name [description]
 	 * @param Type   $type [description]
 	 */
-	public function replaceField( $schema_id, $name, Type $type ) {
-		$schema_id = $this->_stor->replaceField( $schema_id, $name, $type->bindField($schema_id, $name)->toArray() );
+	public function putField( $schema_id, $name, Type $type ) {
+		$schema_id = $this->_stor->putField( $schema_id, $name, $type->bindField($schema_id, $name)->toArray() );
 
-		$newSchema = $this->_stor->getSchema( $schema_id );
+		
+		// 数据没有变更，直接返回
+		if ( is_array($schema_id) ) {
+			return $schema_id;
+		}
 
 		// 更新索引
+		$newSchema = $this->_stor->getSchema( $schema_id );
 		if ( $this->_search->updateType( $newSchema['_spt_name'], $newSchema['_spt_schema_json'] ) === false ) {
 			$this->_stor->rollbackField( $schema_id, $name );
 			throw new Exception("Search Error: " . $this->_search->error() );	
@@ -180,9 +184,14 @@ class Schema {
 	 */
 	public function dropField( $schema_id, $name, $allow_not_exists=false ) {
 		$schema_id = $this->_stor->dropField( $schema_id, $name, $allow_not_exists );
-		$newSchema = $this->_stor->getSchema( $schema_id );
+		
+		// 数据没有变更，直接返回
+		if ( is_array($schema_id) ) {
+			return $schema_id;
+		}
 
 		// 更新索引
+		$newSchema = $this->_stor->getSchema( $schema_id );
 		if ( $this->_search->updateType( $newSchema['_spt_name'], $newSchema['_spt_schema_json'] ) === false ) {
 			$this->_stor->rollbackField( $schema_id, $name );
 			throw new Exception("Search Error: " . $this->_search->error() );	
@@ -193,7 +202,6 @@ class Schema {
 
 
 	//=========
-	
 
 	/**
 	 * 检查数据表结构
@@ -211,8 +219,9 @@ class Schema {
 			return $data;
 		}
 
-
 		$data['name'] = $data['_spt_name'];
+		$data['version'] = $data['_spt_schema_version'];
+		$data['revision'] = $data['_spt_schema_revision'];
 		$data['create_at'] = $data['_spt_create_at'];
 		$data['update_at'] = $data['_spt_update_at'];
 		$data['is_deleted'] =$data['_spt_is_deleted'];

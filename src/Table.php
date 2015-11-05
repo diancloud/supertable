@@ -206,7 +206,7 @@ class Table {
 	 * @param Type   $type        数据类型 (参考) @see \Tuanduimao\supertable\Type
 	 * @return $this
 	 */
-	public function replaceColumn( $column_name, Type $type ) {
+	public function putColumn( $column_name, Type $type ) {
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
@@ -215,7 +215,7 @@ class Table {
 			throw new Exception("列名称格式不正确，由字符、数字和下划线组成，且开头必须为字符。(column_name= $column_name) ");
 		}
 
-		$this->_schema->replaceField( $this->_sheet_id, $column_name, $type );
+		$this->_schema->putField( $this->_sheet_id, $column_name, $type );
 		return $this->selectSheet( $this->_sheet_id );
 	}
 

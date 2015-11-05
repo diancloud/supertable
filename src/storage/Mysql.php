@@ -70,6 +70,20 @@ class Mysql {
 			'length' => 150,
 		),
 
+		'_spt_schema_version' => array(
+			'type' => 'INT',
+			'length' => 10,
+			'default' => 1,
+			'allow_null' => false,
+		),
+
+		'_spt_schema_revision' => array(
+			'type' => 'INT',
+			'length' => 10,
+			'default' => 1,
+			'allow_null' => false,
+		),
+
 		'_spt_schema_json' => array(
 			'type' => 'TEXT',
 			'allow_null' => true,
@@ -246,6 +260,7 @@ class Mysql {
 			throw new Exception("$name is exists! please run update() or replace() method!");
 		}
 		$data['_spt_schema_json'][$name] = $value;
+		$data['_spt_schema_revision'] = "increase";
 		return  $this->updateSchema( $schema_id, $data );
 	}
 
@@ -279,25 +294,35 @@ class Mysql {
 
 		$data = $this->getSchema( $schema_id, false );
 		if ( !isset($data['_spt_schema_json'][$name]) ) {
-			throw new Exception("$name not exists! please run create() or replace() method!");
+			throw new Exception("$name not exists! please run createField() or putField() method!");
+		}
+
+		if ( json_encode($data['_spt_schema_json'][$name]) == json_encode($value)) {
+			throw new Exception("$name not change, nothing done! ");
 		}
 
 		$data['_spt_schema_json'][$name] = $value;
+		$data['_spt_schema_revision'] = "increase";
 		return  $this->updateSchema( $schema_id, $data );
 	}
 
 
 	/**
-	 * API: 替换一个字段（如不存在则创建）
+	 * API: 替换一个字段（如不存在则创建, 如果已存在则忽略 ）
 	 * @param  [type] $schema_id [description]
 	 * @param  [type] $name      [description]
 	 * @param  [type] $value     [description]
 	 * @return [type]            [description]
 	 */
-	function replaceField( $schema_id, $name, $value ) {
+	function putField( $schema_id, $name, $value ) {
 
 		$data = $this->getSchema( $schema_id, false );
+		if ( json_encode($data['_spt_schema_json'][$name]) == json_encode($value)) {
+			return array('errno'=>0, 'error'=>'$name not change, nothing done!', 'schema_id'=>$schema_id );
+		}
+
 		$data['_spt_schema_json'][$name] = $value;
+		$data['_spt_schema_revision'] = "increase";
 		return  $this->updateSchema( $schema_id, $data );
 	}
 
@@ -312,11 +337,19 @@ class Mysql {
 	function dropField( $schema_id, $name, $allow_not_exists=false ) {
 
 		$data = $this->getSchema( $schema_id, false );
-		if ( !isset($data['_spt_schema_json'][$name]) && !$allow_not_exists ) {
-			throw new Exception("$name not exists! no need drop!");
-		} 
+
+		// 如果Field不存在
+		if ( !isset($data['_spt_schema_json'][$name]) ) {
+			if ($allow_not_exists) {
+				return array('errno'=>0, 'error'=>'$name not exists! no need drop!', 'schema_id'=>$schema_id );;
+			} else {
+				throw new Exception("$name not exists! no need drop!");
+			}
+		}
 		
+
 		unset($data['_spt_schema_json'][$name]);
+		$data['_spt_schema_revision'] = "increase";
 		return  $this->updateSchema( $schema_id, $data );
 	}
 
@@ -364,6 +397,15 @@ class Mysql {
 			array_push($filed_list_arr, "`_spt_is_deleted` = 0 ");
 		}
 
+		if ( !isset($data['_spt_schema_version']) && isset($scheme_table['_spt_schema_version']) ) {
+			array_push($filed_list_arr, "`_spt_schema_version`=1 ");
+		}
+
+		if ( !isset($data['_spt_schema_revision']) && isset($scheme_table['_spt_schema_revision']) ) {
+			array_push($filed_list_arr, "`_spt_schema_revision`=1 ");
+		}
+
+		// Field List
 		$filed_list = implode(',', $filed_list_arr);
 		$sql = $this->prepare( "INSERT INTO `$table_name` SET $filed_list", $filed_value);
 		$this->run_sql( $sql, 'master');
@@ -388,19 +430,35 @@ class Mysql {
 		// 数据入库
 		$filed_list_arr = array();
 		$filed_value = array();
-		foreach ($data as $k => $v) {
-			array_push($filed_list_arr, "`$k` =?s ");
-			array_push( $filed_value, $v );
-		}
+
 		// 补全数据表相关信息
 		if ( !isset($data['_spt_update_at']) && isset($scheme_table['_spt_update_at']) ) {
 			array_push($filed_list_arr, "`_spt_update_at` = NOW() ");
 		}
 
+		// 追加版本信息
+		if ( $data['_spt_schema_revision'] == 'increase'  ) {
+			unset( $data['_spt_schema_revision'] );
+			array_push($filed_list_arr, "`_spt_schema_revision` =_spt_schema_revision+1 ");
+		}
+
+
+
+		// 生成数据结构
+		foreach ($data as $k => $v) {
+			array_push($filed_list_arr, "`$k` =?s ");
+			array_push( $filed_value, $v );
+		}
+
+
 		$filed_list = implode(',', $filed_list_arr);
 		$sql = $this->prepare( "UPDATE `{$table_name}` SET $filed_list $where", $filed_value);
-		$this->run_sql($sql);
+		echo "\n";
+		echo  "$sql \n";
+		print_r( $filed_list_arr );
+		echo "\n";
 
+		$this->run_sql($sql);
 		return $this;
 	}
 
