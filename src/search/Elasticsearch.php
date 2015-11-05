@@ -27,6 +27,7 @@
  	private $_option;
 
  	private $_error = null;
+ 	private $_errno = null;
 
 
  	/**
@@ -59,6 +60,7 @@
  		$type = $this->_index['type'] . $name;
  		$emptyMapping = array(
  			'_source' => array('enabled'=>true),
+ 			"_id" => array('path'=>'_spt_data_id'),
  			'properties' => array(
  				'_spt_data_id' => array(
  					 'type' => 'integer',
@@ -178,50 +180,108 @@
 	}
 
 
+	/**
+	 * 创建数据
+	 * @param  [type] $sheet [description]
+	 * @param  [type] $id    [description]
+	 * @param  [type] $data  [description]
+	 * @return [type]        [description]
+	 */
 	function createData( $sheet, $id, $data ) {
 
 		$index = $this->_index['index'];
  		$type = $this->_index['type'] . $sheet['name'];
  		$index_data = $this->getIndexData( $data, $sheet );
+ 		if( $this->uniqueCheck($sheet['name'], $index_data['unique']) == false ) {
+ 			return false;
+ 		}
 
  		$doc = array(
  			'_spt_data_id' =>$id,
  			'_spt_data' => $data,
  		);
 
- 		$doc = array_merge($index_data, $doc );
+
+ 		$doc = array_merge($index_data['index'], $doc );
  		$docInputParam = array(
  			'index' => $index,
  			'type' => $type,
  			'body' => $doc,
  		);
 
- 		echo "==ES Create Data ======\n";
- 		echo "CREATE INDEX: NAME=$name ID=$id \n";
- 		print_r($doc);
-
  		$result = $this->_client->index( $docInputParam );
- 		print_r("=====Call END =======");
- 		print_r($result);
+ 		if ( $result['_id'] != $id ) {
+ 			$this->_error = "Index: createData /$index/{$sheet['name']}/$id Error (".json_encode($result).")";
+ 			return false;
+ 		}
+
+ 		return true;
+	}
+
+
+
+	/**
+	 * 检查唯一数值
+	 * @param  [type] $name        [description]
+	 * @param  [type] $unique_data [description]
+	 * @return [type]              [description]
+	 */
+	private function uniqueCheck( $name, $unique_data ) {
+	
+		$query =array(
+			'index' => $this->_index['index'],
+			'type'  => $this->_index['type'] . $name,
+		);
+
+		foreach ($unique_data as $field => $value) {
+			$query['body']['query']['term'][$field] = $value;
+			$result = $this->_client->search($query);
+			$hits = $result['hits'];
+
+			if ( !isset($hits['total']) ) {
+				$this->_error = "Index: uniqueCheck /{$this->_index['index']}/$name/$field Error (".json_encode($result).")";
+				return false;
+			}
+
+			if ($hits['total'] != 0 ) {
+				$this->_errno = 1062;
+				$this->_error =  "Index: uniqueCheck /{$this->_index['index']}/$name/$field/$value duplicate ID={$hits['hits'][0]['_id']} Exisit ！(".json_encode($result).")";
+				return false;
+			}
+
+			// 清空查询条件
+			unset($query['body']['query']['term']);
+		}
+
+		return true;
 	}
 
 	private function getIndexData( $data, $sheet ) {
-
 		$index_data = array();
+		$unique_data = array();
 		foreach ($data as $field => $value ) {
 			if ($sheet['columns'][$field]->isSearchable()) {
 				$ver = $sheet['_spt_schema_json'][$field]['_version'];
 				$name = "{$field}_{$ver}";
 				$index_data[$name] = $value;
+				if ($sheet['columns'][$field]->isUnique() ) {
+					$unique_data[$name] = $value;
+				}
 			}
 		}
-		return $index_data;
+		return array('index'=>$index_data, 'unique'=>$unique_data);
 	}
+
 
 
 
  	function error() {
  		return $this->_error;
+ 	}
+
+
+ 	function errno() {
+ 		return $this->_errno;
  	}
  }
 

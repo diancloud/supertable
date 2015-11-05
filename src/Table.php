@@ -260,11 +260,17 @@ class Table {
 		$data_id = $this->_stor->createData( $data );
 		
 		// 添加索引
-		$this->_search->createData( $this->_sheet, $data_id, $data );
+		if ( $this->_search->createData( $this->_sheet, $data_id, $data ) == false ){
+			echo "createData HREE";
+			print_r( $this->_search->errno() );
+			print_r( $this->_search->error() );
+		}
+
 	}
 
 
 	public function update( $data ) {
+
 	}
 
 	public function delete( $data ) {

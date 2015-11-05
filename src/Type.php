@@ -80,6 +80,12 @@ class Type {
 		return  false;
 	}
 
+	public function isUnique() {
+		if ( $this->_option['unique'] )  {
+			return true;
+		}
+		return  false;
+	}
 
 	/**
 	 * 设定自定义类型路径信息
