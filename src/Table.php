@@ -55,6 +55,7 @@ class Table {
 			$this->_conf = $conf;
 			$this->_type = $this->type();
 		}
+
 	}
 
 	// === 数据表(Sheet)相关操作 CRUD ==========================
@@ -264,6 +265,7 @@ class Table {
 			echo "createData HREE";
 			print_r( $this->_search->errno() );
 			print_r( $this->_search->error() );
+			// 回滚数据
 		}
 
 	}
@@ -372,6 +374,7 @@ class Table {
 
 		$option['data'] = $this->C('storage/prefix') . $option['data'];
 		$this->_bucket = $option;
+
 		return $this;
 	}
 

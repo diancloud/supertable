@@ -681,13 +681,15 @@ class Mysql {
 	// $sql = "SELECT * FROM `user` WHERE `name` = ?s AND `id` = ?i LIMIT 1 "
 	private function prepare( $sql , $array )
 	{
+		
 		if(!is_array($array)) $array = array($array);
 
-		foreach( $array as $k=>$v )
-			$array[$k] = s($v );
+		foreach( $array as $k=>$v ) {
+			$array[$k] = $this->getDB('master')->real_escape_string($v);
+		}
 		
 		$reg = '/\?([is])/i';
-		$sql = preg_replace_callback( $reg , 'prepair_string' , $sql  );
+		$sql = preg_replace_callback( $reg , '\Tuanduimao\Supertable\Storage\Mysql::prepair_string' , $sql  );
 		$count = count( $array );
 		for( $i = 0 ; $i < $count; $i++ )
 		{
@@ -700,11 +702,12 @@ class Mysql {
 		
 	}
 
-	private function prepair_string( $matches )
-	{
-		if( $matches[1] == 's' ) return "'%s'";
-		if( $matches[1] == 'i' ) return "'%d'";	
+	static function prepair_string( $matches ) {
+			if( $matches[1] == 's' ) return "'%s'";
+			if( $matches[1] == 'i' ) return "'%d'";	
 	}
+
+
 
 	private function getDB( $type='master') {
 
