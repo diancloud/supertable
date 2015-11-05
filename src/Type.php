@@ -31,9 +31,6 @@ class Type {
 	private $_path;
 	private $_instance;
 
-
-
-
 	function __construct( $data=array(), $option=array() ) {
 		$this->setData($data);
 		$this->setOption( $option );
@@ -74,6 +71,13 @@ class Type {
 
 	protected function setDataFormat( $data_format ) {
 		$this->_data_format = $data_format;
+	}
+
+	public function isSearchable(){
+		if ( $this->_option['searchable'] )  {
+			return true;
+		}
+		return  false;
 	}
 
 

@@ -258,11 +258,9 @@ class Table {
 
 		// 数据入库
 		$data_id = $this->_stor->createData( $data );
-
-		$data_index = $data;
 		
 		// 添加索引
-		$this->_search->createData( $this->_sheet['name'], $data_id, $data );
+		$this->_search->createData( $this->_sheet, $data_id, $data );
 	}
 
 

@@ -19,6 +19,8 @@ use \Exception as Exception;
 class Mysql {
 	
 	private $dbs = array();
+	private $_schemaBackup = array();
+
 	private $_opts  = array();
 	private $_table =  array('schema' => null, 'data'=>null );
 	private $_data_table = array();
@@ -160,15 +162,7 @@ class Mysql {
 	}
 
 
-	/**
-	 * API: 删除一个数据结构记录
-	 * @param  [type]  $name             [description]
-	 * @param  boolean $allow_not_exists [description]
-	 * @return [type]                    [description]
-	 */
-	function deleteSchema( $name, $allow_not_exists=false ) {
-		echo "delete $name";
-	}
+	
 
 
 	/**
@@ -242,11 +236,30 @@ class Mysql {
 	 * API: 回滚操作
 	 * @return [type] [description]
 	 */
-	function rollbackField( $sheet_id, $name ) {
-		echo "rollback field";
+	function rollbackSchema( $schema_id ) {
+		if (isset($this->_schemaBackup[$schema_id])) {
+			$this->updateSchema( $schema_id, $this->_schemaBackup[$schema_id] );
+		}
+		return $sheet_id;
 	}
 
-	
+	/**
+	 * API: 删除一个数据结构记录
+	 * @param  [type]  $name             [description]
+	 * @param  boolean $allow_not_exists [description]
+	 * @return [type]                    [description]
+	 */
+	function deleteSchema( $schema_id, $allow_not_exists=false ) {
+		$affected_rows = $this->_delete( $this->_table['schema'], $schema_id,  $this->_schema_table );
+		if ( !$allow_not_exists  && $affected_rows == 0) {
+			var_dump("$affect_rows");
+			throw new Exception("$schema_id maybe not exists! nothing done!");
+		}
+
+		return $schema_id;
+	}
+
+
 	/**
 	 * API: 添加一个字段
 	 * @param [type] $schema_id [description]
@@ -260,10 +273,14 @@ class Mysql {
 			throw new Exception("$name is exists! please run update() or replace() method!");
 		}
 
+		//+ 旧数据备份用于回滚
+		$this->_schemaBackup[$schema_id] = $data;
+
 		//+ 版本号
 		$value['_version'] = 1;
 		$data['_spt_schema_json'][$name] = $value;
 		$data['_spt_schema_revision'] = "increase";
+		$data['_spt_update_at'] = "now";
 		return  $this->updateSchema( $schema_id, $data );
 	}
 
@@ -305,10 +322,15 @@ class Mysql {
 			throw new Exception("$name not change, nothing done! ");
 		}
 
+
+		//+ 旧数据备份用于回滚
+		$this->_schemaBackup[$schema_id] = $data;
+
 		// 更新字段版本号
 		$value['_version'] = intval($data['_spt_schema_json'][$name]['_version']) + 1;
 		$data['_spt_schema_json'][$name] = $value;
 		$data['_spt_schema_revision'] = "increase";
+		$data['_spt_update_at'] = "now";
 		return  $this->updateSchema( $schema_id, $data );
 	}
 
@@ -328,10 +350,14 @@ class Mysql {
 			return array('errno'=>0, 'error'=>'$name not change, nothing done!', 'schema_id'=>$schema_id );
 		}
 
+		//+ 旧数据备份用于回滚
+		$this->_schemaBackup[$schema_id] = $data;
+
 		// 更新字段版本号
 		$value['_version'] = intval($data['_spt_schema_json'][$name]['_version']) + 1;
 		$data['_spt_schema_json'][$name] = $value;
 		$data['_spt_schema_revision'] = "increase";
+		$data['_spt_update_at'] = "now";
 		return  $this->updateSchema( $schema_id, $data );
 	}
 
@@ -358,6 +384,7 @@ class Mysql {
 
 		unset($data['_spt_schema_json'][$name]);
 		$data['_spt_schema_revision'] = "increase";
+		$data['_spt_update_at'] = "now";
 		return  $this->updateSchema( $schema_id, $data );
 	}
 
@@ -439,8 +466,9 @@ class Mysql {
 		$filed_list_arr = array();
 		$filed_value = array();
 
-		// 补全数据表相关信息
-		if ( !isset($data['_spt_update_at']) && isset($scheme_table['_spt_update_at']) ) {
+		// 追加记录更新信息
+		if ( $data['_spt_update_at'] == 'now' && isset($scheme_table['_spt_update_at']) ) {
+			unset($data['_spt_update_at']);
 			array_push($filed_list_arr, "`_spt_update_at` = NOW() ");
 		}
 
@@ -450,24 +478,26 @@ class Mysql {
 			array_push($filed_list_arr, "`_spt_schema_revision` =_spt_schema_revision+1 ");
 		}
 
-
-
 		// 生成数据结构
 		foreach ($data as $k => $v) {
 			array_push($filed_list_arr, "`$k` =?s ");
 			array_push( $filed_value, $v );
 		}
 
-
 		$filed_list = implode(',', $filed_list_arr);
 		$sql = $this->prepare( "UPDATE `{$table_name}` SET $filed_list $where", $filed_value);
-		echo "\n";
-		echo  "$sql \n";
-		print_r( $filed_list_arr );
-		echo "\n";
-
-		$this->run_sql($sql);
+		$this->run_sql($sql, 'master');
 		return $this;
+	}
+
+
+	private function _delete( $table_name, $primary, $scheme_table ) {
+
+		$primary_key = $scheme_table['primary']['COLUMN_NAME'];
+		$table_name = $this->getDB('master')->real_escape_string($table_name);
+		$sql  = $this->prepare("DELETE FROM `{$table_name}` WHERE `$primary_key` = ?s LIMIT 1", array($primary));
+		$this->run_sql($sql, 'master');
+		return $this->affected_rows('master');
 	}
 
 
@@ -607,6 +637,9 @@ class Mysql {
 		return $this->getVar( "SELECT LAST_INSERT_ID() " , $type );
 	}
 
+	private function affected_rows( $type = 'master' ) {
+		return $this->getDB($type)->affected_rows;;
+	}
 
 	private function getData( $sql, $type='slave', $ignore = array() ) {
 

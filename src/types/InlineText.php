@@ -102,7 +102,7 @@ class InlineText extends Type {
 		$this->setDataInput( $data_input );
 		$this->setDataMessage( $data_message );
 		$this->setDataFormat('string');
-	
+		
 	}
 
 

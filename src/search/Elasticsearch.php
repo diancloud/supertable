@@ -15,6 +15,7 @@
  namespace Tuanduimao\Supertable\Search;
 
  use Elasticsearch\Client as ESClient;
+ use Tuanduimao\Supertable\Type;
 
  class Elasticsearch {
  	
@@ -50,9 +51,11 @@
  	 * @param  boolean $allow_exists true: 若Type已存在，返回true; false: 若Type已存在，抛出异常。
  	 * @return Mix  成功返回true , 失败返回false
  	 */
- 	function createType( $name, $allow_exists=false ) {
+ 	function createType( $name, $version, $allow_exists=false ) {
 
- 		$index = $this->_index['index'];
+ 		$alias = $this->_index['index'];
+ 		$index = "{$alias}_{$version}";
+
  		$type = $this->_index['type'] . $name;
  		$emptyMapping = array(
  			'_source' => array('enabled'=>true),
@@ -67,7 +70,7 @@
  			),
  		);
 
- 		// 检查索引是否存在
+ 		// 检查类型是否存在
  		$typeExistsParam = array( 'index'=>$index,  'type'=>$type);
  		if ( $this->_client->indices()->existsType($typeExistsParam) ) {
  			if ( $allow_exists ) {
@@ -77,7 +80,16 @@
  			return false;
  		}
 
+ 		// 检查索引是否存在
+ 		$indexExistsParam = array( 'index'=>$index );
 
+ 		if ($this->_client->indices()->exists($indexExistsParam)) {
+ 			var_dump($this->_client->indices()->exists($indexExistsParam));
+ 			return $this->updateType($name, $emptyMapping);
+ 		}
+
+
+ 		// 新建索引
  		// 创建索引/类型
  		$emptyTypeCreateParam = array(
  			'index'=>$index,
@@ -90,7 +102,17 @@
 
  		$result =  $this->_client->indices()->create($emptyTypeCreateParam );
  		if (!$result['acknowledged']) {
+ 			$this->_error = "Index: Create $index/$name Error (".json_encode($result).")";
  			return false;
+ 		}
+
+ 		$aliasParam = array( 'index'=>$index, 'name'=>$alias );
+ 		if ( !$this->_client->indices()->existsAlias($aliasParam) ) {
+ 			$result = $this->_client->indices()->putAlias( $aliasParam);
+ 			if (!$result['acknowledged']) {
+ 				$this->_error = "Index: Create $alias > $index Error (".json_encode($result).")";
+	 			return false;
+	 		}
  		}
 
  		return true;
@@ -105,17 +127,9 @@
  	 * @return [type]         [description]
  	 */
  	function updateType( $name, $schema  ) {
- 		
+
  		$index = $this->_index['index'];
  		$type = $this->_index['type'] . $name;
-
- 		// 删除Mapping ( 有文档时会有问题吗 ？)
- 		/* $result = $this->_client->indices()->deleteMapping( array('index'=>$index, 'type'=>$type) );
- 		if (!$result['acknowledged']) {
- 			$this->_error = "Index: $index/$name remove old Mappings Error! ";
- 			return false;
- 		} */
-
 
  		// 新建索引
  		$properties = array(
@@ -130,8 +144,9 @@
 
  		foreach ($schema as $field => $info) {
  			if ( $info['option']['searchable'] ) {
+ 				$field = "{$field}_{$info['_version']}";
  				$properties[$field]['type'] = $info['format'];
-
+ 				// $properties[$field]['fields'][$ver] = array('type'=>$info['format']);
  				if ( !isset($info['option']['fulltext']) && $info['format'] == 'string' ) {
  					$properties[$field]['index'] = 'not_analyzed';
  				}
@@ -139,9 +154,11 @@
  		}
 
  		$updateMapping = array(
- 			'_source' => array('enabled'=>true),
- 			'properties' => $properties
+ 			"_source" => array('enabled'=>true),
+ 			"_id" => array('path'=>'_spt_data_id'),
+ 			"properties" => $properties
  		);
+
 
  		$typeUpdateParam = array(
  			'index'=>$index,
@@ -152,9 +169,6 @@
  			)
  		);
 
- 		print_r( $typeUpdateParam );
- 		
-
  		$result = $this->_client->indices()->putMapping( $typeUpdateParam );
 
  		if (!$result['acknowledged']) {
@@ -164,18 +178,18 @@
 	}
 
 
-	function createData( $name, $id, $data ) {
+	function createData( $sheet, $id, $data ) {
 
 		$index = $this->_index['index'];
- 		$type = $this->_index['type'] . $name;
+ 		$type = $this->_index['type'] . $sheet['name'];
+ 		$index_data = $this->getIndexData( $data, $sheet );
 
  		$doc = array(
  			'_spt_data_id' =>$id,
  			'_spt_data' => $data,
  		);
 
- 		$doc = array_merge($data, $doc );
-
+ 		$doc = array_merge($index_data, $doc );
  		$docInputParam = array(
  			'index' => $index,
  			'type' => $type,
@@ -189,8 +203,21 @@
  		$result = $this->_client->index( $docInputParam );
  		print_r("=====Call END =======");
  		print_r($result);
-
 	}
+
+	private function getIndexData( $data, $sheet ) {
+
+		$index_data = array();
+		foreach ($data as $field => $value ) {
+			if ($sheet['columns'][$field]->isSearchable()) {
+				$ver = $sheet['_spt_schema_json'][$field]['_version'];
+				$name = "{$field}_{$ver}";
+				$index_data[$name] = $value;
+			}
+		}
+		return $index_data;
+	}
+
 
 
  	function error() {
