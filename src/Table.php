@@ -267,8 +267,17 @@ class Table {
 			print_r( $this->_search->error() );
 			// 回滚数据
 		}
-
 	}
+
+
+	public function select( $where, $fields=array() ) {
+		
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+		$data = $this->_search->selectSQL( $this->_sheet, $where, $fields );
+	}
+
 
 
 	public function update( $data ) {
@@ -461,6 +470,7 @@ class Table {
 
 	//===== 属性操作
 	public function get() {
+		return $this->_search;
 	}
 
 	public function set( $name, $value ) {

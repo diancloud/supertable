@@ -44,6 +44,7 @@
  		$this->_option = $option;
  		$this->_stor;
  		$this->_client = new ESClient( $option );
+
  	}
 
  	/**
@@ -192,6 +193,7 @@
 		$index = $this->_index['index'];
  		$type = $this->_index['type'] . $sheet['name'];
  		$index_data = $this->getIndexData( $data, $sheet );
+
  		if( $this->uniqueCheck($sheet['name'], $index_data['unique']) == false ) {
  			return false;
  		}
@@ -216,6 +218,35 @@
  		}
 
  		return true;
+	}
+
+
+ /**
+     * @param       $method
+     * @param       $uri
+     * @param null  $params
+     * @param null  $body
+     * @param array $options
+     *
+     * @return mixed
+     */
+    //abstract public function performRequest($method, $uri, $params = null, $body = null, $options = array());
+
+
+	public function selectSQL( $sheet, $where, $fields ) {
+		
+		$index = $this->_index['index'];
+ 		$type = $this->_index['type'] . $sheet['name'];
+ 		$table = "$index/$type";		
+		$where = $this->sqlFilter( "$where", $sheet );
+		$fields = $this->fieldFilter($fields, $sheet);
+
+		$sql = "SELECT " . implode(',', $fields) . " FROM $index/$type $where";
+		echo " SQL = $sql \n";
+		$conn = $this->_client->transport->getConnection();
+		$resp = $conn->performRequest('GET', '/_sql', array('sql'=>$sql));
+		echo $resp['text'];
+
 	}
 
 
@@ -256,6 +287,12 @@
 		return true;
 	}
 
+	/**
+	 * 给待输入字段增加版本号
+	 * @param  [type] $data  [description]
+	 * @param  [type] $sheet [description]
+	 * @return [type]        [description]
+	 */
 	private function getIndexData( $data, $sheet ) {
 		$index_data = array();
 		$unique_data = array();
@@ -272,6 +309,153 @@
 		return array('index'=>$index_data, 'unique'=>$unique_data);
 	}
 
+
+	/**
+	 * 给输入的字段增加版本号
+	 * @param  [type] $fields [description]
+	 * @param  [type] $sheet  [description]
+	 * @return [type]         [description]
+	 */
+	private function fieldFilter( $fields, $sheet) {
+		$fields = (is_array($fields))?$fields:explode(',', $fields);
+
+
+		foreach ($fields as $idx=>$field ) {
+
+			if ( !isset($sheet['columns'][$field]) ) {
+				unset($fields[$idx]);
+				continue;
+			}
+
+			if ($sheet['columns'][$field]->isSearchable()) {
+				$ver = $sheet['_spt_schema_json'][$field]['_version'];
+				$name = "{$field}_{$ver}";
+				$fields[$idx] = $name;
+			} else {
+				array_push($fields, '_spt_data');
+			}
+		}
+		
+		if ( count($fields) == 0){
+			 array_push($fields, '*');
+		} else  {
+			 array_push($fields, '_spt_id');
+		}
+		return array_unique($fields);
+	}
+
+
+	/**
+	 * 给待查询SQL，中字段增加版本号
+	 * @param  [type] $sql   [description]
+	 * @param  [type] $sheet [description]
+	 * @return [type]        [description]
+	 */
+	private function sqlFilter( $sql, $sheet ) {
+
+		$fields = array();
+		// $sql = "SELECT SUM(content),COUNT(*),COUNT(b) FROM bd/bdtype_bd_test WHERE content=matchQuery('美女') AND Map=SUM(age) AND uk LIKE '%0' LIMIT 3,20";
+
+		// $sql = "SELECT distinct content,url,content,sum(a) FROM bd/bdtype_bd_test where content_1=matchQuery('美女') and url like '%D' order by url,id group by content desc LIMIT 3,2";
+		$key = array( 
+			'select' => '[S][E][L][E][C][T]',
+			'order' => '([Oo][Rr][Dd][Ee][Rr])[ ]{1}[ ]*[Bb][Yy]',
+			'group' => '([Gg][Rr][Oo][Uu][Pp])[ ]{1}[ ]*[Bb][Yy]',
+			'from' => '[Ff][Rr][Oo][Mm]',
+			'distinct' => '([Dd][Ii][Ss][Tt][Ii][Nn][Cc][Tt])',
+			'limit' => '([Ll][Ii][Mm][Ii][Tt])',
+			'where'=>array(
+				'[Ww][Hh][Ee][Rr][Ee]', // where
+				'[Aa][Nn][Dd]',  // and
+				'[Oo][Rr]' // or
+			),
+
+			'function'=>array(
+				'[Ss][Uu][Mm]|[Mm]', // sum
+				'[Mm][Aa][Xx]', // max
+				'[Mm][Ii][Nn]', // min
+				'[Aa][Vv][Gg]', // avg
+				'|[Cc][Oo][Uu][Nn][Tt]' //count
+			)
+		);
+
+
+		$regDistinctFields= "/{$key['distinct']}[ ]{1}[ ]*([a-zA-Z0-9\_]+)/";
+		$regSelectFields = "/({$key['select']})(.+){$key['from']}/"; // SELECT语句中的 Field
+		$regOrderFields = "/{$key['order']}[ ]{1}[ ]*(.+)/";
+		$regGroupFields = "/{$key['group']}[ ]{1}[ ]*([a-zA-Z0-9\_]+)/";
+		$regWhereFields = "/(".implode('|', $key['where']).")[ ]{1}[ ]*([a-zA-Z0-9\_]+)/";   // WHERE语句中的 Field
+		$regFunctionFields = "/(".implode('|', $key['function']).")\(([a-zA-Z0-9\_]+)\)/";   // 函数中的 Field
+
+
+		$GLOBALS['_the_sheet'] = $sheet;
+		$newSql = preg_replace_callback( array(
+				  $regSelectFields,$regDistinctFields, 
+				  $regGroupFields, $regWhereFields, 
+				  $regFunctionFields, $regOrderFields), function($match){
+
+			$_the_sheet = $GLOBALS['_the_sheet'];
+			$type = $match[1];
+
+			// 处理SELECT 中的数据
+			if ( strtolower($type) == 'select' ) {
+				$match[0] = preg_replace_callback( "/([a-zA-Z0-9\_]+)/", function($match) {
+					$_the_sheet = $GLOBALS['_the_sheet'];
+					$field = $match[0];
+					if ( !isset($_the_sheet['columns'][$field]) ) {
+						return $field;
+					}
+
+					if ($_the_sheet['columns'][$field]->isSearchable()) {
+						$ver = $_the_sheet['_spt_schema_json'][$field]['_version'];
+						$name = "{$field}_{$ver}";
+
+						return $name;
+					}
+					return $field;
+
+				},$match[0]);
+				return $match[0];
+			} else if ( strtolower($type) == 'order' ) {
+				$match[0] = preg_replace_callback( "/([a-zA-Z0-9\_]+)/", function($match) {
+					$_the_sheet = $GLOBALS['_the_sheet'];
+					$field = $match[0];
+					if ( !isset($_the_sheet['columns'][$field]) ) {
+						return $field;
+					}
+
+					if ($_the_sheet['columns'][$field]->isSearchable()) {
+						$ver = $_the_sheet['_spt_schema_json'][$field]['_version'];
+						$name = "{$field}_{$ver}";
+
+						return $name;
+					}
+					return $field;
+
+				},$match[0]);
+				return $match[0];
+			}
+
+			$ostr = $match[0];
+			$name = $field = $match[2];
+			if ( !isset($_the_sheet['columns'][$field]) ) {
+				//echo "Not Found: $field & NAME=$name \n";
+				return $ostr;
+			}
+
+			if ($_the_sheet['columns'][$field]->isSearchable()) {
+				$ver = $_the_sheet['_spt_schema_json'][$field]['_version'];
+				$name = "{$field}_{$ver}";
+				$ostr = str_replace($field, $name, $ostr);
+				// echo "Found: $field : $name  & ";
+			}
+
+			// echo "Other: NAME=$name\n";
+			return $ostr;
+		},$sql);
+		unset($GLOBALS['_the_sheet']);
+		return $newSql;
+	}
 
 
 
