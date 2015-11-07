@@ -245,40 +245,14 @@ class Table {
 
 
 	// === 数据 (Data) 相关操作 CRUD ==========================
+	
+
 	/**
-	 * 在当前的数据表(Sheet)中，插入一行数据
-	 * @param  [type] $data Array('field'=>'value' ... )
-	 * @return [type]       [description]
+	 * 在当前的数据表(Sheet)中检索 (从索引库中查询，数据有不到一秒延迟)
+	 * @param  string $where  检索条件 EG: "where name='张三' and mobile like '188%' order by mobile desc limit 40,20"
+	 * @param  string|array  $fields 返回字段，多个用","分割 EG: "name,mobile,company" 或者 array('name','mobile', 'company')
+	 * @return array  符合条件的记录集合 array('data'=>array(...), 'total'=>9109); 
 	 */
-	public function create( $data ) {
-
-		// 根据数据结构，检查数据是否合法
-		if ( $this->validation( $data ) === false ) {
-			return false;
-		}
-
-		// 数据入库
-		$data_id = $this->_stor->createData( $data );
-		
-		// 添加索引
-		if ( $this->_search->createData( $this->_sheet, $data_id, $data ) == false ){
-			echo "createData HREE";
-			print_r( $this->_search->errno() );
-			print_r( $this->_search->error() );
-			// 回滚数据
-		}
-	}
-
-
-	public function query( $sql ) {
-		if ( $this->_sheet_id === null ) {
-			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
-		}
-
-		$data = $this->_search->querySQL( $this->_sheet, $sql );
-	}
-
-
 	public function select( $where, $fields=array() ) {
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
@@ -298,27 +272,107 @@ class Table {
 	}
 
 
+	/**
+	 * 读取当前的数据表(Sheet)中一条记录 (实时，从存储引擎中直接提取)
+	 * @param  [type] $data_id [description]
+	 * @return [type]          [description]
+	 */
+	public function get( $data_id ) {
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
 
-	public function update( $data ) {
-
+		return $this->_stor->getDataByID( $data_id);
 	}
-
-	public function delete( $data ) {
-	}
-
-	public function getLine( $data ) {
-	}
-
-	public function getData( $options ) {
-	}
-
+	
 
 	/**
-	 * 校验数据是否合法
+	 * 在当前的数据表(Sheet)中，插入一条记录
+	 * @param  [type] $data Array('field'=>'value' ... )
+	 * @return [type]       [description]
+	 */
+	public function create( $data ) {
+
+		// 根据数据结构，检查数据是否合法
+		if ( $this->validation( $data ) === false ) {
+			return false;
+		}
+
+		// 数据入库
+		$data_id = $this->_stor->createData( $data );
+		$newData = $this->_stor->getDataByID( $data_id );
+		
+		// 添加索引
+		if ( $this->_search->createData( $this->_sheet, $data_id, $newData ) == false ){
+			$this->_stor->deleteData( $data_id );
+			array_push( $this->errors, $this->_search->error() );
+			return false;
+		}
+		return $newData;
+	}
+
+	/**
+	 * 在当前的数据表(Sheet)中，更新一条记录
+	 * @param  [type] $id   [description]
 	 * @param  [type] $data [description]
 	 * @return [type]       [description]
 	 */
-	public function validation( $data ) {
+	public function update( $data_id, $data ) {
+
+		// 根据数据结构，检查数据是否合法
+		if ( $this->validation( $data, true ) === false ) {
+			return false;
+		}
+
+		// 数据存储更新
+		$this->_stor->updateData( $data_id, $data );
+		$newData = $this->_stor->getDataByID( $data_id);
+
+		// 更新索引
+		if ( $this->_search->updateData( $this->_sheet, $data_id, $newData ) == false ){
+			array_push( $this->errors, $this->_search->error() );
+			return false;
+		}
+
+		return $newData;
+	}
+
+	/**
+	 * 再当前数据表(Sheet)中，删除一条记录
+	 * @param  [type] $data_id [description]
+	 * @return [type]          [description]
+	 */
+	public function delete( $data_id ) {
+
+		// 更新索引
+		if ( $this->_search->deleteData( $this->_sheet, $data_id ) == false ){
+			array_push( $this->errors, $this->_search->error() );
+			return false; 
+		}
+
+		// 删除数据
+		$this->_stor->deleteData( $data_id );
+		return true;
+	}
+
+
+
+	private function runsql( $sql ) {
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+		$data = $this->_search->runSQL( $this->_sheet, $sql );
+	}
+
+
+	
+	/**
+	 * 校验数据是否合法
+	 * @param  [type]  $data       输入的数据
+	 * @param  boolean $input_only 是否仅校验输入的数据是否合法, 不校验必填字段。默认为false
+	 * @return [type]              [description]
+	 */
+	public function validation( $data, $input_only=false ) {
 		
 		$this->errors = array();
 
@@ -327,10 +381,26 @@ class Table {
 		}
 
 		$errflag = false;
-		foreach ($this->_sheet['columns'] as $name=>$type ) {
-			if ( !$type->validation( $data[$name] ) ) {
-				$errflag = true;
-				$this->errors = array_merge($type->errors, $this->errors);
+		if ( $input_only ) {  // 仅校验输入字段
+			foreach ($data as $field=>$value ) {
+
+				if ( !isset($this->_sheet['columns'][$field]) ) { // 忽略未知字段
+					continue;
+				}
+
+				$type = $this->_sheet['columns'][$field];
+				if ( !$type->validation( $value ) ) {
+					$errflag = true;
+					$this->errors = array_merge($type->errors, $this->errors);
+				}
+			}
+
+		} else {  // 校验必填
+			foreach ($this->_sheet['columns'] as $name=>$type ) {
+				if ( !$type->validation( $data[$name] ) ) {
+					$errflag = true;
+					$this->errors = array_merge($type->errors, $this->errors);
+				}
 			}
 		}
 
@@ -340,7 +410,6 @@ class Table {
 
 
 	// 类型相关操作
-	
 	public function type( $name=null, $data=array(), $option=array() ) {
 		
 		if ( $name == null ) {

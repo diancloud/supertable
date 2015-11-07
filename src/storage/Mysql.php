@@ -393,12 +393,45 @@ class Mysql {
 	//数据插入
 	// ===== 数据操作
 
+	function getDataByID( $id ) {
+
+		$table_name = $this->_table['data'];
+		$primary_key = $this->_data_table['primary']['COLUMN_NAME'];
+		$sql = $this->prepare("SELECT * from `$table_name` WHERE `$primary_key`=?s LIMIT 1", array($id) );
+		$row = $this->getLine($sql);
+		$data = json_decode($row['_spt_data_json'], true );
+		if( json_last_error() !== JSON_ERROR_NONE) {
+			throw new Exception("Storage: updateData JSON Parser Error( " . json_last_error_msg() . ')'. $_spt_data_json);
+		}
+		unset($row['_spt_data_json']);
+		$row = array_merge($data, $row);
+		return $row;
+	}
+
 	function createData( $data ) {
 		$table_name = $this->_table['data'];
 		$data['_spt_data_json'] = json_encode( $data );
 		$this->_filter( $data, $this->_data_table );
 		return $this->_create($table_name, $data, $this->_data_table );
 	}
+
+	function deleteData( $id ) {
+		$table_name = $this->_table['data'];
+		return $this->_delete( $table_name, $id, $this->_data_table );
+	}
+	
+
+	function updateData( $id, $data ) {
+		$table_name = $this->_table['data'];
+		$data_old = $this->getDataByID($id);
+		$data = array_merge($data_old, $data);
+		$data['_spt_data_json'] = json_encode( $data );
+		$data['_spt_update_at'] = 'now';
+		$this->_filter( $data, $this->_data_table );
+		$this->_update($table_name, $data, $this->_data_table );
+		return $id;
+	}
+
 	
 	// ================================================  以下MySQL特有
 

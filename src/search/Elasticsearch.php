@@ -182,7 +182,7 @@
 
 
 	/**
-	 * 创建数据
+	 * 创建数据索引
 	 * @param  [type] $sheet [description]
 	 * @param  [type] $id    [description]
 	 * @param  [type] $data  [description]
@@ -221,6 +221,84 @@
 	}
 
 
+	/**
+	 * 更新数据索引
+	 * @param  [type] $sheet [description]
+	 * @param  [type] $id    [description]
+	 * @param  [type] $data  [description]
+	 * @return [type]        [description]
+	 */
+	function updateData( $sheet, $id, $data ) {
+		$index = $this->_index['index'];
+ 		$type = $this->_index['type'] . $sheet['name'];
+ 		$index_data = $this->getIndexData( $data, $sheet );
+
+ 		if( $this->uniqueCheck($sheet['name'], $index_data['unique'], $id ) == false ) {
+ 			return false;
+ 		}
+
+ 		$doc = array(
+ 			'_spt_data_id' =>$id,
+ 			'_spt_data' => $data,
+ 		);
+
+ 		$doc = array_merge($index_data['index'], $doc );
+ 		$docInputParam = array(
+ 			'body' => array(array(
+ 				'update' => array('_id'=>$id,'_index'=>$index, '_type'=>$type),
+ 				'doc' => $doc,
+ 			)),
+ 		);
+
+ 		$updateString = json_encode(array('update' => array('_id'=>$id,'_index'=>$index, '_type'=>$type)));
+ 		$updateString = json_encode(array('update' => array('_id'=>$id)));
+ 		$docString = json_encode(array('doc' => $doc));
+ 		$docInputParam = array(
+ 			'index' => $index,
+ 			'type' => $type,
+ 			'body'=>"\n$updateString\n$docString\n"
+ 		);
+
+ 		$result = $this->_client->bulk( $docInputParam );
+ 		if ( $result['errors'] != false || count($result['items']) != 1) {
+ 			$this->_error = "Index: updateData /$index/{$sheet['name']}/$id Error (".json_encode($result).")";
+ 			return false;
+ 		}
+ 		return true;
+	}
+
+
+	function deleteData( $sheet, $id ) {
+
+		$index = $this->_index['index'];
+ 		$type = $this->_index['type'] . $sheet['name'];
+ 		$conn = $this->_client->transport->getConnection();
+		$resp = $conn->performRequest('DELETE', "/$index/$type/$id");
+
+		if ( !isset($resp['status']) || !isset($resp['text']) ) {
+			$this->_errno = 500;
+			$this->_error =  "Index: deleteData Error " . json_encode($resp);
+			return false;
+		}
+
+		$result = json_decode($resp['text'], true );
+		if( json_last_error() !== JSON_ERROR_NONE) {
+			$this->_errno = 500;
+			$this->_error =  "Index: deleteData JSON Parser Error( " . json_last_error_msg() . ')'. json_encode($resp);
+			return false;
+		}
+
+		if ( $result['found'] != true ) {
+			$this->_errno = 404;
+			$this->_error =  "Index: deleteData Error( "  . json_encode($resp);
+			return false;
+		}
+
+		return true;
+	}
+
+
+
  	/**
      * @param       $method
      * @param       $uri
@@ -248,32 +326,22 @@
 	}
 
 
-	public function querySQL( $sheet, $sql ) {
-		// echo " SQL = $sql \n";
+	public function run_sql( $sheet, $sql ) {
 		$conn = $this->_client->transport->getConnection();
 		$sql = $this->sqlFilter( "$sql", $sheet );
-		try{
-			$resp = $conn->performRequest('GET', '/_sql', array('sql'=>$sql));
-		} catch( Exception $e ) {
-			$this->_errno = 500;
-			$this->_error = "Index: selectSQL Request Error (". $e->getMessage() . ")";
-			return false;
-		}
-		return $this->resultFilter( $resp, $sheet );
-
-		//echo $resp['text'];
+		$resp = $conn->performRequest('GET', '/_sql', array('sql'=>$sql));
+		return $resp;
 	}
-
-
 
 
 	/**
 	 * 检查唯一数值
 	 * @param  [type] $name        [description]
 	 * @param  [type] $unique_data [description]
+	 * @param  [type] $except_id   无需检测的ID
 	 * @return [type]              [description]
 	 */
-	private function uniqueCheck( $name, $unique_data ) {
+	private function uniqueCheck( $name, $unique_data, $except_id=null ) {
 	
 		$query =array(
 			'index' => $this->_index['index'],
@@ -281,8 +349,21 @@
 		);
 
 		foreach ($unique_data as $field => $value) {
-			$query['body']['query']['term'][$field] = $value;
+			// $query['body']['query']['term'][$field] = $value;
+			if ( $except_id != null ) {
+				$except['not']['filter']['term']['_id'] = $except_id;
+			}
+
+			$term['term'][$field]=$value;
+			$query['body']['query']["filtered"]['filter']['bool']['must'] = array(
+				$except,$term
+			);
+			
+			// print_r($query);
+
 			$result = $this->_client->search($query);
+			// print_r($result);
+
 			$hits = $result['hits'];
 
 			if ( !isset($hits['total']) ) {
@@ -313,6 +394,9 @@
 		$index_data = array();
 		$unique_data = array();
 		foreach ($data as $field => $value ) {
+			if ( !isset($sheet['columns'][$field]) ) {
+				continue;
+			}
 			if ($sheet['columns'][$field]->isSearchable()) {
 				$ver = $sheet['_spt_schema_json'][$field]['_version'];
 				$name = "{$field}_{$ver}";
@@ -349,7 +433,7 @@
 				$newData['_id'] = $data['_id'];
 			}
 
-			if ( count($data) >= count($newData) ) {
+			if ( count($data) >= count($sheet['_spt_schema_json']) ) {
 				return $newData;
 			}
 
@@ -374,7 +458,12 @@
 		return $data;
 	}
 
-
+	/**
+	 * 处理SQL查询结果
+	 * @param  [type] $resp  [description]
+	 * @param  [type] $sheet [description]
+	 * @return [type]        [description]
+	 */
 	private function resultFilter( $resp, $sheet ) {
 
 		if ( !isset($resp['status']) || !isset($resp['text']) ) {
@@ -418,7 +507,7 @@
 			array_push($data, $row_ext);
 		}
 
-		return array('rows'=>$data, 'total'=>$result['hits']['total']);
+		return array('data'=>$data, 'total'=>$result['hits']['total']);
 	}
 
 
