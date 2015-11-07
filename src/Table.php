@@ -282,7 +282,9 @@ class Table {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
 
-		return $this->_stor->getDataByID( $data_id);
+		$data =  $this->_stor->getDataByID($data_id);
+		@$this->_search->updateData( $this->_sheet, $data_id, $data );
+		return $data;
 	}
 	
 
