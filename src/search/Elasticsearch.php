@@ -221,7 +221,7 @@
 	}
 
 
- /**
+ 	/**
      * @param       $method
      * @param       $uri
      * @param null  $params
@@ -230,11 +230,8 @@
      *
      * @return mixed
      */
-    //abstract public function performRequest($method, $uri, $params = null, $body = null, $options = array());
-
-
 	public function selectSQL( $sheet, $where, $fields ) {
-		
+
 		$index = $this->_index['index'];
  		$type = $this->_index['type'] . $sheet['name'];
  		$table = "$index/$type";		
@@ -242,12 +239,31 @@
 		$fields = $this->fieldFilter($fields, $sheet);
 
 		$sql = "SELECT " . implode(',', $fields) . " FROM $index/$type $where";
-		echo " SQL = $sql \n";
+		// echo " SQL = $sql \n";
+		
 		$conn = $this->_client->transport->getConnection();
 		$resp = $conn->performRequest('GET', '/_sql', array('sql'=>$sql));
-		echo $resp['text'];
+		return $this->resultFilter( $resp, $sheet );
 
 	}
+
+
+	public function querySQL( $sheet, $sql ) {
+		// echo " SQL = $sql \n";
+		$conn = $this->_client->transport->getConnection();
+		$sql = $this->sqlFilter( "$sql", $sheet );
+		try{
+			$resp = $conn->performRequest('GET', '/_sql', array('sql'=>$sql));
+		} catch( Exception $e ) {
+			$this->_errno = 500;
+			$this->_error = "Index: selectSQL Request Error (". $e->getMessage() . ")";
+			return false;
+		}
+		return $this->resultFilter( $resp, $sheet );
+
+		//echo $resp['text'];
+	}
+
 
 
 
@@ -311,6 +327,102 @@
 
 
 	/**
+	 * 去掉搜索返回结果中的版本号
+	 * @param  [type] $data  [description]
+	 * @param  [type] $sheet [description]
+	 * @return [type]        [description]
+	 */
+	private function indexRecover( $data, $sheet ) {
+
+		$source = array_merge($data, array());
+
+		if ( isset($data['_spt_data_id']) ) {
+			$data['_id'] = $data['_spt_data_id'];
+			unset($data['_spt_data_id']);
+		}
+
+		if ( is_array($data['_spt_data']) ){
+
+			$newData = $data['_spt_data'];
+			unset($data['_spt_data']);
+			if ( isset($data['_id']) ) {
+				$newData['_id'] = $data['_id'];
+			}
+
+			if ( count($data) >= count($newData) ) {
+				return $newData;
+			}
+
+			$source = array_merge( $data, $newData);
+		}
+
+		foreach ($sheet['_spt_schema_json'] as $field => $row ) {
+			if ($sheet['columns'][$field]->isSearchable()) {
+				$ver = $row['_version'];
+				$name = "{$field}_{$ver}";
+				if ( isset($data[$name]) ) {
+					$data[$field] = $source[$name];
+					unset($data[$name]);
+				}
+			} else { // 不是索引
+				if ( isset($source[$field]) ) {
+					$data[$field] = $source[$field];
+				}
+			}
+		}
+
+		return $data;
+	}
+
+
+	private function resultFilter( $resp, $sheet ) {
+
+		if ( !isset($resp['status']) || !isset($resp['text']) ) {
+			$this->_errno = 500;
+			$this->_error =  "Index: resultFilter Error " . json_encode($resp);
+			return false;
+		}
+
+		$result = json_decode($resp['text'], true );
+		if( json_last_error() !== JSON_ERROR_NONE) {
+			$this->_errno = 500;
+			$this->_error =  "Index: resultFilter JSON Parser Error( " . json_last_error_msg() . ')'. json_encode($resp);
+			return false;
+		}
+
+		$data = array();
+		$row_ext = array();
+		if (!is_array($result['hits']['hits'])) {
+			$this->_errno = 500;
+			$this->_error =  "Index: resultFilter Result Error " . json_encode($result);
+			return false;
+		}
+
+		// 处理函数等数值
+		if ( is_array($result['aggregations']) ) {
+			foreach ($result['aggregations'] as $field => $arr ) {
+				$row_ext[$field] = $arr['value'];
+			}
+		}
+
+		// 处理资源等数据
+		foreach ($result['hits']['hits'] as $hits ) {
+			$row = array();
+			if ( is_array($hits['_source']) ) {
+				$row = array_merge($this->indexRecover($hits['_source'], $sheet ), $row_ext);
+				array_push($data, $row);
+			}
+		}
+
+		if ( count($data) == 0 && count($row_ext) > 0 ) {
+			array_push($data, $row_ext);
+		}
+
+		return array('rows'=>$data, 'total'=>$result['hits']['total']);
+	}
+
+
+	/**
 	 * 给输入的字段增加版本号
 	 * @param  [type] $fields [description]
 	 * @param  [type] $sheet  [description]
@@ -318,15 +430,19 @@
 	 */
 	private function fieldFilter( $fields, $sheet) {
 		$fields = (is_array($fields))?$fields:explode(',', $fields);
-
-
+		$needAddId = true;
 		foreach ($fields as $idx=>$field ) {
-
-			if ( !isset($sheet['columns'][$field]) ) {
-				unset($fields[$idx]);
-				continue;
+			
+			if ( $field == '*' ) {
+				$fields = array();
+				$needAddId = false;
+				break;
 			}
 
+			if ( !isset($sheet['columns'][$field]) ) {
+				// unset($fields[$idx]);
+				continue;
+			}
 			if ($sheet['columns'][$field]->isSearchable()) {
 				$ver = $sheet['_spt_schema_json'][$field]['_version'];
 				$name = "{$field}_{$ver}";
@@ -338,8 +454,8 @@
 		
 		if ( count($fields) == 0){
 			 array_push($fields, '*');
-		} else  {
-			 array_push($fields, '_spt_id');
+		} else if ( $needAddId ) {
+			 array_push($fields, '_spt_data_id');
 		}
 		return array_unique($fields);
 	}

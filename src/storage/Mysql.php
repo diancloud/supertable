@@ -183,7 +183,7 @@ class Mysql {
 		}
 		$data['_spt_schema_json'] = json_decode($data['_spt_schema_json'], true);
 		$data['_spt_schema_json']  =  ( $data['_spt_schema_json']  == null )? array(): $data['_spt_schema_json'];
-		$data['primary'] = $data[$primary_field];
+		$data['_id'] = $data[$primary_field];
 
 		return $data;
 	}
@@ -209,7 +209,7 @@ class Mysql {
 
 		$data['_spt_schema_json'] = json_decode($data['_spt_schema_json'], true);
 		$data['_spt_schema_json']  =  ( $data['_spt_schema_json']  == null )? array(): $data['_spt_schema_json'];
-		$data['primary'] = $data[$primary_field];
+		$data['_id'] = $data[$primary_field];
 		return $data;
 	}
 

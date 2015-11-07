@@ -98,7 +98,7 @@ class Table {
 			$sheet = $this->_schema->getSheetByName( $sheet_plug, $allow_null );
 		}
 
-		$this->_sheet_id = $sheet['primary'];
+		$this->_sheet_id = $sheet['_id'];
 		$this->_sheet_plug = $sheet_plug;
 		$this->_sheet = $sheet;
 		return $this->_sheet;
@@ -247,7 +247,7 @@ class Table {
 	// === 数据 (Data) 相关操作 CRUD ==========================
 	/**
 	 * 在当前的数据表(Sheet)中，插入一行数据
-	 * @param  [type] $data [description]
+	 * @param  [type] $data Array('field'=>'value' ... )
 	 * @return [type]       [description]
 	 */
 	public function create( $data ) {
@@ -270,12 +270,31 @@ class Table {
 	}
 
 
-	public function select( $where, $fields=array() ) {
-		
+	public function query( $sql ) {
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
-		$data = $this->_search->selectSQL( $this->_sheet, $where, $fields );
+
+		$data = $this->_search->querySQL( $this->_sheet, $sql );
+	}
+
+
+	public function select( $where, $fields=array() ) {
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		try {
+			$data = $this->_search->selectSQL( $this->_sheet, $where, $fields );
+		} catch( Exception $e) {
+			throw new Exception($e->getMessage());
+		}
+
+		if ( $data == false ) {
+			return false;
+		}
+
+		return $data;
 	}
 
 
@@ -466,22 +485,16 @@ class Table {
 	}
 
 
-
-
-	//===== 属性操作
-	public function get() {
-		return $this->_search;
-	}
-
-	public function set( $name, $value ) {
-	}
-
-	public function setExt( $name, $value ) {
-
-	}
-
-
 	// ====== 以下部分为私有函数
+	private function indexName( $index_only=false ) {
+		$index = $this->_index['index'];
+		if ( $index_only ) {
+			return $index;
+		}
+ 		$type = $this->_index['type'] . $this->_sheet['name'];
+ 		$table = "$index/$type";
+ 		return $table;
+	}
 
 	/**
 	 * 连接数据库，并创建数据库对象
