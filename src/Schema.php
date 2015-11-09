@@ -54,7 +54,7 @@ class Schema {
 	public function createSheet( $name, $data = array() ) {
 		
 		// 创建空数据表结构
-		$schema_id = $this->_stor->createSchema( $name, $data = array() );
+		$schema_id = $this->_stor->createSchema( $name, $data );
 
 		// 创建新的索引类型
 		try {

@@ -283,7 +283,7 @@ class Table {
 		}
 
 		$data =  $this->_stor->getDataByID($data_id);
-		@$this->_search->updateData( $this->_sheet, $data_id, $data );
+		@$this->_search->updateData( $this->_sheet, $data_id, $data ); // 应该被优化掉
 		return $data;
 	}
 	

@@ -162,8 +162,6 @@ class Mysql {
 	}
 
 
-	
-
 
 	/**
 	 * API: 根据ID读取一个数据结构
@@ -557,6 +555,8 @@ class Mysql {
 			if ($row['COLUMN_KEY'] == 'PRI') {
 				$primary_key = $field;
 				$return['primary'] = $row;
+			} else {
+				$return[$field] = $row;
 			}
 		}
 
@@ -579,6 +579,11 @@ class Mysql {
 			$errstr = implode("\n", $errlist );
 			throw new Exception($errstr);
 		}
+
+		// echo "<pre>\n";
+		// echo "Table-Check $table_name \n";
+		// print_r($return);
+		// echo "</pre>\n\n";
 
 		return true;
 	}
