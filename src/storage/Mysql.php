@@ -162,7 +162,6 @@ class Mysql {
 	}
 
 
-
 	/**
 	 * API: 根据ID读取一个数据结构
 	 * @param  [type] $schema_id [description]
@@ -757,13 +756,12 @@ class Mysql {
 		$idx = intval(rand(0, count($conf)));
 		$conf = $this->_opts[$type][$idx];
 		$this->dbs[$type] = new Mysqli( $conf['host'], $conf['user'], $conf['pass'], $this->_opts['db_name'],  $conf['socket'] );
-		
 		// 检测数据库连接
 		if ($this->dbs[$type]->connect_error) {
 		    throw new Exception('Connect Error (' . $this->dbs[$type]->connect_errno . ') '
 		            . $this->dbs[$type]->connect_error);
 		}
-
+		$this->dbs[$type]->query("SET NAMES utf8");
 		return $this->dbs[$type];
 	}
 
