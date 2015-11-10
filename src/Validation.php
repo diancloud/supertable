@@ -153,11 +153,10 @@ class Validation {
 
 
     public function allowMatchArray( & $value, $format ) {
-    	// echo "matchArray\n";
-    	// print_r($format);
-    	// print_r($value);
-    	//  echo "<pre>";
-    	//  
+    	if ( !is_array($value) ) {
+    		return false;
+    	}
+
     	$ret = true;
     	foreach ($value as $val) {
     		$curr = false;
@@ -181,10 +180,14 @@ class Validation {
 
 
     public function type( & $value, $format ) {
-    	if ( self::getType( $value) != $format ) {
-    		return false;
+    	
+    	$arr = (is_array($format))? $format : array($format);
+    	foreach ($arr as $fmt ) {
+    		if ( self::getType($value) == $fmt ) {
+    			return true;
+    		}
     	}
-    	return true;
+    	return false;
     }
 
 	public function digits( & $value, $format ){
