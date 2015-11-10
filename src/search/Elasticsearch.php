@@ -313,10 +313,10 @@
 		$index = $this->_index['index'];
  		$type = $this->_index['type'] . $sheet['name'];
  		$table = "$index/$type";		
-		$where = $this->sqlFilter( "$where", $sheet );
+		// $where = $this->sqlFilter( "$where", $sheet );
 		$fields = $this->fieldFilter($fields, $sheet);
 
-		$sql = "SELECT " . implode(',', $fields) . " FROM $index/$type $where";
+		$sql = $this->sqlFilter("SELECT " . implode(',', $fields) . " FROM $index/$type $where", $sheet);
 		// echo " SQL = $sql \n";
 		
 		$conn = $this->_client->transport->getConnection();
@@ -466,6 +466,8 @@
 	 */
 	private function resultFilter( $resp, $sheet ) {
 
+
+
 		if ( !isset($resp['status']) || !isset($resp['text']) ) {
 			$this->_errno = 500;
 			$this->_error =  "Index: resultFilter Error " . json_encode($resp);
@@ -521,7 +523,11 @@
 		$fields = (is_array($fields))?$fields:explode(',', $fields);
 		$needAddId = true;
 		foreach ($fields as $idx=>$field ) {
-			
+			$old_field = $field;
+			$fieldr = explode('.', $field);
+
+			$field = trim($fieldr[0]);
+
 			if ( $field == '*' ) {
 				$fields = array();
 				$needAddId = false;
@@ -532,10 +538,12 @@
 				// unset($fields[$idx]);
 				continue;
 			}
+
 			if ($sheet['columns'][$field]->isSearchable()) {
 				$ver = $sheet['_spt_schema_json'][$field]['_version'];
 				$name = "{$field}_{$ver}";
-				$fields[$idx] = $name;
+				$fieldr[0] = $name;
+				$fields[$idx] = join('.',$fieldr);
 			} else {
 				array_push($fields, '_spt_data');
 			}
@@ -585,13 +593,12 @@
 		);
 
 
-		$regDistinctFields= "/{$key['distinct']}[ ]{1}[ ]*([a-zA-Z0-9\_]+)/";
+		$regDistinctFields= "/{$key['distinct']}[ ]{1}[ ]*([a-zA-Z0-9\.\_]+)/";
 		$regSelectFields = "/({$key['select']})(.+){$key['from']}/"; // SELECT语句中的 Field
 		$regOrderFields = "/{$key['order']}[ ]{1}[ ]*(.+)/";
-		$regGroupFields = "/{$key['group']}[ ]{1}[ ]*([a-zA-Z0-9\_]+)/";
-		$regWhereFields = "/(".implode('|', $key['where']).")[ ]{1}[ ]*([a-zA-Z0-9\_]+)/";   // WHERE语句中的 Field
-		$regFunctionFields = "/(".implode('|', $key['function']).")\(([a-zA-Z0-9\_]+)\)/";   // 函数中的 Field
-
+		$regGroupFields = "/{$key['group']}[ ]{1}[ ]*([a-zA-Z0-9\.\_]+)/";
+		$regWhereFields = "/(".implode('|', $key['where']).")[ ]{1}[ ]*([a-zA-Z0-9\.\_]+)/";   // WHERE语句中的 Field
+		$regFunctionFields = "/(".implode('|', $key['function']).")\(([a-zA-Z0-9\.\_]+)\)/";   // 函数中的 Field
 
 		$GLOBALS['_the_sheet'] = $sheet;
 		$newSql = preg_replace_callback( array(
@@ -604,38 +611,46 @@
 
 			// 处理SELECT 中的数据
 			if ( strtolower($type) == 'select' ) {
-				$match[0] = preg_replace_callback( "/([a-zA-Z0-9\_]+)/", function($match) {
+				$match[0] = preg_replace_callback( "/([a-zA-Z0-9\.\_]+)/", function($match) {
+
 					$_the_sheet = $GLOBALS['_the_sheet'];
 					$field = $match[0];
+					$fieldr = explode('.',$field);
+					$field = $fieldr[0];
+
 					if ( !isset($_the_sheet['columns'][$field]) ) {
-						return $field;
+						return join('.',$fieldr);
 					}
 
 					if ($_the_sheet['columns'][$field]->isSearchable()) {
 						$ver = $_the_sheet['_spt_schema_json'][$field]['_version'];
 						$name = "{$field}_{$ver}";
-
-						return $name;
+						$fieldr[0] = $name;
+						return join('.',$fieldr);
 					}
-					return $field;
+
+					return join('.',$fieldr);
 
 				},$match[0]);
 				return $match[0];
 			} else if ( strtolower($type) == 'order' ) {
-				$match[0] = preg_replace_callback( "/([a-zA-Z0-9\_]+)/", function($match) {
+				$match[0] = preg_replace_callback( "/([a-zA-Z0-9\.\_]+)/", function($match) {
 					$_the_sheet = $GLOBALS['_the_sheet'];
 					$field = $match[0];
+					$fieldr = explode('.',$field);
+					$field = $fieldr[0];
+
 					if ( !isset($_the_sheet['columns'][$field]) ) {
-						return $field;
+						return join('.',$fieldr);
 					}
 
 					if ($_the_sheet['columns'][$field]->isSearchable()) {
 						$ver = $_the_sheet['_spt_schema_json'][$field]['_version'];
 						$name = "{$field}_{$ver}";
-
-						return $name;
+						$fieldr[0] = $name;
+						return join('.',$fieldr);
 					}
-					return $field;
+					return  join('.',$fieldr);
 
 				},$match[0]);
 				return $match[0];
@@ -643,6 +658,9 @@
 
 			$ostr = $match[0];
 			$name = $field = $match[2];
+			$fieldr = explode('.',$field);
+			$field = $fieldr[0];
+
 			if ( !isset($_the_sheet['columns'][$field]) ) {
 				//echo "Not Found: $field & NAME=$name \n";
 				return $ostr;
@@ -659,6 +677,7 @@
 			return $ostr;
 		},$sql);
 		unset($GLOBALS['_the_sheet']);
+
 		return $newSql;
 	}
 
