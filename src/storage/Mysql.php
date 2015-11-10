@@ -249,13 +249,12 @@ class Mysql {
 	function deleteSchema( $schema_id, $allow_not_exists=false ) {
 		$affected_rows = $this->_delete( $this->_table['schema'], $schema_id,  $this->_schema_table );
 		if ( !$allow_not_exists  && $affected_rows == 0) {
-			var_dump("$affect_rows");
+			// var_dump("$affect_rows");
 			throw new Exception("$schema_id maybe not exists! nothing done!");
 		}
 
 		return $schema_id;
 	}
-
 
 	/**
 	 * API: 添加一个字段

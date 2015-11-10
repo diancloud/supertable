@@ -87,7 +87,7 @@
  		$indexExistsParam = array( 'index'=>$index );
 
  		if ($this->_client->indices()->exists($indexExistsParam)) {
- 			var_dump($this->_client->indices()->exists($indexExistsParam));
+ 			// var_dump($this->_client->indices()->exists($indexExistsParam));
  			return $this->updateType($name, $emptyMapping);
  		}
 
