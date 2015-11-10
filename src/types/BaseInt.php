@@ -37,8 +37,10 @@ use \Exception as Exception;
 
 class BaseInt extends Type {
 
-	function __construct( $opts = array() ) {
+	function __construct( $data = array(), $option=array() ) {
 		
+		$opts = array_merge($data, $option );
+
 		// FORMINPUT DATA
 		$opts['max'] = (isset($opts['max']))? $opts['max'] : 9223372036854775807;
 		$opts['min'] = (isset($opts['min']))? $opts['min'] : 0;
@@ -53,7 +55,7 @@ class BaseInt extends Type {
 		$opts['unique'] = (isset($opts['unique']))? $opts['unique'] : 0;
 		$opts['order'] = (isset($opts['order']))? $opts['order'] : 1;
 		$opts['hidden'] = (isset($opts['hidden']))? $opts['hidden'] : 1;
-		
+
 		$option = [
 			'screen_name' => $opts['screen_name'] ,
 		 	'required' => $opts['required'],

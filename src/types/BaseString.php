@@ -37,7 +37,9 @@ use \Exception as Exception;
 
 class BaseString extends Type {
 
-	function __construct( $opts = array() ) {
+	function __construct( $data = array(), $option=array() ) {
+
+		$opts = array_merge($data, $option );
 		
 		// FORMINPUT DATA
 		$opts['maxlength'] = (isset($opts['maxlength']))? $opts['maxlength'] : 200; 
