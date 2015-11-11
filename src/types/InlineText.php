@@ -37,6 +37,7 @@ class InlineText extends Type {
 		$opts['unique'] = (isset($opts['unique']))? $opts['unique'] : 0;
 		$opts['order'] = (isset($opts['order']))? $opts['order'] : 1;
 		$opts['hidden'] = (isset($opts['hidden']))? $opts['hidden'] : 0;
+		$opts['dropable'] = (isset($opts['dropable']))? $opts['dropable'] : 1; // 能否移除 默认为1 可以移除
 
 		$option = [
 		 	'required' => $opts['required'],
@@ -44,6 +45,7 @@ class InlineText extends Type {
 		 	'searchable' => $opts['searchable'],
 		 	'unique' => $opts['unique'],
 		 	'order' => $opts['order'],
+		 	'dropable' => $opts['dropable'],
 		];
 
 		$data = [

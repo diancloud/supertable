@@ -1,0 +1,40 @@
+<ul 
+  id="<?=$instance['id']?>" 
+  name="<?=$instance['name']?>" 
+  class="block-content 
+           block-taglist 
+           block-taglist-sortable 
+           block-taglist-push-15 
+           block-taglist-push-15-t  
+           sortable
+           supertable-columns-list" 
+           style="padding-bottom:20px;padding-top:5px;">
+
+    <?php foreach ($items as $field => $info ) : ?>
+    <?php if ( $info['html'] != null ) : echo $info['html']; else : 
+          $style = 'info';
+          if ( $info['data']['option']['summary'] ) { $style='primary'; }
+          if ( $info['data']['option']['required'] ) { $style='danger'; }
+        ?>
+        <li id="<?=$field?>" name="<?=$field?>">
+            <?php if ( $info['data']['option']['searchable'] ) :  ?>
+              <span class="tag tag-<?=$style?>"><i class="fa fa-search"></i></span>
+            <?php else :?>
+              <span class="tag tag-<?=$style?>"><i class="fa fa-database"></i> </span>
+            <?php endif; ?>
+           
+            <a class="tag tag-<?=$style?>" href="#"><?=$info['data']['option']['screen_name']?></a> 
+
+            <?php if ( $info['data']['option']['dropable'] ) :  ?>
+            <a class="tag tag-<?=$style?>" href="#"><i class="fa fa-close"></i></a> 
+            <?php endif; ?> 
+        </li>
+    <?php
+        endif; 
+        endforeach; ?>
+</ul>
+<script type="text/javascript">
+  
+  $('[name="<?=$instance['name']?>"]').supertable('container',{});
+
+</script>

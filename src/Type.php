@@ -154,6 +154,36 @@ class Type {
 	}
 
 
+	public function renderItem( $sheet_id, $field_name, $option ) {
+		$templete = (isset($option['templete']))? "{$option['templete']}-item" : null;
+		$tpl = (isset($option['tpl']))? "{$option['tpl']}" : null;
+		if ( $tpl != null ){
+			$file_name = basename($tpl);
+			$item_file_name = str_replace('.tpl.html', '-item.tpl.html', $file_name);
+			$tpl = str_replace($file_name, $item_file_name, $tpl );
+		}
+		$tpl = ($tpl!=null)? $tpl : $this->getTplFile( $templete );
+		
+		$typeName  = @end(@explode('\\', get_class($this)));
+		$option['sheet_id'] = $sheet_id;
+		$data =[
+			'instance' => $option,
+			'input'=>$this->_data_input,
+			'data' =>$this->_data,
+			'option' => $this->_option,
+			'type' => $typeName,
+			'cname' => $this->_cname,
+			'field' => $field_name,
+		];
+		$html = null;
+		if ( file_exists($tpl)) {
+			$html = $this->_render( $data, $tpl );
+		}
+
+		return ['status'=>'success','html'=>$html, 'data'=>$data];
+	}
+
+
 	public function getTplFile( $name ) {
 
 		$data['_type'] = $class_name = get_class($this);

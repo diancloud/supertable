@@ -447,12 +447,23 @@ class Table {
 	 * @param  [type] $tpl [description]
 	 * @return String HTML 代码
 	 */
-	public function actionColumnQuery( $tpl=null ) {
+	public function renderColumnQuery( $option ) {
 		$this->errors = array();
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
+
+		$templete = (isset($option['templete']))? $option['templete'] : 'columns.container';
+		$tpl = (isset($option['tpl']))? $option['tpl'] : $this->_tpl_filename($templete);
+
+		$data = ['items' => [], 'instance'=>$option];
+		foreach ($this->_sheet['columns'] as $field=>$type ) {
+			$data['items'][$field] = $type->renderItem( $this->_sheet_id, $field, $option );
+		}
+		$html = $this->_render( $data, $tpl );
+		return ['status'=>'success','html'=>$html, 'data'=>$data];
 	}
+
 
 	/**
 	 * Column 查询Column 列表页面和JS组件
@@ -481,6 +492,40 @@ class Table {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
 	}
+
+
+	/**
+	 * 渲染模板
+	 * @param  [type] $data [description]
+	 * @param  [type] $name [description]
+	 * @return [type]       [description]
+	 */
+	private function _render( $data,  $tpl=null ) {
+		if ( !file_exists($tpl) ) {
+			throw new Exception("Templete Not Found! file=$tpl");
+		}
+		ob_start();
+		$html = "";
+		@extract( $data );
+		if ( file_exists($tpl) ) {
+			require( $tpl );
+		}
+		$content = ob_get_contents();
+        ob_clean();
+        return $content;
+	}
+
+	private function _tpl_filename( $name ) {
+
+		$path = $this->C('path');
+		$view_file =  $path['templete'] . "$name.tpl.html";
+		if ( !file_exists($view_file) ) {
+			$view_file = __DIR__ . "/view/$name.tpl.html";
+		}
+
+		return $view_file;
+	}
+
 
 
 	// === 类型 (Type) 相关Helper ==========================
