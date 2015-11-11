@@ -359,14 +359,6 @@ class Table {
 
 
 
-	private function runsql( $sql ) {
-		if ( $this->_sheet_id === null ) {
-			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
-		}
-		$data = $this->_search->runSQL( $this->_sheet, $sql );
-	}
-
-
 	
 	/**
 	 * 校验数据是否合法
@@ -410,8 +402,89 @@ class Table {
 	}
 
 
+	// === 页面渲染相关Helper ==========================
+	// 1. Column 创建、修改表单 （ HTML + JS组件 ) renderColumn*
+	// 2. Column 创建、修改、删除和查询处理  actionColumn*
+	// 3. Data 创建、修改和查询(列表)表单  （ HTML + JS组件 )  renderData*
+	// 4. Data 创建、修改、删除和查询处理  actionData*
+	
 
-	// 类型相关操作
+	/**
+	 * Column 创建Column表单和JS组件 
+	 * @param  string $type_name 类型名称，默认为 inlineText
+	 * @param  string $tpl       自定义模板文件，默认为NULL，该类型默认模板
+	 * @return array  表单HTML代码和类型数据  ['status'=>'success','data'=>[...], 'html'=>'<div>...</div>' ]
+	 */
+	public function renderColumnCreate( $type_name='inlineText', $option=array() ) {
+
+		$this->errors = array();
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		$Type = $this->type($type_name);
+		return $Type->renderCreate( $this->_sheet_id, $option );
+	}
+
+
+
+	/**
+	 * Column 更新Column 表单和JS组件 
+	 * @param  string $column_name 字段名称
+	 * @param  string $tpl       自定义模板文件，默认为NULL，该类型默认模板
+	 * @return string html代码
+	 */
+	public function renderColumnUpdate( $column_name, $tpl=null ) {
+		$this->errors = array();
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+	}
+
+
+	/**
+	 * Column 查询Column 列表页面和JS组件
+	 * @param  [type] $tpl [description]
+	 * @return String HTML 代码
+	 */
+	public function actionColumnQuery( $tpl=null ) {
+		$this->errors = array();
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+	}
+
+	/**
+	 * Column 查询Column 列表页面和JS组件
+	 * @param  [type] $tpl [description]
+	 * @return String HTML 代码
+	 */
+	public function actionColumnGet( $column_name, $tpl=null ) {
+		$this->errors = array();
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+	}
+
+
+	/**
+	 * Column  预览Column表单和JS组件 
+	 * @param  string $type_name 类型名称，默认为 inlineText
+	 * @param  array  $data 用户提交的数据
+	 * @param  string $tpl       自定义模板文件，默认为NULL，该类型默认模板
+	 * @return string html代码
+	 */
+	public function actionColumnPreview( $type_name='inlineText', $data=[], $tpl=null ) {
+
+		$this->errors = array();
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+	}
+
+
+	// === 类型 (Type) 相关Helper ==========================
+	
 	public function type( $name=null, $data=array(), $option=array() ) {
 		
 		if ( $name == null ) {
@@ -605,6 +678,16 @@ class Table {
 
 		return $this;
 	}
+
+
+
+	private function runsql( $sql ) {
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+		$data = $this->_search->runSQL( $this->_sheet, $sql );
+	}
+
 
 
 }

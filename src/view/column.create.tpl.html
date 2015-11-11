@@ -1,0 +1,233 @@
+<form 
+    id="<?=$instance['id']?>" 
+    name="<?=$instance['name']?>"
+    class="form-horizontal push-5-t"
+    action="<?=$instance['action']?>" 
+    method="post" >
+   
+    <div class="form-group">
+        <div class="col-sm-12">
+            <h5>新增字段</h5>
+        </div>
+    </div>
+    <!-- FROM GROP -->
+    <div class="form-group">
+        <!--  数据格式 -->
+        <div class="col-sm-12">
+            <div class="form-material">
+                <select class="js-select2 form-control" id="example2-select2" name="example2-select2" style="width: 100%;" data-placeholder="选择数据类型..">
+                    <option></option><!-- Required for data-placeholder attribute to work with Select2 plugin -->
+                    <optgroup label="文本格式">
+                        <option value="1">单行文本</option>
+                        <option value="2">多行文本</option>
+                        <option value="3">邮箱</option>
+                        <option value="5">手机</option>
+                        <option value="5">电话</option>
+                        <option value="4">网址</option>
+                        <option value="4">住址</option>
+                    </optgroup>
+
+                    <optgroup label="数字格式">
+                        <option value="7">数字</option>
+                        <option value="8">货币</option>
+                        <option value="9">百分数</option>
+                        <option value="9">小数</option>
+                        <option value="10">分数</option>
+                    </optgroup>
+
+                    <optgroup label="地区时间">
+                        <option value="6">时间</option>
+                        <option value="6">日期</option>
+                        <option value="6">日期+时间</option>
+                        <option value="6">倒计时</option>
+                        <option value="6">时区</option>
+                        <option value="6">中国地区</option>
+                        <option value="6">全球地区</option>
+                    </optgroup>
+
+                    <optgroup label="特殊格式">
+                        <option value="6">单选框</option>
+                        <option value="6">复选框</option>
+                        <option value="6">标签栏</option>
+                        <option value="6">图片</option>
+                        <option value="6">附件</option>
+                    </optgroup>
+                </select>
+                <label for="example2-select2">
+                    数据格式
+                    <i  class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"  
+                        data-original-title="请从下拉列表中类型，不同类型有不同的可配置选项" ></i>
+                </label>
+            </div>
+        </div> <!-- END 数据格式 -->
+    </div><!-- END FORM GROUP -->
+
+    
+    <!-- INPUT LIST FROM GROUP Start -->
+    <div class="form-group">
+
+        <?php 
+        $colcnt = 0;
+        $instance['action_name'] = (isset($instance['action_name']))? $instance['action_name'] : "";
+        $opt['input_width'] = (isset($opt['input_width']))? $opt['input_width'] : 6;
+        $opt['input_width'] = ($opt['input_width'] > 12)? 12 : $opt['input_width'];
+        $opt['input_width'] = ($opt['input_width'] < 1)? 1 : $opt['input_width'];
+        
+        $groupcnt = 0;
+        foreach ($input as $field => $opt ) : 
+            $colcnt = $opt['input_width'] + $colcnt;
+            $groupcnt = $opt['input_width'] + $groupcnt;
+        ?>
+        <?php if( $groupcnt > 12 ) : 
+            $groupcnt = $groupcnt  - 12; ?>
+    
+    </div><!-- END GROUP LINE -->
+    <!-- NEW GROUP LINE -->
+    <div class="form-group">  
+        <?php endif; ?>
+
+        <!-- col Start -->
+        <div class="col-lg-<?=$opt['input_width']?> ">
+            <!-- Form-Material Start -->
+            <div class="form-material">
+            <?php if( $opt['input_type'] == 'text' ) : ?>
+                <input 
+                    class="form-control" type="text" 
+                    id="input-<?=$field?>" 
+                    name="<?=$field?>" 
+                    placeholder="<?=$opt['placeholder']?>"
+                    value="<?=$opt['default']?>"  >
+
+            <?php elseif ( $opt['input_type'] == 'select' ) : ?>
+                <select 
+                    class="js-select2 form-control"  style="width: 100%;"
+                    id="input-<?=$field?>" 
+                    name="<?=$field?>" 
+                    data-placeholder="<?=$opt['placeholder']?>" >
+
+                    <option></option><!-- Required for data-placeholder attribute to work with Select2 plugin -->
+                <?php if (is_array($opt['input_option'])): 
+                    foreach ($opt['input_option'] as $option_value => $option_name) : ?>
+                    <option 
+                        value="<?=$option_value?>"  
+                        <?php if($option_value == $opt['default']):?> 
+                        selected
+                        <?php endif; ?> >
+                        <?=$option_name?>
+                    </option>
+    
+                <?php 
+                    endforeach;
+                    endif;?>
+
+                </select>
+
+            <?php endif; ?>
+                
+                <label for="input-<?=$field?>">
+                    <?=$opt['screen_name']?>
+                    <?php if (isset($opt['input_tips'])): ?>
+                    <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"  
+                        data-original-title="<?=$opt['input_tips']?>" ></i>
+                    <?php endif ?>
+                </label>
+
+            </div> <!-- Form-Material END -->
+        </div> <!-- col END -->
+        <?php endforeach; ?>
+
+    </div><!-- INPUT LIST FROM GROUP END -->
+
+    <!-- OPTION LIST  FROM GROUP Start -->
+    <div class="form-group">
+        <div class="col-sm-12 text-right">
+            <div class="form-material">
+                <label class="css-input  css-checkbox css-checkbox-info">
+                    <input id="required" name="required"
+                        <?php if($option['required']):?> checked <?php endif; ?> 
+                        type="checkbox" ><span></span> 作为必填字段
+                    <i class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"  
+                        data-original-title="如果开启这个选项，录入信息时这个字段必须填写" ></i>
+                </label>
+            </div>
+        </div>
+   
+        <div class="col-sm-12  push-30-t text-right">
+            <div class="form-material text-right">
+                <label class="css-input  css-checkbox css-checkbox-info">
+                    <input id="summary" name="summary"  
+                        <?php if($option['summary']):?> checked <?php endif; ?> 
+                        type="checkbox" ><span></span> 作为摘要数据
+                    <i  class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"  
+                        data-original-title="开启这个选项，这个字段会出现客户列表中呈现" ></i>
+                </label>
+            </div>
+        </div>
+
+        <div class="col-sm-12  push-30-t">
+            <div class="form-material text-right">
+                <label class="css-input  css-checkbox css-checkbox-info">
+                    <input id="searchable" name="searchable"  
+                        <?php if($option['searchable']):?> checked <?php endif; ?> 
+                        type="checkbox" ><span></span> 作为检索条件
+                    <i  class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"  
+                        data-original-title="开启这个选项，可以按照这个字段进行检" ></i>
+                </label>
+            </div>
+        </div>
+
+        <div class="col-sm-12  push-30-t">
+            <div class="form-material text-right">
+                <label class="css-input  css-checkbox css-checkbox-info">
+                    <input id="unique" name="unique"  
+                        <?php if($option['unique']):?> checked <?php endif; ?> 
+                        type="checkbox" ><span></span> 不可重复
+                    <i  class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"  
+                        data-original-title="开启这个选项，这个字段的数值不能重复 （ 开启作为检索条件后生效 ）" ></i>
+                </label>
+            </div>
+        </div>
+    </div><!-- OPTION LIST  FROM GROUP END -->
+
+
+    <div class="form-group">
+        <!-- Hidden Info -->
+        <input type="hidden" id="instance-sheet_id"  name="sheet_id"  value="<?=$instance['sheet_id']?>" >
+        <input type="hidden" id="instance-column_name"  name="column_name"  value="" >
+        <div class="col-sm-12 push-15-t">
+            <button class="btn btn-success supertable-submit instance-<?=$instance['id']?>-submit" type="button"> 增加字段 </button>
+        </div>
+    </div>
+</form>
+
+<script type="text/javascript">
+
+jQuery(function() {
+    jQuery('.js-select2').select2();
+    jQuery('[data-toggle="tooltip"], .js-tooltip').tooltip({
+        container: 'form[name="<?=$instance['name']?>"]',
+        animation: false
+    });
+    jQuery('form[name="<?=$instance['name']?>"]').supertable('columnCreate', {
+        beforeSubmit: function(form) {
+             return true;
+        },
+        rules: {
+        <?php foreach ($input as $field => $opt ) :
+            if ( is_array($opt['js.validation']) ): ?>
+            '<?=$field?>': $.parseJSON('<?=json_encode($opt['js.validation'])?>'),
+        <?php endif;
+            endforeach; ?>
+        },
+
+        messages: {
+        <?php foreach ($input as $field => $opt ) :
+            if ( is_array($opt['js.messages']) ): ?>
+            '<?=$field?>': $.parseJSON('<?=json_encode($opt['js.messages'])?>'),
+        <?php endif;
+            endforeach; ?>
+        },
+    });
+
+});
+</script>

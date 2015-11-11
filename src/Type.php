@@ -20,7 +20,7 @@ use \Exception as Exception;
 
 class Type {
 	
-	
+	protected $_cname = '';
 	protected $_data_format = 'string';
 	protected $_data_input = array();
 	protected $_data_message = array();
@@ -126,10 +126,55 @@ class Type {
 	}
 
 
-
+	/**
+	 * 数据验证定义 (构建类型时，重载此方法)
+	 * @param  [type] $value [description]
+	 * @return [type]        [description]
+	 */
 	public function validation( & $value ) {
 		return true;
 	}
+
+	// === 页面渲染相关Helper ==========================
+	public function renderCreate( $sheet_id, $option ) {
+		$tpl = (isset($option['tpl']))? $option['tpl']: $this->getTplFile('column.create');
+		$typeName  = @end(@explode('\\', get_class($this)));
+		$option['sheet_id'] = $sheet_id;
+		$data =[
+			'instance' => $option,
+			'input'=>$this->_data_input,
+			'data' =>$this->_data,
+			'option' => $this->_option,
+			'type' => $typeName,
+			'cname' => $this->_cname,
+		];
+
+		$html = $this->_render( $data, $tpl );
+		return ['status'=>'success','html'=>$html, 'data'=>$data];
+	}
+
+
+	public function getTplFile( $name ) {
+
+		$data['_type'] = $class_name = get_class($this);
+		$namer = explode('\\', $class_name);
+		$view_name = end($namer);
+		$view_file =  $this->_path['templete'] . "/$view_name/$name.tpl.html";
+		if ( !file_exists($view_file) ) {
+			$view_file =  $this->_path['templete'] . "/$name.tpl.html";
+		}
+		if ( !file_exists($view_file) ) {
+			$view_file = __DIR__ . "/view/$view_name/$name.tpl.html";
+		}
+
+		if ( !file_exists($view_file) ) {
+			$view_file = __DIR__ . "/view/$name.tpl.html";
+		}
+
+		return $view_file;
+	}
+
+
 
 
 	/**
@@ -224,33 +269,20 @@ class Type {
 	 * @param  [type] $name [description]
 	 * @return [type]       [description]
 	 */
-	protected function _render( $data, $name, $tpl=null ) {
-		
+	protected function _render( $data,  $tpl=null ) {
 		$data['_type'] = $class_name = get_class($this);
 
-		$namer = explode('\\', $class_name);
-		$view_name = end($namer);
-
-		if ( $tpl != null ) {
-			$view_file = $tpl;
-			if ( !file_exists($view_file) ) {
-				throw new Exception("呈现模板文件不存在! file=$tpl");
-			}
-		} else {
-			$view_file =  $this->_path['templete'] . "/$view_name/$name.tpl.html";
-			if ( !file_exists($view_file) ) {
-				$view_file = __DIR__ . "/view/$view_name/$name.tpl.html";
-			}
+		if ( !file_exists($tpl) ) {
+			throw new Exception("Templete Not Found! file=$tpl");
 		}
 
 		ob_start();
 		$html = "";
 		@extract( $data );
-		if ( file_exists($view_file) ) {
-			require( $view_file );
+		if ( file_exists($tpl) ) {
+			require( $tpl );
 		}
 		$content = ob_get_contents();
-
         ob_clean();
         return $content;
 	}
