@@ -38,6 +38,8 @@ class InlineText extends Type {
 		$opts['order'] = (isset($opts['order']))? $opts['order'] : 1;
 		$opts['hidden'] = (isset($opts['hidden']))? $opts['hidden'] : 0;
 		$opts['dropable'] = (isset($opts['dropable']))? $opts['dropable'] : 1; // 能否移除 默认为1 可以移除
+		$opts['field_name'] = (isset($opts['field_name']))? $opts['field_name'] : "";
+		$opts['column_name'] = (isset($opts['column_name']))? $opts['column_name'] : "";
 
 		$option = [
 		 	'required' => $opts['required'],
@@ -46,6 +48,8 @@ class InlineText extends Type {
 		 	'unique' => $opts['unique'],
 		 	'order' => $opts['order'],
 		 	'dropable' => $opts['dropable'],
+		 	'column_name' => $opts['column_name'],
+		 	'field_name' => $opts['field_name'],
 		];
 
 		$data = [

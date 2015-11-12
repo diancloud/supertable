@@ -243,20 +243,20 @@ class Schema {
 		$data['is_deleted'] =$data['_spt_is_deleted'];
 
 		foreach ($data['_spt_schema_json'] as $field=>$type ) {
-			$data['columns'][$field] = $this->_typeObj( $type );
+			$type = $this->_typeObj( $type )->bindField($data['_id'],$field);
+			$data['columns'][$field] = $type;
 		}
 
 		return $data;
 	}
 
-
 	private function _typeObj( $type_schema ) {
+
 		if ( !is_array($type_schema['data']) ||
 			 !is_array($type_schema['option']) ||
 			 !isset($type_schema['type']) 
 			) {
 
-			print_r( $type_schema );
 			throw new Exception(" _typeObj 返回结果错误");
 		}
 		return $this->_type->load($type_schema['type'], $type_schema['data'], $type_schema['option']);

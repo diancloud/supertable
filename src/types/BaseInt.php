@@ -55,6 +55,9 @@ class BaseInt extends Type {
 		$opts['unique'] = (isset($opts['unique']))? $opts['unique'] : 0;
 		$opts['order'] = (isset($opts['order']))? $opts['order'] : 1;
 		$opts['hidden'] = (isset($opts['hidden']))? $opts['hidden'] : 1;
+		$opts['dropable'] = (isset($opts['dropable']))? $opts['dropable'] : 0; // 能否移除 默认为1 可以移除
+		$opts['field_name'] = (isset($opts['field_name']))? $opts['field_name'] : "";
+		$opts['column_name'] = (isset($opts['column_name']))? $opts['column_name'] : "";
 
 		$option = [
 			'screen_name' => $opts['screen_name'] ,
@@ -63,6 +66,8 @@ class BaseInt extends Type {
 		 	'searchable' => $opts['searchable'],
 		 	'unique' => $opts['unique'],
 		 	'order' => $opts['order'],
+		 	'column_name' => $opts['column_name'],
+		 	'field_name' => $opts['field_name'],
 		];
 
 		$data = [
@@ -73,6 +78,7 @@ class BaseInt extends Type {
 		];
 
 		$data_input = [
+			
 			'maxvalue' => [
 				'screen_name' => '最大值',
 				'placeholder' => '最大可以输入的数值',

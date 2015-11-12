@@ -12,6 +12,7 @@
            style="padding-bottom:20px;padding-top:5px;">
 <?php endif; ?>
 
+<?php if ($item_only): ?>
     <?php foreach ($items as $field => $info ) : ?>
     <?php if ( $info['html'] != null ) : echo $info['html']; else : 
           $style = 'info';
@@ -34,6 +35,7 @@
     <?php
         endif; 
         endforeach; ?>
+<?php endif; ?>
 
 <?php if (!$item_only) :?>
 </ul>
@@ -42,6 +44,6 @@
   $('[name="<?=$instance['name']?>"]').supertable('container',{
       'instance':$.parseJSON('<?=json_encode($instance)?>')
   });
-
+  $('[name="<?=$instance['name']?>"]').addColumn([], true );
 </script>
 <?php endif; ?>

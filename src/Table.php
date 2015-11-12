@@ -467,8 +467,9 @@ class Table {
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
-
+		
 		$field_name = $data['column_name'];
+
 		if ( $data['render_only'] == true && $field_name != "" ) { // 直接渲染
 			$type_name = $data['_type'];
 			$Type = $this->type( $type_name, $data );
@@ -525,6 +526,7 @@ class Table {
 			$data['items'][$field] = $type->renderItem( $this->_sheet_id, $field, $option );
 		}
 		$html = $this->_render( $data, $tpl );
+
 		return ['status'=>'success','html'=>$html, 'data'=>$data];
 	}
 
