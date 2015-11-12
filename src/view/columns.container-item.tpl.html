@@ -1,18 +1,18 @@
 <?php 
   $style = 'info';
-  if ( $option['summary'] ) { $style='primary'; }
-  if ( $option['required'] ) { $style='danger'; }
+  if ( $data['summary'] ) { $style='primary'; }
+  if ( $data['required'] ) { $style='danger'; }
 ?>
 <li id="<?=$field?>" name="<?=$field?>" >
-    <?php if ( $option['searchable'] ) :  ?>
+    <?php if ( $data['searchable'] ) :  ?>
       <span class="tag tag-<?=$style?>"><i class="fa fa-search"></i></span>
     <?php else :?>
       <span class="tag tag-<?=$style?>"><i class="fa fa-database"></i> </span>
     <?php endif; ?>
    
-    <a class="tag tag-<?=$style?>" href="#"><?=$option['screen_name']?></a> 
+    <a class="tag tag-<?=$style?>" href="#"><?=$data['screen_name']?></a> 
 
-    <?php if ( $option['dropable'] ) :  ?>
+    <?php if ( $data['dropable'] ) :  ?>
     <a class="tag tag-<?=$style?>" href="#"><i class="fa fa-close"></i></a> 
     <?php endif; ?> 
 </li>

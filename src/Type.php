@@ -53,6 +53,20 @@ class Type {
 		return $this;
 	}
 
+	public function option( $name ) {
+		if ( isset($this->_option[$name])) {
+			return $this->_option[$name];
+		}
+		return null;
+	}
+
+	public function data( $name ) {
+		if ( isset($this->_data[$name])) {
+			return $this->_data[$name];
+		}
+		return null;
+	}
+
 
 	public function setOption( $option ) {
 		$this->_option = $option;
@@ -143,7 +157,8 @@ class Type {
 		$data =[
 			'instance' => $option,
 			'input'=>$this->_data_input,
-			'data' =>$this->_data,
+			'_data' =>$this->_data,
+			'data' => array_merge($this->_data, $this->_option),
 			'option' => $this->_option,
 			'type' => $typeName,
 			'cname' => $this->_cname,
@@ -169,7 +184,8 @@ class Type {
 		$data =[
 			'instance' => $option,
 			'input'=>$this->_data_input,
-			'data' =>$this->_data,
+			'_data' =>$this->_data,
+			'data' => array_merge($this->_data, $this->_option),
 			'option' => $this->_option,
 			'type' => $typeName,
 			'cname' => $this->_cname,

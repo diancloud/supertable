@@ -1,3 +1,4 @@
+<?php if (!$item_only): ?>
 <ul 
   id="<?=$instance['id']?>" 
   name="<?=$instance['name']?>" 
@@ -9,32 +10,38 @@
            sortable
            supertable-columns-list" 
            style="padding-bottom:20px;padding-top:5px;">
+<?php endif; ?>
 
     <?php foreach ($items as $field => $info ) : ?>
     <?php if ( $info['html'] != null ) : echo $info['html']; else : 
           $style = 'info';
-          if ( $info['data']['option']['summary'] ) { $style='primary'; }
-          if ( $info['data']['option']['required'] ) { $style='danger'; }
+          if ( $info['data']['data']['summary'] ) { $style='primary'; }
+          if ( $info['data']['data']['required'] ) { $style='danger'; }
         ?>
         <li id="<?=$field?>" name="<?=$field?>">
-            <?php if ( $info['data']['option']['searchable'] ) :  ?>
+            <?php if ( $info['data']['data']['searchable'] ) :  ?>
               <span class="tag tag-<?=$style?>"><i class="fa fa-search"></i></span>
             <?php else :?>
               <span class="tag tag-<?=$style?>"><i class="fa fa-database"></i> </span>
             <?php endif; ?>
            
-            <a class="tag tag-<?=$style?>" href="#"><?=$info['data']['option']['screen_name']?></a> 
+            <a class="tag tag-<?=$style?>" href="#"><?=$info['data']['data']['screen_name']?></a> 
 
-            <?php if ( $info['data']['option']['dropable'] ) :  ?>
+            <?php if ( $info['data']['data']['dropable'] ) :  ?>
             <a class="tag tag-<?=$style?>" href="#"><i class="fa fa-close"></i></a> 
             <?php endif; ?> 
         </li>
     <?php
         endif; 
         endforeach; ?>
+
+<?php if (!$item_only) :?>
 </ul>
 <script type="text/javascript">
   
-  $('[name="<?=$instance['name']?>"]').supertable('container',{});
+  $('[name="<?=$instance['name']?>"]').supertable('container',{
+      'instance':$.parseJSON('<?=json_encode($instance)?>')
+  });
 
 </script>
+<?php endif; ?>

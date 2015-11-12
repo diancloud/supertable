@@ -452,7 +452,6 @@ class Table {
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
-
 		$templete = (isset($option['templete']))? $option['templete'] : 'columns.container';
 		$tpl = (isset($option['tpl']))? $option['tpl'] : $this->_tpl_filename($templete);
 
@@ -463,6 +462,27 @@ class Table {
 		$html = $this->_render( $data, $tpl );
 		return ['status'=>'success','html'=>$html, 'data'=>$data];
 	}
+
+
+	public function renderColumnQueryItem( $option ) {
+		$this->errors = array();
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		$columns = (isset($option['columns']))? $option['columns'] : [];
+		if ( isset($option['columns'])) { unset( $option['columns']); }
+
+		$templete = (isset($option['templete']))? $option['templete'] : 'columns.container';
+		$tpl = (isset($option['tpl']))? $option['tpl'] : $this->_tpl_filename($templete);
+		$data = ['items' =>[], 'instance'=>$option, 'item_only'=>true ];
+		foreach ( $columns as $field=>$type ) {
+			$data['items'][$field] = $type->renderItem( $this->_sheet_id, $field, $option );
+		}
+		$html = $this->_render( $data, $tpl );
+		return ['status'=>'success','html'=>$html, 'data'=>$data];
+	}
+
 
 
 	/**
