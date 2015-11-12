@@ -434,16 +434,57 @@ class Table {
 	 * @param  string $tpl       自定义模板文件，默认为NULL，该类型默认模板
 	 * @return string html代码
 	 */
-	public function renderColumnUpdate( $column_name, $tpl=null ) {
+	public function renderColumnUpdate( $data, $option=array() ) {
 		$this->errors = array();
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
+
+		$field_name = $data['column_name'];
+		if ( $data['render_only'] == true && $field_name != "" ) { // 直接渲染
+			$type_name = $data['_type'];
+			$Type = $this->type( $type_name, $data );
+			$Type->bindField($this->_sheet_id, $field_name );
+
+
+		} else if( isset($this->_sheet['columns'][$field_name]) ) {  // 渲染服务器数据
+			$Type = $this->_sheet['columns'][$field_name];
+		}
+
+		return $Type->renderUpdate( $this->_sheet_id, $option );
 	}
 
 
 	/**
-	 * Column 查询Column 列表页面和JS组件
+	 * Column  预览Column表单和JS组件 
+	 * @param  string $type_name 类型名称，默认为 inlineText
+	 * @param  array  $data 用户提交的数据
+	 * @param  string $tpl       自定义模板文件，默认为NULL，该类型默认模板
+	 * @return string html代码
+	 */
+	public function renderColumnPreview( $data, $option=array() ) {
+		$this->errors = array();
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		$field_name = $data['column_name'];
+		if ( $data['render_only'] == true && $field_name != "" ) { // 直接渲染
+			$type_name = $data['_type'];
+			$Type = $this->type( $type_name, $data );
+			$Type->bindField($this->_sheet_id, $field_name );
+
+		} else if( isset($this->_sheet['columns'][$field_name]) ) {  // 渲染服务器数据
+			$Type = $this->_sheet['columns'][$field_name];
+		}
+
+		return $Type->renderPreview( $this->_sheet_id, $option );
+	}
+
+
+
+	/**
+	 * Column  查询Column 列表页面和JS组件
 	 * @param  [type] $tpl [description]
 	 * @return String HTML 代码
 	 */
@@ -463,7 +504,11 @@ class Table {
 		return ['status'=>'success','html'=>$html, 'data'=>$data];
 	}
 
-
+	/**
+	 * Column  查询Column Items 列表页面和JS组件 (仅显示Item)
+	 * @param  [type] $option [description]
+	 * @return [type]         [description]
+	 */
 	public function renderColumnQueryItem( $option ) {
 		$this->errors = array();
 		if ( $this->_sheet_id === null ) {
@@ -497,21 +542,6 @@ class Table {
 		}
 	}
 
-
-	/**
-	 * Column  预览Column表单和JS组件 
-	 * @param  string $type_name 类型名称，默认为 inlineText
-	 * @param  array  $data 用户提交的数据
-	 * @param  string $tpl       自定义模板文件，默认为NULL，该类型默认模板
-	 * @return string html代码
-	 */
-	public function actionColumnPreview( $type_name='inlineText', $data=[], $tpl=null ) {
-
-		$this->errors = array();
-		if ( $this->_sheet_id === null ) {
-			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
-		}
-	}
 
 
 	/**

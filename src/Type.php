@@ -49,6 +49,7 @@ class Type {
 		}
 		$this->_option['schema_id'] = $schema_id;
 		$this->_option['field_name'] = $field_name;
+		$this->_option['column_name'] = $field_name;
 		
 		return $this;
 	}
@@ -158,20 +159,54 @@ class Type {
 			'instance' => $option,
 			'input'=>$this->_data_input,
 			'_data' =>$this->_data,
-			'data' => array_merge($this->_data, $this->_option),
+			'data' => array_merge($this->_data, $this->_option, array('_type'=>$typeName)),
 			'option' => $this->_option,
 			'type' => $typeName,
 			'cname' => $this->_cname,
 		];
+		$html = $this->_render( $data, $tpl );
+		return ['status'=>'success','html'=>$html, 'data'=>$data];
+	}
 
+	public function renderUpdate( $sheet_id, $option ) {
+		$tpl = (isset($option['tpl']))? $option['tpl']: $this->getTplFile('column.update');
+		$typeName  = @end(@explode('\\', get_class($this)));
+		$option['sheet_id'] = $sheet_id;
+		$data =[
+			'instance' => $option,
+			'input'=>$this->_data_input,
+			'_data' =>$this->_data,
+			'data' => array_merge($this->_data, $this->_option, array('_type'=>$typeName)),
+			'option' => $this->_option,
+			'type' => $typeName,
+			'cname' => $this->_cname,
+		];
+		$html = $this->_render( $data, $tpl );
+		return ['status'=>'success','html'=>$html, 'data'=>$data];
+	}
+
+	public function renderPreview( $sheet_id, $option ) {
+		$tpl = (isset($option['tpl']))? $option['tpl']: $this->getTplFile('column.preview');
+		$typeName  = @end(@explode('\\', get_class($this)));
+		$option['sheet_id'] = $sheet_id;
+		$data =[
+			'instance' => $option,
+			'input'=>$this->_data_input,
+			'_data' =>$this->_data,
+			'data' => array_merge($this->_data, $this->_option, array('_type'=>$typeName)),
+			'option' => $this->_option,
+			'type' => $typeName,
+			'cname' => $this->_cname,
+		];
 		$html = $this->_render( $data, $tpl );
 		return ['status'=>'success','html'=>$html, 'data'=>$data];
 	}
 
 
+
 	public function renderItem( $sheet_id, $field_name, $option ) {
 		$templete = (isset($option['templete']))? "{$option['templete']}-item" : null;
-		$tpl = (isset($option['tpl']))? "{$option['tpl']}" : null;
+		$tpl = (isset($option['tpl']))? "{$option['tpl']}" : null;	
 		if ( $tpl != null ){
 			$file_name = basename($tpl);
 			$item_file_name = str_replace('.tpl.html', '-item.tpl.html', $file_name);
@@ -185,7 +220,7 @@ class Type {
 			'instance' => $option,
 			'input'=>$this->_data_input,
 			'_data' =>$this->_data,
-			'data' => array_merge($this->_data, $this->_option),
+			'data' => array_merge($this->_data, $this->_option, array('_type'=>$typeName)),
 			'option' => $this->_option,
 			'type' => $typeName,
 			'cname' => $this->_cname,
@@ -222,93 +257,6 @@ class Type {
 
 
 
-
-	/**
-	 * 渲染代码
-	 * @return [type] [description]
-	 */
-	public function previewHTML( $instance=null, $tpl=null ) {
-		if ( $instance == null ) {
-			$instance =array(
-			 	"name" =>'tmp_'. time() .rand(10000,99999),
-			 	'screen_name' => @end(@explode('\\', get_class($this))).'示例',
-			 	'value' => null,
-			);
-		}
-
-		$data = array(
-			'data' =>$this->_data,
-			'_type' => @end(@explode('\\', get_class($this))),
-			'_instance' => $instance,
-		);
-		return $this->_render( $data, 'preview' );
-	}
-
-	public function previewJSON( $instance=null ) {
-		if ( $instance == null ) {
-			$instance =array(
-			 	"name" =>'tmp_'. time() .rand(10000,99999),
-			 	'screen_name' => @end(@explode('\\', get_class($this))).'示例',
-			 	'value' => null,
-			);
-		}
-
-		$data = array(
-			'data' =>$this->_data,
-			'_type' => @end(@explode('\\', get_class($this))),
-			'_instance' => $instance,
-		);
-		return json_encode($data);
-	}
-
-	public function inputFormHTML( $instance="", $tpl=null ) {
-
-		if ( $instance == null ) {
-			$instance =array(
-			 	"name" =>'tmp_'. time() .rand(10000,99999),
-			 	'screen_name' => @end(@explode('\\', get_class($this))).'示例',
-			 	'value' => null,
-			);
-		}
-
-		$data = array(
-			'input'=>$this->_data_input,
-			'data' =>$this->_data,
-			'_type' => @end(@explode('\\', get_class($this))),
-			'_instance' => $instance,
-		);
-		return $this->_render( $data, 'form', $tpl );
-	}
-
-
-
-	public function inputFormJSON( $instance="") {
-
-		if ( $instance == null ) {
-			$instance =array(
-			 	"name" =>'tmp_'. time() .rand(10000,99999),
-			 	'screen_name' => @end(@explode('\\', get_class($this))).'示例',
-			 	'value' => null,
-			);
-		}
-
-		$data = array(
-			'input'=>$this->_data_input,
-			'data' =>$this->_data,
-			'_type' => @end(@explode('\\', get_class($this))),
-			'_instance' => $instance,
-		);
-		return json_encode($data);
-	}
-
-
-	public function inputValidationJSCODE() {
-	}
-
-	public function dataValidationJSCODE() {
-	}
-
-
 	/**
 	 * 渲染模板
 	 * @param  [type] $data [description]
@@ -339,14 +287,18 @@ class Type {
 		return json_encode($this->toArray());
 	}
 
+
 	public function toArray() {
+		$typeName  = @end(@explode('\\', get_class($this)));
 		return array(
 			'format' => $this->_data_format,
 			'type' => @end(@explode('\\', get_class($this))),
 			'option' => $this->_option,
-			'data' => $this->_data,
+			'_data' =>$this->_data,
+			'data' => array_merge($this->_data, $this->_option, array('_type'=>$typeName)),
 		);
 	}
+
 
 	/**
 	 * 验证输入数据是否合法
