@@ -210,6 +210,30 @@ class Mysql {
 		return $data;
 	}
 
+	/**
+	 * API: 根据ID更新一个数据结构的扩展信息
+	 * @param  [type] $schema_id [description]
+	 * @param  [type] $data      [description]
+	 * @return [type]            [description]
+	 */
+	function updateSchemaData( $schema_id, $data ) {
+		$table = $this->_table;
+		$this->_filter( $data, $this->_schema_table );
+		
+		// 过滤系统相关字段
+		foreach ($data as $key => $value) {
+			if ( preg_match('/_spt_(.+)/', $key, $match) ){
+				unset($data[$key]);
+			}
+		}
+		// echo "<pre>\n";
+		// print_r($data);
+		$primary_field = $this->_schema_table['primary']['COLUMN_NAME'];
+		$data[$primary_field] = $schema_id;
+		$this->_update( $table['schema'], $data,  $this->_schema_table );
+		return $schema_id;
+	}
+
 
 	/**
 	 * API: 根据ID更新一个数据结构
@@ -218,7 +242,6 @@ class Mysql {
 	 * @return $schema_id
 	 */
 	function updateSchema( $schema_id, $data ) {
-
 		$table = $this->_table;
 		$this->_filter( $data, $this->_schema_table );
 		$primary_field = $this->_schema_table['primary']['COLUMN_NAME'];
@@ -227,6 +250,11 @@ class Mysql {
 		$this->_update( $table['schema'], $data,  $this->_schema_table );
 		return $schema_id;
 	}
+
+
+
+
+
 
 
 	/**

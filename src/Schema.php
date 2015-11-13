@@ -72,7 +72,6 @@ class Schema {
 	}
 
 
-
 	/**
 	 *  根据Name读取一个数据表 (Sheet)
 	 * @param  [type]  $name       [description]
@@ -95,6 +94,19 @@ class Schema {
 		$sheet = $this->_stor->getSchema( $id, $allow_null );
 		return $this->_formatSheet( $sheet );
 	}
+
+
+	/**
+	 * 根据ID更新一张数据表(Sheet) 扩展信息
+	 * @param  [type] $id   [description]
+	 * @param  array  $data [description]
+	 * @return [type]       [description]
+	 */
+	public function updateSheet( $id, $data = array() ) {
+		$this->_stor->updateSchemaData($id, $data );
+		return $id;
+	}
+
 
 	/**
 	 * 读取一个字段

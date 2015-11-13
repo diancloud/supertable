@@ -126,6 +126,23 @@ class Table {
 		return $this->selectSheet( $sheet_id );
 	}
 
+	/**
+	 * 更新一个数据表 (Sheet )
+	 * @param  array  $data 扩展数据 (如果有自定字段，则填写这些字段的数值) 
+	 * @return [type]       [description]
+	 */
+	public function updateSheet( $data = array() ) {
+		
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		$sheet_id = $this->_schema->updateSheet( $this->_sheet_id, $data );
+		return $this->selectSheet( $sheet_id );
+	}
+
+
+
 
 	// 删除一个表格
 	public function deleteSheet( $removedata = false ) {
