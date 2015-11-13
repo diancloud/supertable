@@ -21,51 +21,23 @@
                     name="type" 
                     style="width: 100%;" data-placeholder="选择数据类型..">
                     <option></option><!-- Required for data-placeholder attribute to work with Select2 plugin -->
-                    <optgroup label="文本格式">
-                        <option value="InlineText" selected >单行文本</option>
-                        <option value="2">多行文本</option>
-                        <option value="3">邮箱</option>
-                        <option value="5">手机</option>
-                        <option value="5">电话</option>
-                        <option value="4">网址</option>
-                        <option value="4">住址</option>
+                    <?php foreach ($public['groups'] as $gname => $options) :?> { 
+                    <optgroup label="<?=$gname?>">
+                        <?php foreach ($options as $ovalue => $oname): ?>
+                        <option value="<?=$ovalue?>" <?=($data['_type']==$ovalue)?'selected':''?> ><?=$oname?></option>
+                        <?php endforeach; ?> 
                     </optgroup>
-
-                    <optgroup label="数字格式">
-                        <option value="7">数字</option>
-                        <option value="8">货币</option>
-                        <option value="9">百分数</option>
-                        <option value="9">小数</option>
-                        <option value="10">分数</option>
-                    </optgroup>
-
-                    <optgroup label="地区时间">
-                        <option value="6">时间</option>
-                        <option value="6">日期</option>
-                        <option value="6">日期+时间</option>
-                        <option value="6">倒计时</option>
-                        <option value="6">时区</option>
-                        <option value="6">中国地区</option>
-                        <option value="6">全球地区</option>
-                    </optgroup>
-
-                    <optgroup label="特殊格式">
-                        <option value="6">单选框</option>
-                        <option value="6">复选框</option>
-                        <option value="6">标签栏</option>
-                        <option value="6">图片</option>
-                        <option value="6">附件</option>
-                    </optgroup>
+                    <?php endforeach; ?> 
                 </select>
                 <label for="example2-select2">
                     数据格式
                     <i  class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"  
                         data-original-title="请从下拉列表中类型，不同类型有不同的可配置选项" ></i>
                 </label>
+
             </div>
         </div> <!-- END 数据格式 -->
     </div><!-- END FORM GROUP -->
-
     
     <!-- INPUT LIST FROM GROUP Start -->
     <div class="form-group">

@@ -47,6 +47,7 @@ class InlineText extends Type {
 		 	'searchable' => $opts['searchable'],
 		 	'unique' => $opts['unique'],
 		 	'order' => $opts['order'],
+		 	'hidden' => $opts['hidden'],
 		 	'dropable' => $opts['dropable'],
 		 	'column_name' => $opts['column_name'],
 		 	'field_name' => $opts['field_name'],
@@ -140,7 +141,7 @@ class InlineText extends Type {
 					'required' => false,
 					'digits'=>true,
 					'min'=>1,
-					'max'=>50,
+					'max'=>400,
 				],
 
 				'message' => [
@@ -153,13 +154,12 @@ class InlineText extends Type {
 					'required' => false,
 					'digits'=>true,
 					'min'=>1,
-					'max'=>50,
+					'max'=>400,
 				],
-
 				'js.messages' => [
 					'digits' => '最大字数格式不正确，请输入数字',
 					'min' => '最大字数不能少于1',
-					'max' => '最大字数不能超过50',
+					'max' => '最大字数不能超过400',
 				],
 			],
 
@@ -172,10 +172,9 @@ class InlineText extends Type {
 				'validation' => [
 					'required' => false,
 					'digits'=>true,
-					'min'=>1,
-					'max'=>50,
+					'min'=>0,
+					'max'=>400,
 				],
-
 				'message' => [
 					'digits' => '{screen_name}({name})格式不正确，请输入数字',
 					'min' => '{screen_name}({name})数值不能少于{value}',
@@ -185,14 +184,14 @@ class InlineText extends Type {
 				'js.validation' => [
 					'required' => false,
 					'digits'=>true,
-					'min'=>1,
-					'max'=>50,
+					'min'=>0,
+					'max'=>400,
 				],
 
 				'js.messages' => [
 					'digits' => '最小字数格式不正确，请输入数字',
-					'min' => '最小字数不能少于1',
-					'max' => '最小字数不能超过50',
+					'min' => '最小字数不能少于0',
+					'max' => '最小字数不能超过400',
 				],
 			],
 

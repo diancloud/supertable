@@ -20,13 +20,15 @@ use \Exception as Exception;
 
 class Type {
 	
+	public $errors = array();
+
 	protected $_cname = '';
 	protected $_data_format = 'string';
 	protected $_data_input = array();
 	protected $_data_message = array();
 	protected $_data = array();
 	protected $_option = array();
-	public $errors = array();
+	protected $_public = array(); // 普通用户可通过工具编辑分类列表
 
 	private $_path;
 	private $_instance;
@@ -111,6 +113,11 @@ class Type {
 		return $this;
 	}
 
+	public function setPublic( $public_list ) {
+		$this->_public = $public_list;
+		return $this;
+	}
+
 	/**
 	 * 载入类型定义类
 	 * @param  [type] $name 类型名称 (区分大小写)
@@ -137,7 +144,9 @@ class Type {
 		}
 
 		// 创建实例
-		return new $class_name( $data, $option );
+		return (new $class_name( $data, $option ))
+					->setPath($this->_path)
+					->setPublic( $this->_public );
 	}
 
 
@@ -162,6 +171,7 @@ class Type {
 			'data' => array_merge($this->_data, $this->_option, array('_type'=>$typeName)),
 			'option' => $this->_option,
 			'type' => $typeName,
+			'public' => $this->_public,
 			'cname' => $this->_cname,
 		];
 		$html = $this->_render( $data, $tpl );
@@ -179,8 +189,10 @@ class Type {
 			'data' => array_merge($this->_data, $this->_option, array('_type'=>$typeName)),
 			'option' => $this->_option,
 			'type' => $typeName,
+			'public' => $this->_public,
 			'cname' => $this->_cname,
 		];
+
 		$html = $this->_render( $data, $tpl );
 		return ['status'=>'success','html'=>$html, 'data'=>$data];
 	}

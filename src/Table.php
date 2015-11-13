@@ -478,7 +478,7 @@ class Table {
 
 
 		} else if( isset($this->_sheet['columns'][$field_name]) ) {  // 渲染服务器数据
-			$Type = $this->_sheet['columns'][$field_name];
+			$Type = $this->_sheet['columns'][$field_name];			
 		}
 
 		return $Type->renderUpdate( $this->_sheet_id, $option );
@@ -526,11 +526,17 @@ class Table {
 		}
 		$templete = (isset($option['templete']))? $option['templete'] : 'columns.container';
 		$tpl = (isset($option['tpl']))? $option['tpl'] : $this->_tpl_filename($templete);
+		$allow_types = $this->C('type/public/list'); // 开放型字段列表
 
 		$data = ['items' => [], 'instance'=>$option];
 		foreach ($this->_sheet['columns'] as $field=>$type ) {
-			// 是否显示隐藏字段
+			// display_hidden=0 不显示隐藏字段
 			if ( !$option['display_hidden'] && $type->option('hidden') ) { 
+				continue;
+			}
+
+			//忽略非开放字段类型
+			if ( !in_array(@end(explode('\\', get_class($type))), $allow_types) ) { 
 				continue;
 			}
 
@@ -556,12 +562,22 @@ class Table {
 
 		$templete = (isset($option['templete']))? $option['templete'] : 'columns.container';
 		$tpl = (isset($option['tpl']))? $option['tpl'] : $this->_tpl_filename($templete);
+		$allow_types = $this->C('type/public/list'); // 开放型字段列表
+
+
 		$data = ['items' =>[], 'instance'=>$option, 'item_only'=>true ];
 		foreach ( $columns as $field=>$type ) {
 			
+			// display_hidden=0 不显示隐藏字段
 			if ( !$option['display_hidden'] && $type->option('hidden') ) { 
 				continue;
 			}
+
+			//忽略非开放字段类型
+			if ( !in_array(@end(explode('\\', get_class($type))), $allow_types) ) { 
+				continue;
+			}
+
 			$data['items'][$field] = $type->renderItem( $this->_sheet_id, $field, $option );
 		}
 		$html = $this->_render( $data, $tpl );
@@ -625,12 +641,19 @@ class Table {
 			if ( is_a($this->_type, "Tuanduimao\Supertable\Type") ) {
 				return $this->_type;
 			}
-			return (new Type())->setPath( $this->C('path') );
+
+			$this->_type = (new Type())
+								->setPath( $this->C('path') )
+								->setPublic( $this->C('type/public'));
+
+			return $this->_type;
 		}
-		
+
 		return (new Type())
 			 ->setPath( $this->C('path') )
-			 ->load( $name, $data, $option )->setPath( $this->C('path') );
+			 ->setPublic( $this->C('type/public'))
+			 ->load( $name, $data, $option );
+
 	}
 
 
