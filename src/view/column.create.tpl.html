@@ -64,7 +64,7 @@
         <?php endif; ?>
 
         <!-- col Start -->
-        <div class="col-lg-<?=$opt['input_width']?> ">
+        <div class="col-lg-<?=$opt['input_width']?> col-sm-<?=$opt['input_width']?> col-xs-12">
             <!-- Form-Material Start -->
             <div class="form-material">
             <?php if( $opt['input_type'] == 'text' ) : ?>
@@ -110,6 +110,7 @@
             </div> <!-- Form-Material END -->
         </div> <!-- col END -->
         <?php endforeach; ?>
+        
 
     </div><!-- INPUT LIST FROM GROUP END -->
 
