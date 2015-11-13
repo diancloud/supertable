@@ -240,9 +240,39 @@ class Table {
 		$this->_schema->dropField( $this->_sheet_id, $column_name, $allow_not_exists );
 		return $this->selectSheet( $this->_sheet_id );
 	}
+
+
+	public function synColumn( $data ) {
+		
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		if ( !is_array($data) ) {
+			throw new Exception(" Input Error. data is not array!");
+		}
+		foreach ($data as $method => $datar ) {
+			$method = "{$method}Column";
+			foreach ($datar as $field => $data ) {
+				if ($method == 'dropColumn' ) {
+					$this->$method( $field);
+				} else {
+
+					$type_name = $data['_type'];
+					$type = $this->type($type_name, $data);
+					// echo "field:$field ====================\n";
+					// print_r( $data );
+					// print_r( $type->toArray());
+					// echo "\n\n";
+
+					$this->$method( $field, $type );
+
+				}
+			}
+		}
+		return $this->selectSheet( $this->_sheet_id );
+	}
 	
-
-
 
 	// === 数据 (Data) 相关操作 CRUD ==========================
 	
