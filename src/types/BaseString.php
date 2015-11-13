@@ -66,10 +66,12 @@ class BaseString extends Type {
 		 	'searchable' => $opts['searchable'],
 		 	'unique' => $opts['unique'],
 		 	'order' => $opts['order'],
+		 	'hidden' => $opts['hidden'],
+		 	'dropable' => $opts['dropable'],
 		 	'column_name' => $opts['column_name'],
 		 	'field_name' => $opts['field_name'],
 		];
-
+		
 		$data = [
 			'maxvalue' => $opts['maxlength'],
 			'minvalue' => $opts['minlength'],

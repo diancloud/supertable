@@ -529,6 +529,11 @@ class Table {
 
 		$data = ['items' => [], 'instance'=>$option];
 		foreach ($this->_sheet['columns'] as $field=>$type ) {
+			// 是否显示隐藏字段
+			if ( !$option['display_hidden'] && $type->option('hidden') ) { 
+				continue;
+			}
+
 			$data['items'][$field] = $type->renderItem( $this->_sheet_id, $field, $option );
 		}
 		$html = $this->_render( $data, $tpl );
@@ -553,14 +558,16 @@ class Table {
 		$tpl = (isset($option['tpl']))? $option['tpl'] : $this->_tpl_filename($templete);
 		$data = ['items' =>[], 'instance'=>$option, 'item_only'=>true ];
 		foreach ( $columns as $field=>$type ) {
+			
+			if ( !$option['display_hidden'] && $type->option('hidden') ) { 
+				continue;
+			}
 			$data['items'][$field] = $type->renderItem( $this->_sheet_id, $field, $option );
 		}
 		$html = $this->_render( $data, $tpl );
 
 		return ['status'=>'success','html'=>$html, 'data'=>$data];
 	}
-
-
 
 	/**
 	 * Column 查询Column 列表页面和JS组件
