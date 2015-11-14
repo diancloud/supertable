@@ -13,9 +13,11 @@
  */
 
 namespace Tuanduimao\Supertable;
+
 use \Exception as Exception;
 use Tuanduimao\Supertable\Schema;
 use Tuanduimao\Supertable\Type;
+use Tuanduimao\Supertable\Items;
 
 
 /**
@@ -141,16 +143,13 @@ class Table {
 		return $this->selectSheet( $sheet_id );
 	}
 
-
-
+	// 读取所有表格
+	public function querySheet(  $options, $page=null,  $perpage=20, $maxrows=0 ) {
+		return $this->_schema->querySheet( $options, $page, $perpage, $maxrows );
+	}
 
 	// 删除一个表格
 	public function deleteSheet( $removedata = false ) {
-	}
-
-
-	// 读取所有表格
-	public function getSheetList() {
 	}
 
 

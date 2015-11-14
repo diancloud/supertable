@@ -15,6 +15,8 @@
 namespace Tuanduimao\Supertable;
 use \Exception as Exception;
 use Tuanduimao\Supertable\Type;
+use Tuanduimao\Supertable\Items;
+use Tuanduimao\Supertable\Item;
 
 
 class Schema {
@@ -105,6 +107,26 @@ class Schema {
 	public function updateSheet( $id, $data = array() ) {
 		$this->_stor->updateSchemaData($id, $data );
 		return $id;
+	}
+
+
+	/**
+	 * 根据$options设置的查询条件，检索符合条件数据表(Sheet)
+	 * @param  [type]  $options [description]
+	 * @param  [type]  $page    [description]
+	 * @param  integer $perpage [description]
+	 * @param  integer $maxrows [description]
+	 * @return [type]           [description]
+	 */
+	public function querySheet( $options, $page=null,  $perpage=20, $maxrows=0 ) {
+		 $items = $this->_stor->querySchema( $options, $page, $perpage, $maxrows );
+		 $items->each( function( $item, $schema ) {
+		 	$data = $item->toArray();
+		 	$schema->_formatSheet($data);
+		 	return new Item( $data );
+		 }, $this );
+
+		 return $items;
 	}
 
 

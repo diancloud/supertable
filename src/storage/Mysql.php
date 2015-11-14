@@ -13,6 +13,8 @@
  */
 
 Namespace Tuanduimao\Supertable\Storage;
+use \Tuanduimao\Supertable\Items as Items;
+use \Tuanduimao\Supertable\Item as Item;
 use \Mysqli as Mysqli;
 use \Exception as Exception;
 
@@ -236,6 +238,112 @@ class Mysql {
 
 
 	/**
+	 * API: 数据表查询接口
+	 * @param  Array|String  $options 查询条件  array('f1'=>'6', '@order'=>'order by id desc', '@limit'=>'3,5') | "f1='6' order by id desc limit 3,5 "
+	 * @param  integer $page    当前页码
+	 * @param  integer $perpage 每页显示几条记录 （默认为 20 ）
+	 * @param  integer $maxrows 最多返回几条记录 （ 默认为 0 表示无限 ）
+	 * @return cblObjectList 返回List对象
+	 */
+	function querySchema(  $options, $page=null,  $perpage=20, $maxrows=0  ){
+
+		// 查询条件
+		$where = "1";
+		$limit = null;
+		$order = "";
+		$table = $this->_table['schema'];
+		$primary_field = $this->_schema_table['primary']['COLUMN_NAME'];
+
+		if ( is_array($options) ) {
+
+			// 处理LIMIT语法
+			if ( isset( $options['@limit'] ) ) {
+				$limit = $options['@limit'];
+			}
+			if ( isset( $options['@order'] ) ) {
+				$order = $options['@order'];
+			}
+			$this->_filter( $options, $this->_schema_table );
+
+			$filed_list_arr = array();
+			$filed_value = array();
+			foreach ($options as $k => $v) {
+				array_push($filed_list_arr, "`$k` =?s ");
+				array_push( $filed_value, $v );
+			}
+			$where = implode(' AND ', $filed_list_arr);
+		} else if ( is_string($options) ) {
+
+			// 处理LIMIT语法
+			if( preg_match("/([Ll]{1}[Ii]{1}[Mm]{1}[Ii]{1}[Tt]{1}[ ]+([0-9]+)[,]*([0-9]*))[ ]*/", $options, $match ) ) {
+
+				$limit_str = $match[0];
+				$offset = ( is_numeric($match[3]) ) ? $match[2] : 0;
+				$rows = ( is_numeric($match[3]) ) ? $match[3] : $match[2];
+				$limit = "$offset,$rows";
+				$options = str_replace($limit_str, '', $options );
+			}
+
+			$where = $options;
+		}
+
+		$record_total = null;
+		$from = 0;
+
+
+		$items = new Items();
+
+		// 如果设置页号，则计算分页
+		$record_limit =( $limit != null) ? "LIMIT $limit" : "";
+
+		if ( $page !== null && is_numeric($page) ) {
+			
+
+			$sql_record_total = prepare( "SELECT count($primary_field) as cnt FROM `{$table}` WHERE $where", $filed_value );
+			$record_total = $this->getVar($sql_record_total);
+
+			if ( ($maxrows > 0 ) &&  ($record_total > $maxrows) ) {
+				$record_total = $maxrows;
+			}
+
+			
+			$record_total = intval($record_total);
+
+			// 计算分页
+			$record_limit = $items->pagination( $page, $perpage, $record_total );
+		}
+
+		// 查询数据
+		$sql = prepare( "SELECT * FROM `{$table}` WHERE $where $order $record_limit", $filed_value );
+		$rows = $this->getData( $sql );
+
+		if ( $rows == null ) { // 记录不存在
+			return $items;
+		}
+
+
+		foreach ($rows as $row ) {
+
+			$row['_spt_schema_json'] = json_decode($row['_spt_schema_json'], true);
+			$row['_spt_schema_json']  =  ( $row['_spt_schema_json']  == null )? array(): $row['_spt_schema_json'];
+			$row['_id'] = $row[$primary_field];
+
+			// ？过滤数据 
+			/* foreach ($row as $k => $v) {
+				if ( preg_match('/_spt_(.+)/', $k, $match) ){
+					unset($row[$k]);
+				}
+			} */
+			$item = new Item( $row );
+			$items->push( $item );
+		}
+
+		return $items;
+	}
+
+
+
+	/**
 	 * API: 根据ID更新一个数据结构
 	 * @param  [type] $schema_id [description]
 	 * @param  [type] $data      [description]
@@ -250,10 +358,6 @@ class Mysql {
 		$this->_update( $table['schema'], $data,  $this->_schema_table );
 		return $schema_id;
 	}
-
-
-
-
 
 
 
