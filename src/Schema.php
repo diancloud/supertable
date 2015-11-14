@@ -138,13 +138,19 @@ class Schema {
 	 */
 	public function deleteSheet( $id, $mark_only=true  ) {
 
-		if ( $mark_only == true ) {
-			
+		// 删除索引
+		try {
+			$schema = $this->_stor->getSchema( $id );
+			if ( $this->_search->deleteType( $schema['_spt_name'] ) === false ) {
+				throw new Exception("Search Error: " . $this->_search->error() );	
+			}
+		} catch(Exception $e ) {
+			throw new Exception($e->getMessage());	
 		}
 
+		// 删除记录
+		return $this->_stor->dropSchema( $id, $mark_only );
 	}
-
-
 
 
 	/**

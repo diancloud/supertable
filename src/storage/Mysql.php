@@ -180,7 +180,7 @@ class Mysql {
 		$table_name = $this->getDB('master')->real_escape_string( $this->_table['schema']);
 		$primary_field = $this->_schema_table['primary']['COLUMN_NAME'];
 
-		$sql = $this->prepare("SELECT * from `$table_name` WHERE `$primary_field`=?s LIMIT 1", $schema_id);
+		$sql = $this->prepare("SELECT * from `$table_name` WHERE `$primary_field`=?s AND `_spt_is_deleted` ='0' LIMIT 1", $schema_id);
 		$data = $this->getLine( $sql, 'slave' );
 
 		if ( $data == null ) {
@@ -205,7 +205,7 @@ class Mysql {
 		$table_name = $this->getDB('master')->real_escape_string( $this->_table['schema']);
 		$primary_field = $this->_schema_table['primary']['COLUMN_NAME'];
 
-		$sql = $this->prepare("SELECT * from `$table_name` WHERE `_spt_name`=?s LIMIT 1", $schema_name);
+		$sql = $this->prepare("SELECT * from `$table_name` WHERE `_spt_name`=?s AND `_spt_is_deleted` ='0'  LIMIT 1", $schema_name);
 		$data = $this->getLine( $sql, 'slave' );
 
 		if ( $data == null ) {
@@ -255,13 +255,17 @@ class Mysql {
 	function querySchema(  $options, $page=null,  $perpage=20, $maxrows=0  ){
 
 		// 查询条件
-		$where = "1";
+		$where = " 1 ";
 		$limit = null;
 		$order = "";
 		$table = $this->_table['schema'];
 		$primary_field = $this->_schema_table['primary']['COLUMN_NAME'];
 
 		if ( is_array($options) ) {
+
+			if ( !isset($options['_spt_is_deleted'])) {
+				$options['_spt_is_deleted'] = "0";
+			}
 
 			// 处理LIMIT语法
 			if ( isset( $options['@limit'] ) ) {
@@ -328,7 +332,6 @@ class Mysql {
 			return $items;
 		}
 
-
 		foreach ($rows as $row ) {
 
 			$row['_spt_schema_json'] = json_decode($row['_spt_schema_json'], true);
@@ -391,9 +394,46 @@ class Mysql {
 			// var_dump("$affect_rows");
 			throw new Exception("$schema_id maybe not exists! nothing done!");
 		}
-
 		return $schema_id;
 	}
+
+
+	/**
+	 * API: 删除一个数据结构记录，同步删除数据
+	 * @param  [type]  $schema_id [description]
+	 * @param  boolean $mark_only [description]
+	 * @return [type]             [description]
+	 */
+	function dropSchema( $schema_id, $mark_only=true ) {
+		$table = $this->_table;
+		$primary_field = $this->_schema_table['primary']['COLUMN_NAME'];
+
+		if ( $mark_only == true ) {
+			$affected_rows = 0;
+			$sqlSchema = $this->prepare("UPDATE {$table['schema']} SET `_spt_is_deleted`='1' WHERE  `$primary_field` = ?s LIMIT 1 ", $schema_id);
+			$sqlData =  $this->prepare("UPDATE {$table['data']} SET `_spt_is_deleted`='1' WHERE  `_spt_schema_id` = ?s", $schema_id);
+
+			$this->run_sql($sqlSchema, 'master');
+			$affected_rows = $affected_rows + $this->affected_rows();
+			$this->run_sql($sqlData, 'master');
+			$affected_rows = $affected_rows + $this->affected_rows();
+			return $affected_rows;
+
+		} else {
+
+			$affected_rows = 0;
+			$sqlSchema = $this->prepare("DELETE {$table['schema']}  WHERE  `$primary_field` = ?s LIMIT 1 ", $schema_id);
+			$sqlData =  $this->prepare("DELETE {$table['data']}  WHERE  `_spt_schema_id` = ?s", $schema_id );
+			$this->run_sql($sqlSchema, 'master');
+			$affected_rows = $affected_rows + $this->affected_rows();
+			$this->run_sql($sqlData, 'master');
+			$affected_rows = $affected_rows + $this->affected_rows();
+			return $affected_rows;
+		}
+	}
+
+
+
 
 	/**
 	 * API: 添加一个字段
@@ -532,7 +572,7 @@ class Mysql {
 
 		$table_name = $this->_table['data'];
 		$primary_key = $this->_data_table['primary']['COLUMN_NAME'];
-		$sql = $this->prepare("SELECT * from `$table_name` WHERE `$primary_key`=?s LIMIT 1", array($id) );
+		$sql = $this->prepare("SELECT * from `$table_name` WHERE `$primary_key`=?s AND `_spt_is_deleted`='0' LIMIT 1", array($id) );
 		$row = $this->getLine($sql);
 		$data = json_decode($row['_spt_data_json'], true );
 		if( json_last_error() !== JSON_ERROR_NONE) {

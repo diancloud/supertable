@@ -180,6 +180,29 @@
  		return true;
 	}
 
+	/**
+	 * 删除一个TYPE
+	 * @param  [type] $name [description]
+	 * @return [type]       [description]
+	 */
+	function deleteType( $name ) {
+		
+		$index = $this->_index['index'];
+ 		$type = $this->_index['type'] . $name;
+
+ 		$deleteMappingParam = [
+ 			'index' => $index,
+ 			'type' => $type,
+ 		];
+ 		$result = $this->_client->indices()->deleteMapping( $deleteMappingParam );
+ 		if (!$result['acknowledged']) {
+ 			// print_r($result);
+ 			return false;
+ 		}
+ 		return true;
+	}
+
+
 
 	/**
 	 * 创建数据索引
