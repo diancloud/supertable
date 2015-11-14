@@ -275,12 +275,16 @@ class InlineText extends Type {
 
 		$value = strval($value);
 		$errflag = false;
+		
+		$name = $this->_data['screen_name'];
+		$name = ( $name != "" ) ? $name : $this->_option['screen_name'];
 
 		// 校验是否必填
 		if( $this->_option['required'] && ($value === null  || $value === "") ) {
-			$message = $this->_message('required', array('screen_name'=>$this->_option['screen_name']) );
-			array_push($this->errors, array('required'=>$message) );
+			$message = $this->_message('required', array('screen_name'=>$this->_data['screen_name']) );
+			$this->errors = array_merge($this->errors, [ "$name"=>[['method'=>'required','message'=>$message]] ] );
 			return false;
+
 		} else if ( $value === null || $value === "" ) {
 			return true;
 		}
@@ -293,9 +297,10 @@ class InlineText extends Type {
 				'screen_name'=>$this->_option['screen_name'],
 				'minlength'=>$this->_data['minlength'],
 			));
-			array_push($this->errors, array('minlength'=>$message) );
+			$this->errors = array_merge($this->errors, [ "$name"=>[['method'=>'minlength','message'=>$message]] ] );
 			$errflag = true;
 		}
+
 
 		// 校验最大值
 		if ( !$check->maxwlength($value, $this->_data['maxlength']) ) {
@@ -303,7 +308,7 @@ class InlineText extends Type {
 				'screen_name'=>$this->_option['screen_name'],
 				'maxlength'=>$this->_data['maxlength'],
 			));
-			array_push($this->errors, array('maxlength'=>$message) );
+			$this->errors = array_merge($this->errors, [ "$name"=>[['method'=>'maxlength','message'=>$message]] ] );
 			$errflag = true;
 		}
 

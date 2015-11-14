@@ -35,6 +35,13 @@ class Mysql {
 			'length' => 20,
 			'orhas' => 'PRIMARY KEY',
 		),
+
+		'_spt_schema_id' => array(
+			'type' => 'BIGINT',
+			'index' => array('KEY'),
+			'length' => 20,
+		),
+
 		'_spt_data_json' => array(
 			'type' => 'TEXT',
 			'allow_null' => true,
@@ -536,9 +543,10 @@ class Mysql {
 		return $row;
 	}
 
-	function createData( $data ) {
+	function createData( $data, $sheet_id ) {
 		$table_name = $this->_table['data'];
 		$data['_spt_data_json'] = json_encode( $data );
+		$data['_spt_schema_id'] = $sheet_id;
 		$this->_filter( $data, $this->_data_table );
 		return $this->_create($table_name, $data, $this->_data_table );
 	}
@@ -549,12 +557,13 @@ class Mysql {
 	}
 	
 
-	function updateData( $id, $data ) {
+	function updateData( $id, $data , $sheet_id ) {
 		$table_name = $this->_table['data'];
 		$data_old = $this->getDataByID($id);
 		$data = array_merge($data_old, $data);
 		$data['_spt_data_json'] = json_encode( $data );
 		$data['_spt_update_at'] = 'now';
+		$data['_spt_schema_id'] = $sheet_id;
 		$this->_filter( $data, $this->_data_table );
 		$this->_update($table_name, $data, $this->_data_table );
 		return $id;

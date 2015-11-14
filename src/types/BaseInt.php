@@ -176,8 +176,9 @@ class BaseInt extends Type {
 		if (is_numeric($value)) {
 			$value = intval($value);
 		}
-
-		$name = $this->_option['screen_name'];
+		$name = $this->_data['screen_name'];
+		$name = ( $name != "" ) ? $name : $this->_option['screen_name'];
+		
 		$rule = [
 			"$name" => [
 				'validation' => [
@@ -207,6 +208,7 @@ class BaseInt extends Type {
 			$this->errors = array_merge( $this->errors, $errlist );
 			return false;
 		}
+		
 		return true;
 	}
 

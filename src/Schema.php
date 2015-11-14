@@ -131,6 +131,23 @@ class Schema {
 
 
 	/**
+	 * 删除Sheet
+	 * @param  [type]  $id        [description]
+	 * @param  boolean $mark_only [description]
+	 * @return [type]             [description]
+	 */
+	public function deleteSheet( $id, $mark_only=true  ) {
+
+		if ( $mark_only == true ) {
+			
+		}
+
+	}
+
+
+
+
+	/**
 	 * 读取一个字段
 	 * 
 	 * @param [type] $name [description]

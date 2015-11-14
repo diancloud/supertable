@@ -148,8 +148,19 @@ class Table {
 		return $this->_schema->querySheet( $options, $page, $perpage, $maxrows );
 	}
 
-	// 删除一个表格
-	public function deleteSheet( $removedata = false ) {
+	/**
+	 * 删除一张数据表( Sheet )
+	 * @param  boolean $mark_only true: 标记删除已有数据记录 is_delete=1 (可恢复) , false: 删除已有数据记录 (毁灭性)
+	 * @return [type]              [description]
+	 */
+	public function deleteSheet( $mark_only = true ) {
+
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		return $this->_schema->deleteSheet( $this->_sheet_id, $mark_only );
+
 	}
 
 
@@ -341,13 +352,18 @@ class Table {
 	 */
 	public function create( $data ) {
 
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+
 		// 根据数据结构，检查数据是否合法
 		if ( $this->validation( $data ) === false ) {
 			return false;
 		}
 
 		// 数据入库
-		$data_id = $this->_stor->createData( $data );
+		$data_id = $this->_stor->createData( $data, $this->_sheet_id );
 		$newData = $this->_stor->getDataByID( $data_id );
 		
 		// 添加索引
@@ -367,13 +383,18 @@ class Table {
 	 */
 	public function update( $data_id, $data ) {
 
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+
 		// 根据数据结构，检查数据是否合法
 		if ( $this->validation( $data, true ) === false ) {
 			return false;
 		}
 
 		// 数据存储更新
-		$this->_stor->updateData( $data_id, $data );
+		$this->_stor->updateData( $data_id, $data, $this->_sheet_id );
 		$newData = $this->_stor->getDataByID( $data_id);
 
 		// 更新索引
@@ -391,6 +412,11 @@ class Table {
 	 * @return [type]          [description]
 	 */
 	public function delete( $data_id ) {
+
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
 
 		// 更新索引
 		if ( $this->_search->deleteData( $this->_sheet, $data_id ) == false ){
@@ -431,7 +457,7 @@ class Table {
 				$type = $this->_sheet['columns'][$field];
 				if ( !$type->validation( $value ) ) {
 					$errflag = true;
-					$this->errors = array_merge($type->errors, $this->errors);
+					$this->errors = array_merge($this->errors, $type->errors);
 				}
 			}
 
@@ -439,11 +465,11 @@ class Table {
 			foreach ($this->_sheet['columns'] as $name=>$type ) {
 				if ( !$type->validation( $data[$name] ) ) {
 					$errflag = true;
-					$this->errors = array_merge($type->errors, $this->errors);
+					$this->errors = array_merge($this->errors, $type->errors);
 				}
+
 			}
 		}
-
 		return !$errflag;
 	}
 
