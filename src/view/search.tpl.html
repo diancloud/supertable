@@ -1,0 +1,84 @@
+<form 
+    id="<?=$instance['id']?>" 
+    name="<?=$instance['name']?>"
+    class="form-horizontal push-5-t"
+    action="<?=$instance['action']?>" 
+    method="post" >
+    
+	<!-- PC呈现 -->
+	<div class="form-group hidden-xs">
+        <?php 
+        $colcnt = 0;
+        $instance['action_name'] = (isset($instance['action_name']))? $instance['action_name'] : "";
+        $groupcnt = 0;
+        foreach ($items as $field => $info ) : 
+        	$opt = $info['data']['data'];
+            $opt['input_width'] = (isset($opt['input_width']))? $opt['input_width'] : 6;
+            $opt['input_width'] = ($opt['input_width'] > 12)? 12 : $opt['input_width'];
+            $opt['input_width'] = ($opt['input_width'] < 1)? 1 : $opt['input_width'];
+            $colcnt = $opt['input_width'] + $colcnt;
+            $groupcnt = $opt['input_width'] + $groupcnt;
+        ?>
+        <?php 
+	    if( $groupcnt > 12 ) : 
+	    $groupcnt = $groupcnt  - 12; ?>
+
+    </div><!-- END GROUP LINE -->
+    <!-- NEW GROUP LINE -->
+    <div class="form-group hidden-xs">  
+        	<?php endif; ?>
+		<?php if ( $info['html'] != null ) : echo $info['html']; else : 
+			$data = $info['data']['data'];
+			$data['width'] = (isset($data['width'])) ? $data['width'] : 6;
+		 ?>
+  			<div class="col-lg-<?=$data['width']?> col-md-<?=$data['width']?> col-sm-<?=$data['width']?>" >
+			    <div class="form-material">
+			        <input class="form-control" type="text" 
+			               value="<?=$data['default']?>" 
+			               id="<?=$data['name']?>" name="<?=$data['name']?>" placeholder="<?=$data['placeholder']?>">
+			        <label for="<?=$data['name']?>"><?=$data['screen_name']?></label>
+			    </div>
+			</div>
+    	<?PHP endif; ?>
+        <?php endforeach; ?>
+    </div><!-- INPUT LIST FROM GROUP END -->
+
+	<!-- 手机呈现 -->
+    <?php foreach ($items as $field => $info ) : ?>
+    	<?php if ( $info['html'] != null ) : ?>
+    		<div class="form-group hidden-lg hidden-sm hidden-md">
+    			<?=$info['html']?>
+    		</div>
+    	<?php else : 
+			$data = $info['data']['data'];
+			$data['width'] = (isset($data['width'])) ? $data['width'] : 6;
+		 ?>
+    	<div class="form-group hidden-lg hidden-sm hidden-md">
+			<div class="col-xs-12" >
+			    <div class="form-material">
+			        <input class="form-control" type="text" 
+			               value="<?=$data['default']?>" 
+			               id="<?=$data['name']?>" name="<?=$data['name']?>" placeholder="<?=$data['placeholder']?>">
+			        <label for="<?=$data['name']?>"><?=$data['screen_name']?></label>
+			    </div>
+			</div>
+		</div>	
+		<?PHP endif; ?>
+	<?php endforeach; ?>
+	
+	
+	<!-- 搜索按钮  -->
+	<div class="form-group  <?php if(!$instance['display_submit'] ):?> hidden <?php endif; ?>">
+		<div class="col-xs-12" >
+		    <div class="form-material">
+		        <button class="btn btn-primary supertable-submit" type="submit" 
+		               id="search-submit" name="search-submit">
+		         <?php if(isset($instance['submit_name'])):?><?=$instance['submit_name']?><?php else: ?> 搜索 <?php endif; ?>
+		        </button>
+		        <label for=""></label>
+		    </div>
+		</div>
+	</div>
+
+
+</form>

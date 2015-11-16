@@ -97,6 +97,20 @@ class Type {
 		return  false;
 	}
 
+	public function isHidden(){
+		if ( $this->_option['hidden'] )  {
+			return true;
+		}
+		return  false;
+	}
+
+	public function order() {
+		if ( isset($this->_option['order']) ) {
+			return intval($this->_option['order']);
+		}
+		return 1;
+	}
+
 	public function isUnique() {
 		if ( $this->_option['unique'] )  {
 			return true;
@@ -217,14 +231,18 @@ class Type {
 
 
 	public function renderItem( $sheet_id, $field_name, $option ) {
-		$templete = (isset($option['templete']))? "{$option['templete']}-item" : null;
-		$tpl = (isset($option['tpl']))? "{$option['tpl']}" : null;	
+		$templete = (isset($option['templete']))? "{$option['templete']}-item" : null; // 模板名称
+		$tpl = (isset($option['tpl']))? "{$option['tpl']}" : null;	// 模板文件地址
 		if ( $tpl != null ){
 			$file_name = basename($tpl);
 			$item_file_name = str_replace('.tpl.html', '-item.tpl.html', $file_name);
 			$tpl = str_replace($file_name, $item_file_name, $tpl );
 		}
-		$tpl = ($tpl!=null)? $tpl : $this->getTplFile( $templete );
+		$tpl = ($tpl != null)? $tpl : $this->getTplFile( $templete );
+
+		if (!file_exists($tpl)  ) {  // 载入默认模板 form-item
+			$tpl = $this->getTplFile('form-item');
+		}
 		
 		$typeName  = @end(@explode('\\', get_class($this)));
 		$option['sheet_id'] = $sheet_id;
@@ -252,16 +270,16 @@ class Type {
 		$data['_type'] = $class_name = get_class($this);
 		$namer = explode('\\', $class_name);
 		$view_name = end($namer);
-		$view_file =  $this->_path['templete'] . "/$view_name/$name.tpl.html";
+		$view_file =  $this->_path['templete'] . "/$view_name/$name.tpl.html";  // 用户自定义模板路径    eg: /data/my_view/InlineText/$name.tpl.html
 		if ( !file_exists($view_file) ) {
-			$view_file =  $this->_path['templete'] . "/$name.tpl.html";
+			$view_file =  $this->_path['templete'] . "/$name.tpl.html";  // 用户自定义模板路径    eg: /data/my_view/$name.tpl.html
 		}
 		if ( !file_exists($view_file) ) {
-			$view_file = __DIR__ . "/view/$view_name/$name.tpl.html";
+			$view_file = __DIR__ . "/view/$view_name/$name.tpl.html";   // 默认模板路径   eg: <supter_table_root>/view/InlineText/$name.tpl.html
 		}
 
 		if ( !file_exists($view_file) ) {
-			$view_file = __DIR__ . "/view/$name.tpl.html";
+			$view_file = __DIR__ . "/view/$name.tpl.html";   // 默认模板路径   eg: <supter_table_root>/view/$name.tpl.html
 		}
 
 		return $view_file;
@@ -289,7 +307,7 @@ class Type {
 			require( $tpl );
 		}
 		$content = ob_get_contents();
-        ob_clean();
+        ob_end_clean();
         return $content;
 	}
 

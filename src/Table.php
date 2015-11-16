@@ -628,16 +628,52 @@ class Table {
 		return ['status'=>'success','html'=>$html, 'data'=>$data];
 	}
 
+
+
 	/**
-	 * Column 查询Column 列表页面和JS组件
-	 * @param  [type] $tpl [description]
-	 * @return String HTML 代码
+	 * 数据查询: 搜索器
+	 * @param  [type] $option [description]
+	 * @return [type]         [description]
 	 */
-	public function actionColumnGet( $column_name, $tpl=null ) {
+	public function renderSearchForm( $option ) {
 		$this->errors = array();
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
+
+		$columns = (isset($option['columns']))? $option['columns'] : $this->_sheet['columns'];
+		if ( isset($option['columns'])) { unset( $option['columns']); }
+
+		$templete = (isset($option['templete']))? $option['templete'] : 'search';
+		$tpl = (isset($option['tpl']))? $option['tpl'] : $this->_tpl_filename($templete);
+		$option['display_submit'] = (isset($option['display_submit']))? $option['display_submit'] : 1;
+		
+		$data = ['items' =>[], 'instance'=>$option, 'item_only'=>false ];
+		$columns_sort = $this->_columns_sort( $columns );
+
+		foreach ( $columns_sort as $idx=>$column ) {
+			$field = $column['field'];
+			$type = $column['type'];
+			
+			if ( !method_exists($type, 'isSearchable') ) {
+				continue;
+			}
+
+			// display_hidden=0 不显示隐藏字段
+			if ( !$option['display_hidden'] && $type->isHidden() ) { 
+				continue;
+			}
+			if ( !$type->isSearchable() ) { 
+				continue;
+			}
+			$data['items'][$field] = $type->renderItem( $this->_sheet_id, $field, $option );
+		}
+
+		$html = $this->_render( $data, $tpl );
+
+		echo "</pre>";
+
+		return ['status'=>'success','html'=>$html, 'data'=>$data];
 	}
 
 
@@ -659,10 +695,16 @@ class Table {
 			require( $tpl );
 		}
 		$content = ob_get_contents();
-        ob_clean();
+        ob_end_clean();
         return $content;
 	}
 
+
+	/**
+	 * 获取模板路径
+	 * @param  [type] $name [description]
+	 * @return [type]       [description]
+	 */
 	private function _tpl_filename( $name ) {
 
 		$path = $this->C('path');
@@ -673,6 +715,71 @@ class Table {
 
 		return $view_file;
 	}
+
+
+	/**
+	 * 对字段进行排序
+	 * @return [type] [description]
+	 */
+	private function _columns_sort( $columns ) {
+
+		$this->errors = array();
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		$sort = [];
+		foreach ($columns as $field => $type ) {
+			$order = $type->order();
+			if ($type->isHidden() && $order == 1) {
+				$order = 0;
+			}
+			array_push( $sort, ['order'=>$order, 'field'=>$field, 'type'=>$type] );
+		}
+
+		$sort = $this->_array_sort( $sort, 'order' );
+		return $sort;
+	}
+
+
+	private function _array_sort($array,$keys,$type='asc'){
+		if(!isset($array) || !is_array($array) || empty($array)){
+			return '';
+		}
+
+		if(!isset($keys) || trim($keys)==''){
+			return '';
+		}
+
+		if(!isset($type) || $type=='' || !in_array(strtolower($type),array('asc','desc'))){
+			return '';
+		}
+		$keysvalue=array();
+		foreach($array as $key=>$val){
+			$val[$keys] = str_replace('-','',$val[$keys]);
+			$val[$keys] = str_replace(' ','',$val[$keys]);
+			$val[$keys] = str_replace(':','',$val[$keys]);
+			$keysvalue[] =$val[$keys];
+		}
+		asort($keysvalue); //key值排序
+		reset($keysvalue); //指针重新指向数组第一个
+		foreach($keysvalue as $key=>$vals) {
+			$keysort[] = $key;
+		}
+		$keysvalue = array();
+		$count=count($keysort);
+		if(strtolower($type) != 'asc'){
+			for($i=$count-1; $i>=0; $i--) {
+				$keysvalue[] = $array[$keysort[$i]];
+			}
+		}else{
+			for($i=0; $i<$count; $i++){
+				$keysvalue[] = $array[$keysort[$i]];
+			}
+		}
+		return $keysvalue;
+	}
+
 
 
 
