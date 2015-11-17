@@ -1,4 +1,8 @@
-<div class="col-lg-<?=$data['width']?> col-md-<?=$data['width']?> col-sm-<?=$data['width']?> col-xs-12" >
+<div class="col-lg-<?=$data['width']?> col-md-<?=$data['width']?> col-sm-<?=$data['width']?> 
+	<?php if ( in_array($data['column_name'], $instance['fillter']) || in_array($data['screen_name'], $instance['fillter']) ): ?>
+		hidden
+	<?php endif; ?>
+		col-xs-12" >
     <div class="form-material">
         <input class="form-control" type="text" 
                value="<?=$data['default']?>" 
@@ -6,3 +10,5 @@
         <label for="<?=$data['name']?>"><?=$data['screen_name']?></label>
     </div>
 </div>
+
+

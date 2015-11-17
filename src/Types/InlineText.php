@@ -264,6 +264,32 @@ class InlineText extends Type {
 
 
 	/**
+	 * 生成 jquery-validation 验证规则 
+	 * @return [type] [description]
+	 */
+	public function jsValidation() {
+
+		$column_name = $this->get('column_name');
+		$screen_name = $this->get('screen_name');
+		$rules = [
+			'maxlength' => $this->get('maxlength'),
+			'minlength' => $this->get('minlength'),
+		];
+
+		$messages = [
+			'maxlength' => "{$screen_name}不能超过".$this->get('maxlength')."个字",
+			'minlength' => "{$screen_name}至少".$this->get('minlength')."个字",
+		];
+
+		if ( $this->isRequired() ) {
+			$rules['required'] = true;
+			$messages['required'] = "请填写{$screen_name}";
+		}
+		return json_encode(['rules'=> [$column_name=>$rules], 'messages'=>[$column_name=>$messages]]);
+	}
+
+
+	/**
 	 * 重载数据校验函数
 	 * @param  [type] $value [description]
 	 * @return [type]        [description]

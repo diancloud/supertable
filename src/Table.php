@@ -671,9 +671,52 @@ class Table {
 
 		$html = $this->_render( $data, $tpl );
 
-		echo "</pre>";
-
 		return ['status'=>'success','html'=>$html, 'data'=>$data];
+	}
+
+
+	/**
+	 * 数据增加/修改表单
+	 * @param  [type] $option [description]
+	 * @return [type]         [description]
+	 */
+	public function renderDataForm( $option ) {
+		$this->errors = array();
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		$columns = (isset($option['columns']))? $option['columns'] : $this->_sheet['columns'];
+		if ( isset($option['columns'])) { unset( $option['columns']); }
+
+		$templete = (isset($option['templete']))? $option['templete'] : 'data.form';
+		$tpl = (isset($option['tpl']))? $option['tpl'] : $this->_tpl_filename($templete);
+
+		$option['fillter'] = (isset($option['fillter']))? $option['fillter'] : [];
+		$option['display_submit'] = (isset($option['display_submit']))? $option['display_submit'] : 0;
+		
+		$data = ['items' =>[], 'instance'=>$option, 'item_only'=>false ];
+		$columns_sort = $this->_columns_sort( $columns );
+
+		foreach ( $columns_sort as $idx=>$column ) {
+			$field = $column['field'];
+			$type = $column['type'];
+			
+			if ( !method_exists($type, 'isSearchable') ) {
+				continue;
+			}
+
+			// display_hidden=0 不显示隐藏字段
+			if ( !$option['display_hidden'] && $type->isHidden() ) { 
+				array_push($data['instance']['fillter'], $field);
+			}
+
+			$data['items'][$field] = $type->renderItem( $this->_sheet_id, $field, $option );
+		}
+
+		$html = $this->_render( $data, $tpl );
+		return ['status'=>'success','html'=>$html, 'data'=>$data];
+		
 	}
 
 

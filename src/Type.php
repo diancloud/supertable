@@ -70,6 +70,19 @@ class Type {
 		return null;
 	}
 
+	public function get( $name ) {
+
+		if ( isset($this->_data[$name])) {
+			return $this->_data[$name];
+		}
+
+		if ( isset($this->_option[$name])) {
+			return $this->_option[$name];
+		}
+
+		return null;
+	}
+
 
 	public function setOption( $option ) {
 		$this->_option = $option;
@@ -94,11 +107,31 @@ class Type {
 		if ( $this->_option['searchable'] )  {
 			return true;
 		}
+
+		if ( $this->_data['searchable'] )  {
+			return true;
+		}
 		return  false;
 	}
 
+	public function isRequired(){
+		if ( $this->_option['required'] )  {
+			return true;
+		}
+
+		if ( $this->_data['required'] )  {
+			return true;
+		}
+		return  false;
+	}
+
+
 	public function isHidden(){
 		if ( $this->_option['hidden'] )  {
+			return true;
+		}
+
+		if ( $this->_data['hidden'] )  {
 			return true;
 		}
 		return  false;
@@ -113,6 +146,10 @@ class Type {
 
 	public function isUnique() {
 		if ( $this->_option['unique'] )  {
+			return true;
+		}
+
+		if ( $this->_data['unique'] )  {
 			return true;
 		}
 		return  false;
@@ -172,6 +209,13 @@ class Type {
 	public function validation( & $value ) {
 		return true;
 	}
+
+
+	public function jsValidation() {
+		$rules = [];
+		return json_encode($rules);
+	}
+
 
 	// === 页面渲染相关Helper ==========================
 	public function renderCreate( $sheet_id, $option ) {
@@ -243,9 +287,10 @@ class Type {
 		if (!file_exists($tpl)  ) {  // 载入默认模板 form-item
 			$tpl = $this->getTplFile('form-item');
 		}
-		
+
 		$typeName  = @end(@explode('\\', get_class($this)));
 		$option['sheet_id'] = $sheet_id;
+		$option['fillter'] = (isset($option['fillter']))? $option['fillter'] : [];
 		$data =[
 			'instance' => $option,
 			'input'=>$this->_data_input,
@@ -255,7 +300,9 @@ class Type {
 			'type' => $typeName,
 			'cname' => $this->_cname,
 			'field' => $field_name,
+			'validation' => $this->jsValidation(),
 		];
+
 		$html = null;
 		if ( file_exists($tpl)) {
 			$html = $this->_render( $data, $tpl );
@@ -263,6 +310,7 @@ class Type {
 
 		return ['status'=>'success','html'=>$html, 'data'=>$data];
 	}
+
 
 
 	public function getTplFile( $name ) {
