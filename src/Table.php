@@ -814,7 +814,8 @@ class Table {
 		$option['sheet_id'] = $this->_sheet_id;
 
 		// 读取数值
-		$option['value'] = (isset($option['_id']))? $this->get($option['_id']) : [];
+		$option['value'] = (is_numeric($option['_id']))? $this->get($option['_id']) : [];
+		
 
 		$data = ['items' =>[], 'instance'=>$option, 'item_only'=>false ];
 		$columns_sort = $this->_columns_sort( $columns );
@@ -831,7 +832,7 @@ class Table {
 			if ( isset($option['value'][$field]) ) {
 				$type->setValue( $option['value'][$field] );
 			}
-			
+
 
 			// display_hidden=0 不显示隐藏字段
 			if ( !$option['display_hidden'] && $type->isHidden() ) { 
