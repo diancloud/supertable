@@ -366,7 +366,7 @@ class Table {
 		}
 
 		// 数据入库
-		$data_id = $this->_stor->createData( $data, $this->_sheet_id );
+		$data_id = $this->_stor->createData( $data, $this->_sheet );
 		$newData = $this->_stor->getDataByID( $data_id );
 		
 		// 添加索引
@@ -405,8 +405,6 @@ class Table {
 
 			return false;
 		}
-
-		$newData['_id'] = $newData['_spt_id'];
 		return $newData;
 	}
 
@@ -469,7 +467,6 @@ class Table {
 			return false;
 		}
 
-		$newData['_id'] = $newData['_spt_id'];
 		return $newData;
 	}
 

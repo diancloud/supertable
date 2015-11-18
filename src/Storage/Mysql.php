@@ -578,14 +578,32 @@ class Mysql {
 		if( json_last_error() !== JSON_ERROR_NONE) {
 			throw new Exception("Storage: updateData JSON Parser Error( " . json_last_error_msg() . ')'. $_spt_data_json);
 		}
-		unset($row['_spt_data_json']);
+		
 		$row = array_merge($data, $row);
+
+		// FixData
+		$row['_id'] = $row[$primary_key];
+		$row['_sheet_id'] =  $row['_spt_schema_id'];
+		$row['create_at'] = $row['_spt_create_at'];
+		$row['update_at'] = $row['_spt_update_at'];
+		$row['is_deleted'] = $row['_spt_is_deleted'];
+
+		unset($row['_spt_id']);
+		unset($row['_spt_data_json']);
+		unset($row['_spt_schema_id']);
+		unset($row['_spt_create_at']);
+		unset($row['_spt_update_at']);
+		unset($row['_spt_is_deleted']);
+
 		return $row;
 	}
 
-	function createData( $data, $sheet_id ) {
+	function createData( $data, $sheet ) {
+		$sheet_id = $sheet['_id'];
 		$table_name = $this->_table['data'];
-		$data['_spt_data_json'] = json_encode( $data );
+		$data_json = $this->_filter_data_json( $data, $sheet );
+
+		$data['_spt_data_json'] = json_encode( $data_json );
 		$data['_spt_schema_id'] = $sheet_id;
 		$this->_filter( $data, $this->_data_table );
 		return $this->_create($table_name, $data, $this->_data_table );
@@ -597,11 +615,13 @@ class Mysql {
 	}
 	
 
-	function updateData( $id, $data , $sheet_id ) {
+	function updateData( $id, $data , $sheet ) {
+		$sheet_id = $sheet['_id'];
 		$table_name = $this->_table['data'];
 		$data_old = $this->getDataByID($id);
 		$data = array_merge($data_old, $data);
-		$data['_spt_data_json'] = json_encode( $data );
+		$data_json = $this->_filter_data_json( $data, $sheet );
+		$data['_spt_data_json'] = json_encode( $data_json );
 		$data['_spt_update_at'] = 'now';
 		$data['_spt_schema_id'] = $sheet_id;
 		$this->_filter( $data, $this->_data_table );
@@ -609,8 +629,19 @@ class Mysql {
 		return $id;
 	}
 
-	
+
 	// ================================================  以下MySQL特有
+
+	private function _filter_data_json( $data, $sheet ) {
+		$data_json = [];
+		foreach ($sheet['columns'] as $field => $type ) {
+			if ( isset($data[$field])) {
+				$data_json[$field] = $data[$field];
+			}
+		}
+
+		return $data_json;
+	}
 
 	private function _filter( & $data, $scheme_table ) {
 		unset($scheme_table['primary']);
