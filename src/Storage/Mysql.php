@@ -639,6 +639,10 @@ class Mysql {
 		$primary_key = $this->_data_table['primary']['COLUMN_NAME'];
 		$sql = $this->prepare("SELECT * from `$table_name` WHERE `$primary_key`=?s AND `_spt_is_deleted`='0' LIMIT 1", array($id) );
 		$row = $this->getLine($sql);
+		if ( $row == null ) {
+			throw new Exception("id=$id data does not exists!");
+		}
+
 		$data = json_decode($row['_spt_data_json'], true );
 		if( json_last_error() !== JSON_ERROR_NONE) {
 			throw new Exception("Storage: updateData JSON Parser Error( " . json_last_error_msg() . ')'. $_spt_data_json);

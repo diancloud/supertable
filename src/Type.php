@@ -314,12 +314,10 @@ class Type {
 			'cname' => $this->_cname,
 		];
 
-		$data['value'] = (isset($data['data']['default']))? $this->valueDecode( $data['data']['default'] ) : "";
+		$data['value'] = (isset($data['data']['default']))? $this->valueEncode( $data['data']['default'] ) : "";
 		$html = $this->_render( $data, $tpl );
 		return ['status'=>'success','html'=>$html, 'data'=>$data];
 	}
-
-
 
 	public function renderItem( $sheet_id, $field_name, $option ) {
 		$templete = (isset($option['templete']))? "{$option['templete']}-item" : null; // 模板名称
@@ -350,12 +348,11 @@ class Type {
 			'validation' => $this->jsValidation(),
 		];
 
-
 		// 设定当前实例数值
 		if ( $this->_value == null ) {
-			$data['value'] = (isset($data['data']['default']))? $this->valueDecode( $data['data']['default'] ) : "";
+			$data['value'] = (isset($data['data']['default']))? $this->valueEncode( $data['data']['default'] ) : "";
 		} else {
-			$data['value'] = $this->getValue();
+			$data['value'] = $this->_value;
 		}
 
 

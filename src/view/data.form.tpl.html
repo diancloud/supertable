@@ -43,9 +43,9 @@
   			  >
 			    <div class="form-material">
 			        <input class="form-control" type="text" 
-			               value="<?=$data['default']?>" 
+			               value='<?=$info['data']['value']?>' 
 			               id="<?=$data['column_name']?>" name="<?=$data['column_name']?>" placeholder="<?=$data['placeholder']?>">
-			        <label for="<?=$data['column_name']?>"><?=$data['screen_name']?></label>
+			        <label for="<?=$data['column_name']?>">11<?=$data['screen_name']?></label>
 			    </div>
 			</div>
     	<?PHP endif; ?>
@@ -65,8 +65,9 @@
 		</div>
 	</div>
 
-	<input type="hidden"  id="_id" name="_id" value="<?=$_id?>" >
+	<input type="hidden"  id="_id" name="_id" value="<?=$instance['_id']?>" >
 	<input type="hidden"  id="sheet_id" name="sheet_id" value="<?=$instance['sheet_id']?>" >
+
 </form>
 
 

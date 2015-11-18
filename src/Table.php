@@ -339,11 +339,8 @@ class Table {
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
-
 		$data =  $this->_stor->getDataByID($data_id);
 		@$this->_search->updateData( $this->_sheet, $data_id, $data ); // 应该被优化掉
-
-		$data['_id'] = $data['_spt_id'];
 		return $data;
 	}
 	
@@ -815,7 +812,10 @@ class Table {
 		$option['fillter'] = (isset($option['fillter']))? $option['fillter'] : [];
 		$option['display_submit'] = (isset($option['display_submit']))? $option['display_submit'] : 0;
 		$option['sheet_id'] = $this->_sheet_id;
-		
+
+		// 读取数值
+		$option['value'] = (isset($option['_id']))? $this->get($option['_id']) : [];
+
 		$data = ['items' =>[], 'instance'=>$option, 'item_only'=>false ];
 		$columns_sort = $this->_columns_sort( $columns );
 
@@ -826,6 +826,12 @@ class Table {
 			if ( !method_exists($type, 'isSearchable') ) {
 				continue;
 			}
+
+			// 给已有数据赋值
+			if ( isset($option['value'][$field]) ) {
+				$type->setValue( $option['value'][$field] );
+			}
+			
 
 			// display_hidden=0 不显示隐藏字段
 			if ( !$option['display_hidden'] && $type->isHidden() ) { 
