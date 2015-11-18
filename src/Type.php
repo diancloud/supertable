@@ -28,6 +28,7 @@ class Type {
 	protected $_data_message = array();
 	protected $_data = array();
 	protected $_option = array();
+	protected $_value = null;
 	protected $_public = array(); // 普通用户可通过工具编辑分类列表
 
 	private $_path;
@@ -176,7 +177,7 @@ class Type {
 	 * @param  [type] $option 字段选项
 	 * @return [type] $this
 	 */
-	public function load( $name, $data, $option ) {
+	final public function load( $name, $data, $option ) {
 
 		$class_path = $this->_path['type'] . "/$name.php";
 		$class_name = "\\Tuanduimao\\Supertable\\Types\\$name";
@@ -211,9 +212,53 @@ class Type {
 	}
 
 
+
+	/**
+	 * JS 验证规则 (构建类型时，重载此方法)
+	 * @return [type] [description]
+	 */
 	public function jsValidation() {
 		$rules = [];
 		return json_encode($rules);
+	}
+
+
+	/**
+	 * 对类型实例数值进行编码 （构建类型时，如需对传入数值解析， 可重载此方法）
+	 * 注意: 返回数值必须为字符串，如为数组或对象，JSON encode 后存入
+	 * @param [type] $column_value [description]
+	 */
+	public function valueEncode( $value ) {
+		return (string) $value;
+	}
+
+
+	/**
+	 * 对类型实例数值进行解码 （构建类型时，如需对传出数值解析， 可重载此方法）
+	 * 注意: 返回数值必须为字符串，如为数组或对象，JSON encode 后存入
+	 * @param [type] $column_value [description]
+	 */
+	public function valueDecode( $value ) {
+		return $value;
+	}
+
+
+	/**
+	 * 设定类型实例数值
+	 * @param mix $value 
+	 * @return $this
+	 */
+	final public function setValue( $value ) {
+		$this->_value = $this->valueEncode($value);
+		return $this;
+	}
+
+	/**
+	 * 读取类型实例的数值 ( 解码之后的数值 )
+	 * @return mix $value
+	 */
+	final public function getValue() {
+		return $this->valueDecode($this->_value);
 	}
 
 
@@ -268,6 +313,8 @@ class Type {
 			'type' => $typeName,
 			'cname' => $this->_cname,
 		];
+
+		$data['value'] = (isset($data['data']['default']))? $this->valueDecode( $data['data']['default'] ) : "";
 		$html = $this->_render( $data, $tpl );
 		return ['status'=>'success','html'=>$html, 'data'=>$data];
 	}
@@ -302,6 +349,15 @@ class Type {
 			'field' => $field_name,
 			'validation' => $this->jsValidation(),
 		];
+
+
+		// 设定当前实例数值
+		if ( $this->_value == null ) {
+			$data['value'] = (isset($data['data']['default']))? $this->valueDecode( $data['data']['default'] ) : "";
+		} else {
+			$data['value'] = $this->getValue();
+		}
+
 
 		$html = null;
 		if ( file_exists($tpl)) {

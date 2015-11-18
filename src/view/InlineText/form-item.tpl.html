@@ -5,10 +5,35 @@
 		col-xs-12" >
     <div class="form-material">
         <input class="form-control" type="text" 
-               value="<?=$data['default']?>" 
+               value="<?=$value?>" 
                id="<?=$data['column_name']?>" name="<?=$data['column_name']?>" placeholder="<?=$data['placeholder']?>">
-        <label for="<?=$data['name']?>"><?=$data['screen_name']?></label>
+        <label for="<?=$data['name']?>" >
+            <?php if ($data['summary']) : ?>
+                <i class="fa fa-star"></i>
+            <?php endif; ?>
+            <?=$data['screen_name']?>
+             <?php if ($data['required']) : ?>
+                <span class="text-danger">*</span>
+            <?php endif; ?>
+        </label>
     </div>
 </div>
+<?php if (isset($instance["_handler"])):?> 
 
 
+<script type="text/javascript">
+  // JS 修改更新表单API
+  $('<?=$instance["_handler"]?>').registerAPI("<?=$data['column_name']?>", function( form, name, value ) {
+      if ( typeof value == 'undefined' ) {
+          return $('[name="'+name+'"]', form).attr('value');
+      }
+
+      if ( typeof value == 'object' ) {
+          value = JSON.stringify(value);
+      }
+
+      $('[name="'+name+'"]', form).attr('value', value);
+      return true;
+  });
+</script>
+<?php endif;?>

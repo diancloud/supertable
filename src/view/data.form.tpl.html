@@ -33,12 +33,13 @@
 			$data = $info['data']['data'];
 			$data['width'] = (isset($data['width'])) ? $data['width'] : 6;
 		 ?>
-  			<div class="col-lg-<?=$data['width']?> col-md-<?=$data['width']?> col-sm-<?=$data['width']?>" 
+  			<div class="col-lg-<?=$data['width']?> col-md-<?=$data['width']?> col-sm-<?=$data['width']?> 
 
   				<?php if ( in_array($data['column_name'], $instance['fillter']) || in_array($data['screen_name'], $instance['fillter']) ): ?>
 					hidden
 				<?php endif; ?>
-
+				
+				"
   			  >
 			    <div class="form-material">
 			        <input class="form-control" type="text" 

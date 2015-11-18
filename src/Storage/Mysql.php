@@ -566,35 +566,16 @@ class Mysql {
 
 
 	//数据插入
-	// ===== 数据操作
+	// ===== 数据操作 API
 
 	function getDataByID( $id ) {
-
-		$table_name = $this->_table['data'];
-		$primary_key = $this->_data_table['primary']['COLUMN_NAME'];
-		$sql = $this->prepare("SELECT * from `$table_name` WHERE `$primary_key`=?s AND `_spt_is_deleted`='0' LIMIT 1", array($id) );
-		$row = $this->getLine($sql);
-		$data = json_decode($row['_spt_data_json'], true );
-		if( json_last_error() !== JSON_ERROR_NONE) {
-			throw new Exception("Storage: updateData JSON Parser Error( " . json_last_error_msg() . ')'. $_spt_data_json);
-		}
-		
-		$row = array_merge($data, $row);
-
-		// FixData
-		$row['_id'] = $row[$primary_key];
-		$row['_sheet_id'] =  $row['_spt_schema_id'];
-		$row['create_at'] = $row['_spt_create_at'];
-		$row['update_at'] = $row['_spt_update_at'];
-		$row['is_deleted'] = $row['_spt_is_deleted'];
-
+		$row = $this->_getDataByID( $id );
 		unset($row['_spt_id']);
 		unset($row['_spt_data_json']);
 		unset($row['_spt_schema_id']);
 		unset($row['_spt_create_at']);
 		unset($row['_spt_update_at']);
 		unset($row['_spt_is_deleted']);
-
 		return $row;
 	}
 
@@ -613,12 +594,11 @@ class Mysql {
 		$table_name = $this->_table['data'];
 		return $this->_delete( $table_name, $id, $this->_data_table );
 	}
-	
 
 	function updateData( $id, $data , $sheet ) {
 		$sheet_id = $sheet['_id'];
 		$table_name = $this->_table['data'];
-		$data_old = $this->getDataByID($id);
+		$data_old = $this->_getDataByID($id);
 		$data = array_merge($data_old, $data);
 		$data_json = $this->_filter_data_json( $data, $sheet );
 		$data['_spt_data_json'] = json_encode( $data_json );
@@ -650,6 +630,29 @@ class Mysql {
 				unset($data[$field]);
 			}
 		}
+	}
+
+
+	private function _getDataByID( $id ) {
+
+		$table_name = $this->_table['data'];
+		$primary_key = $this->_data_table['primary']['COLUMN_NAME'];
+		$sql = $this->prepare("SELECT * from `$table_name` WHERE `$primary_key`=?s AND `_spt_is_deleted`='0' LIMIT 1", array($id) );
+		$row = $this->getLine($sql);
+		$data = json_decode($row['_spt_data_json'], true );
+		if( json_last_error() !== JSON_ERROR_NONE) {
+			throw new Exception("Storage: updateData JSON Parser Error( " . json_last_error_msg() . ')'. $_spt_data_json);
+		}
+		
+		$row = array_merge($data, $row);
+
+		// FixData
+		$row['_id'] = $row[$primary_key];
+		$row['_sheet_id'] =  $row['_spt_schema_id'];
+		$row['create_at'] = $row['_spt_create_at'];
+		$row['update_at'] = $row['_spt_update_at'];
+		$row['is_deleted'] = $row['_spt_is_deleted'];
+		return $row;
 	}
 
 

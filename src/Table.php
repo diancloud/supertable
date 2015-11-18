@@ -349,6 +349,25 @@ class Table {
 	
 
 	/**
+	 * 对表单提交的数据进行解码
+	 * @param  [type] $form_data [description]
+	 * @return $this
+	 */
+	public function decode( & $form_data ) {
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+		foreach ($form_data as $field => $value) {
+			if ( isset($this->sheet()['columns'][$field]) ) {
+				$form_data[$field] = $this->sheet()['columns'][$field]->valueDecode( $value );
+			}
+		}
+		return $this;
+	}
+
+
+
+	/**
 	 * 在当前的数据表(Sheet)中，插入一条记录
 	 * @param  [type] $data Array('field'=>'value' ... )
 	 * @return [type]       [description]
@@ -427,7 +446,7 @@ class Table {
 		}
 
 		// 数据存储更新
-		$this->_stor->updateData( $data_id, $data, $this->_sheet_id );
+		$this->_stor->updateData( $data_id, $data, $this->sheet() );
 		$newData = $this->_stor->getDataByID( $data_id);
 
 		// 更新索引
@@ -478,7 +497,6 @@ class Table {
 	 */
 	public function save( $data ) {
 		$data_id = (isset($data['_id']))? $data['_id'] : null;
-
 		if ( $data_id != null ) {
 			unset($data['_id']);
 			return $this->update( $data_id, $data );
@@ -554,7 +572,6 @@ class Table {
 		}
 		return !$errflag;
 	}
-
 
 	public function error_reporting(){
 		$errors = [];
