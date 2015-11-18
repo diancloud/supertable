@@ -365,7 +365,7 @@
 	 * @param  [type] $except_id   无需检测的ID
 	 * @return [type]              [description]
 	 */
-	private function uniqueCheck( $name, $unique_data, $except_id=null, $map=[] ) {
+	private function uniqueCheck( $name, $unique_data, $except_id=null, $map=[], $allow_null = true ) {
 	
 		$query =array(
 			'index' => $this->_index['index'],
@@ -373,6 +373,12 @@
 		);
 
 		foreach ($unique_data as $field => $value) {
+
+			if ( $allow_null && trim($value) == "" ) {
+				continue;
+			}
+			
+
 			// $query['body']['query']['term'][$field] = $value;
 			if ( $except_id != null ) {
 				$except['not']['filter']['term']['_id'] = $except_id;
