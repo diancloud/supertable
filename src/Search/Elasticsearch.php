@@ -28,6 +28,7 @@
 
  	private $_error = null;
  	private $_errno = null;
+ 	private $_errdt = null; //错误数据
 
 
  	/**
@@ -217,7 +218,7 @@
  		$type = $this->_index['type'] . $sheet['name'];
  		$index_data = $this->getIndexData( $data, $sheet );
 
- 		if( $this->uniqueCheck($sheet['name'], $index_data['unique']) == false ) {
+ 		if( $this->uniqueCheck($sheet['name'], $index_data['unique'], null, $index_data['map']) == false ) {
  			return false;
  		}
 
@@ -256,7 +257,7 @@
  		$type = $this->_index['type'] . $sheet['name'];
  		$index_data = $this->getIndexData( $data, $sheet );
 
- 		if( $this->uniqueCheck($sheet['name'], $index_data['unique'], $id ) == false ) {
+ 		if( $this->uniqueCheck($sheet['name'], $index_data['unique'], $id, $index_data['map'] ) == false ) {
  			return false;
  		}
 
@@ -364,7 +365,7 @@
 	 * @param  [type] $except_id   无需检测的ID
 	 * @return [type]              [description]
 	 */
-	private function uniqueCheck( $name, $unique_data, $except_id=null ) {
+	private function uniqueCheck( $name, $unique_data, $except_id=null, $map=[] ) {
 	
 		$query =array(
 			'index' => $this->_index['index'],
@@ -390,12 +391,16 @@
 			$hits = $result['hits'];
 
 			if ( !isset($hits['total']) ) {
+				$this->_errno = 1062;
+				$this->_errdt = (isset($map[$field]))? $map[$field] : $field;
 				$this->_error = "Index: uniqueCheck /{$this->_index['index']}/$name/$field Error (".json_encode($result).")";
 				return false;
 			}
 
+
 			if ($hits['total'] != 0 ) {
 				$this->_errno = 1062;
+				$this->_errdt = (isset($map[$field]))? $map[$field] : $field;
 				$this->_error =  "Index: uniqueCheck /{$this->_index['index']}/$name/$field/$value duplicate ID={$hits['hits'][0]['_id']} Exisit ！(".json_encode($result).")";
 				return false;
 			}
@@ -407,6 +412,7 @@
 		return true;
 	}
 
+
 	/**
 	 * 给待输入字段增加版本号
 	 * @param  [type] $data  [description]
@@ -416,6 +422,7 @@
 	private function getIndexData( $data, $sheet ) {
 		$index_data = array();
 		$unique_data = array();
+		$field_map = array();
 		foreach ($data as $field => $value ) {
 			if ( !isset($sheet['columns'][$field]) ) {
 				continue;
@@ -423,13 +430,14 @@
 			if ($sheet['columns'][$field]->isSearchable()) {
 				$ver = $sheet['_spt_schema_json'][$field]['_version'];
 				$name = "{$field}_{$ver}";
+				$field_map[$name] = $field;
 				$index_data[$name] = $value;
 				if ($sheet['columns'][$field]->isUnique() ) {
 					$unique_data[$name] = $value;
 				}
 			}
 		}
-		return array('index'=>$index_data, 'unique'=>$unique_data);
+		return array('index'=>$index_data, 'unique'=>$unique_data, 'map'=>$field_map );
 	}
 
 
@@ -713,6 +721,10 @@
 
  	function errno() {
  		return $this->_errno;
+ 	}
+
+ 	function errdt() {
+ 		return $this->_errdt;
  	}
  }
 

@@ -1,0 +1,67 @@
+<form 
+    id="<?=$instance['id']?>" 
+    name="<?=$instance['name']?>"
+    class="form-horizontal push-5-t"
+    action="<?=$instance['action']?>" 
+    method="post" >
+
+	<!-- 手机呈现 -->
+    <?php foreach ($items as $field => $info ) : ?>
+    	<?php if ( $info['html'] != null ) : ?>
+    		<div class="form-group hidden-lg hidden-sm hidden-md">
+    			<?=$info['html']?>
+    		</div>
+    	<?php else : 
+			$data = $info['data']['data'];
+			$data['width'] = (isset($data['width'])) ? $data['width'] : 6;
+		 ?>
+    	<div class="form-group hidden-lg hidden-sm hidden-md  
+    		<?php if ( in_array($data['column_name'], $instance['fillter']) || in_array($data['screen_name'], $instance['fillter']) ): ?>
+					hidden
+				<?php endif; ?>
+    	">
+			<div class="col-xs-12" >
+			    <div class="form-material">
+			        <input class="form-control" type="text" 
+			               value="<?=$data['default']?>" 
+			               id="<?=$data['name']?>" name="<?=$data['name']?>" placeholder="<?=$data['placeholder']?>">
+			        <label for="<?=$data['name']?>"><?=$data['screen_name']?></label>
+			    </div>
+			</div>
+		</div>	
+		<?PHP endif; ?>
+	<?php endforeach; ?>
+
+	<!-- 保存按钮  -->
+	<div class="form-group  <?php if(!$instance['display_submit'] ):?> hidden <?php endif; ?>">
+		<div class="col-xs-12" >
+		    <div class="form-material">
+		        <button class="btn btn-primary supertable-submit" type="submit" 
+		               id="search-submit" name="search-submit">
+		         <?php if(isset($instance['submit_name'])):?><?=$instance['submit_name']?><?php else: ?> 保存 <?php endif; ?>
+		        </button>
+		        <label for=""></label>
+		    </div>
+		</div>
+	</div>
+	<input type="hidden"  id="_id" name="_id" value="<?=$_id?>" >
+	
+</form>
+
+
+<script type="text/javascript">
+jQuery( function(){
+	jQuery('.js-select2').select2();
+    jQuery('[data-toggle="tooltip"], .js-tooltip').tooltip({
+        container: 'form[name="<?=$instance['name']?>"]',
+        animation: false
+    });
+});
+</script>
+
+
+
+
+
+
+

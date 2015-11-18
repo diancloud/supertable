@@ -342,6 +342,8 @@ class Table {
 
 		$data =  $this->_stor->getDataByID($data_id);
 		@$this->_search->updateData( $this->_sheet, $data_id, $data ); // 应该被优化掉
+
+		$data['_id'] = $data['_spt_id'];
 		return $data;
 	}
 	
@@ -370,9 +372,41 @@ class Table {
 		// 添加索引
 		if ( $this->_search->createData( $this->_sheet, $data_id, $newData ) == false ){
 			$this->_stor->deleteData( $data_id );
-			array_push( $this->errors, $this->_search->error() );
+
+			if ( $this->_search->errno() == "1062" ) {
+				$column = $this->_search->errdt();
+				if (isset($this->sheet()['columns'][$column]) ) {
+					$screen_name = $this->sheet()['columns'][$column]->get('screen_name');
+					 $this->errors = array_merge( $this->errors, [$screen_name=>[
+							[ 
+							  "message"=>"{$screen_name}已存在", 
+							  'method'=>'unique', 
+							  'format'=>'unique', 
+							  'field' => $column,
+							  'name'=>$screen_name,
+							  'value'=>$data[$column], 
+							]
+						]
+					]);
+				} else {
+					$this->errors =  array_merge( $this->errors, ['未知数据'=>[[
+						"message"=>"数据有重复", 
+						'method'=>'unique', 
+						'format'=>'unique', 
+						'field' => '<unknown>',
+						'name'=>'未知数据',
+						'value'=>'未知数据',
+					]]]);
+				}
+
+			} else {
+				array_push( $this->errors, $this->_search->error() );
+			}
+
 			return false;
 		}
+
+		$newData['_id'] = $newData['_spt_id'];
 		return $newData;
 	}
 
@@ -401,11 +435,61 @@ class Table {
 		// 更新索引
 		if ( $this->_search->updateData( $this->_sheet, $data_id, $newData ) == false ){
 			array_push( $this->errors, $this->_search->error() );
+
+			if ( $this->_search->errno() == "1062" ) {
+				$column = $this->_search->errdt();
+				if (isset($this->sheet()['columns'][$column]) ) {
+					$screen_name = $this->sheet()['columns'][$column]->get('screen_name');
+					 $this->errors = array_merge( $this->errors, [$screen_name=>[
+							[ 
+							  "message"=>"{$screen_name}已存在", 
+							  'method'=>'unique', 
+							  'format'=>'unique', 
+							  'field' => $column,
+							  'name'=>$screen_name,
+							  'value'=>$data[$column], 
+							]
+						]
+					]);
+				} else {
+					$this->errors =  array_merge( $this->errors, ['未知数据'=>[[
+						"message"=>"数据有重复", 
+						'method'=>'unique', 
+						'format'=>'unique', 
+						'field' => '<unknown>',
+						'name'=>'未知数据',
+						'value'=>'未知数据',
+					]]]);
+				}
+
+			} else {
+				array_push( $this->errors, $this->_search->error() );
+			}
+			
 			return false;
 		}
 
+		$newData['_id'] = $newData['_spt_id'];
 		return $newData;
 	}
+
+
+	/**
+	 * 在当前的数据表(Sheet)中，更新一条记录( 如果不存在则创建 )
+	 * @param  [type] $data [description]
+	 * @return [type]       [description]
+	 */
+	public function save( $data ) {
+		$data_id = (isset($data['_id']))? $data['_id'] : null;
+
+		if ( $data_id != null ) {
+			unset($data['_id']);
+			return $this->update( $data_id, $data );
+		} else {
+			return $this->create( $data );
+		}
+	}
+
 
 	/**
 	 * 再当前数据表(Sheet)中，删除一条记录
@@ -472,6 +556,28 @@ class Table {
 			}
 		}
 		return !$errflag;
+	}
+
+
+	public function error_reporting(){
+		$errors = [];
+		foreach ($this->errors as $name => $value ) {
+			if (is_array($value) ) {
+				$msg_title = "$name: ";
+				foreach ($value as $v ) {
+					if ( isset($v['message']) ) {
+						$msg = $msg_title . $v['message'];
+					}
+					array_push($errors, $msg );
+				}
+
+			} else if ( is_string($value) ) {
+				$msg_title = "$name: ";
+				$msg = $msg_title . $value;
+				array_push($errors, $value );
+			}
+		}
+		return $errors;
 	}
 
 
@@ -694,6 +800,7 @@ class Table {
 
 		$option['fillter'] = (isset($option['fillter']))? $option['fillter'] : [];
 		$option['display_submit'] = (isset($option['display_submit']))? $option['display_submit'] : 0;
+		$option['sheet_id'] = $this->_sheet_id;
 		
 		$data = ['items' =>[], 'instance'=>$option, 'item_only'=>false ];
 		$columns_sort = $this->_columns_sort( $columns );
@@ -713,6 +820,7 @@ class Table {
 
 			$data['items'][$field] = $type->renderItem( $this->_sheet_id, $field, $option );
 		}
+
 
 		$html = $this->_render( $data, $tpl );
 		return ['status'=>'success','html'=>$html, 'data'=>$data];
