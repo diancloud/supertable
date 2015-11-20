@@ -617,7 +617,8 @@
 			'where'=>array(
 				'[Ww][Hh][Ee][Rr][Ee]', // where
 				'[Aa][Nn][Dd]',  // and
-				'[Oo][Rr]' // or
+				'[Oo][Rr]', // or
+				'[\(]' // ( 
 			),
 
 			'function'=>array(
@@ -699,7 +700,7 @@
 			$field = $fieldr[0];
 
 			if ( !isset($_the_sheet['columns'][$field]) ) {
-				//echo "Not Found: $field & NAME=$name \n";
+				// echo "Not Found: $field & NAME=$name ostr=$ostr \n";
 				return $ostr;
 			}
 

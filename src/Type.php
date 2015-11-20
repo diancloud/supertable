@@ -145,6 +145,15 @@ class Type {
 		return 1;
 	}
 
+
+	public function isSummary() {
+		if ( $this->get('summary') )  {
+			return true;
+		}
+		return  false;
+	}
+
+
 	public function isUnique() {
 		if ( $this->_option['unique'] )  {
 			return true;
@@ -244,6 +253,25 @@ class Type {
 
 
 	/**
+	 * 根据类型数值，设定查询字符串 （构建类型时，如需对传入数值解析， 可重载此方法）
+	 * @param  [type] $value [description]
+	 * @return [type]        [description]
+	 */
+	public function valueString( $value, $column_name = null ) {
+		$column_name = ( $column_name == null ) ? $this->get('column_name') : $column_name;
+		return "$column_name='$value'";
+	}
+
+	/**
+	 * 根据类型数值， 返回HTML格式数据 （构建类型时，如需对传入数值解析， 可重载此方法）
+	 * @return [type] [description]
+	 */
+	public function valueHTML( $value ) {
+		return $value;
+	}
+
+
+	/**
 	 * 设定类型实例数值
 	 * @param mix $value 
 	 * @return $this
@@ -328,6 +356,8 @@ class Type {
 			$tpl = str_replace($file_name, $item_file_name, $tpl );
 		}
 		$tpl = ($tpl != null)? $tpl : $this->getTplFile( $templete );
+		// echo "$templete {$tpl} \n";
+		// print_r($option);
 
 		if (!file_exists($tpl)  ) {  // 载入默认模板 form-item
 			$tpl = $this->getTplFile('form-item');
@@ -350,9 +380,11 @@ class Type {
 
 		// 设定当前实例数值
 		if ( $this->_value == null ) {
-			$data['value'] = (isset($data['data']['default']))? $this->valueEncode( $data['data']['default'] ) : "";
+			$data['_value'] = (isset($data['data']['default']))? $this->valueEncode( $data['data']['default'] ) : "";
+			$data['value'] = (isset($data['data']['default']))? $data['data']['default']: "";
 		} else {
-			$data['value'] = $this->_value;
+			$data['_value'] = $this->_value;
+			$data['value'] = $this->getValue();
 		}
 
 
@@ -429,6 +461,7 @@ class Type {
 			'data' => array_merge($this->_data, $this->_option, array('_type'=>$typeName)),
 		);
 	}
+
 
 
 	/**

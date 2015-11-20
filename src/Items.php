@@ -28,6 +28,7 @@ class Items {
 	private $_perpage = null;
 	private $_totalpage = null;
 	private $_offset = null;
+	private $_query = [];
 	
 	function __construct() {
 	}
@@ -64,6 +65,29 @@ class Items {
 
 		return "LIMIT $this->_offset, $perpage ";
 	}
+
+	/**
+	 * 设定查询条件
+	 * @param  [type] $query [description]
+	 * @return [type]        [description]
+	 */
+	function query( $name = null, $value= null ) {
+
+		if ( $name == null ) {
+			return $this->_query;
+		}
+		
+		if ( $value == null ) {
+			if ( isset($this->_query[$name]) ) {
+				return  $this->_query[$name];
+			}
+			return null;
+		}
+
+		$this->_query[$name] = $value;
+		return $this->_query[$name];
+	}
+
 
 	/**
 	 * 读取记录集(当前页）

@@ -1,25 +1,31 @@
 <div class="col-lg-<?=$data['width']?> col-md-<?=$data['width']?> col-sm-<?=$data['width']?> 
-	<?php if ( in_array($data['column_name'], $instance['fillter']) || in_array($data['screen_name'], $instance['fillter']) ): ?>
-		hidden
-	<?php endif; ?>
+
+       <?php 
+        $display_only_flag = ( count($instance['display_only'])  > 0 )? true : false;
+        if ( !$display_only_flag ) : ?>
+            <?php if ( in_array($data['column_name'], $instance['fillter']) || in_array($data['screen_name'], $instance['fillter']) ): ?>
+            hidden
+          <?php endif; ?>
+        <?php else: ?>
+
+          <?php if ( !in_array($data['column_name'], $instance['display_only']) && !in_array($data['screen_name'], $instance['display_only']) ): ?>
+            hidden
+          <?php endif; ?>
+        <?php endif;  ?>
+
 		col-xs-12" >
     <div class="form-material">
         <input class="form-control" type="text" 
                value='<?=$_value?>' 
                id="<?=$data['column_name']?>" name="<?=$data['column_name']?>" placeholder="<?=$data['placeholder']?>">
         <label for="<?=$data['name']?>" >
-            <?php if ($data['summary']) : ?>
-                <i class="fa fa-star"></i>
-            <?php endif; ?>
             <?=$data['screen_name']?>
-             <?php if ($data['required']) : ?>
-                <span class="text-danger">*</span>
-            <?php endif; ?>
         </label>
     </div>
 </div>
-<?php if (isset($instance["_handler"])):?>
-  
+<?php if (isset($instance["_handler"])):?> 
+
+
 <script type="text/javascript">
   // JS 修改更新表单API
   $('<?=$instance["_handler"]?>').registerAPI("<?=$data['column_name']?>", function( form, name, value ) {

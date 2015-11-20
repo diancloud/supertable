@@ -18,6 +18,7 @@ use \Exception as Exception;
 use Tuanduimao\Supertable\Schema;
 use Tuanduimao\Supertable\Type;
 use Tuanduimao\Supertable\Items;
+use Tuanduimao\Supertable\Item;
 
 
 /**
@@ -65,6 +66,35 @@ class Table {
 	public function sheet() {
 		return $this->_sheet;
 	}
+
+	/**
+	 * 读取摘要清单
+	 * @param  integer $limit [description]
+	 * @return [type]         [description]
+	 */
+	public function summary( $limit=null ) {
+		$summary = [];
+		$cnt = 0;
+		$columns = $this->sheet()['columns'];
+
+		$columns_sort = $this->_columns_sort( $columns );
+		foreach ( $columns_sort as $idx=>$column ) {
+			$field = $column['field'];
+			$type = $column['type'];
+
+			if ( $type->isSummary() ) {
+				array_push($summary, $field );
+				$cnt++;
+
+				if ( $cnt == $limit) {
+					break;
+				}
+			}
+		}
+		return $summary;
+	}	
+
+
 
 	/**
 	 * 根据ID/NAME选中一个数据表(Sheet), 如果数据表不存在则创建
@@ -327,6 +357,120 @@ class Table {
 		}
 
 		return $data;
+	}
+
+
+	/**
+	 * 在当前的数据(Sheet)中检索 (从索引库中查询，数据有不到一秒延迟)
+	 * @param  [type] $option [description]
+	 * @param  array  $fields [description]
+	 * @return [type]         [description]
+	 */
+	public function query(  $options, $page=null, $perpage=20, $fields=array(), $maxrows=0  ){
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		$columns = $this->sheet()['columns'];
+		$items = new Items();
+
+		// 查询条件
+		$where = "";
+		$order = "";
+		$other = "";
+		$limit = null;
+		
+
+		if ( is_array($options) ) {
+
+			// 处理LIMIT语法
+			if ( isset( $options['@limit'] ) ) {
+				$limit = $options['@limit'];
+				$items->query('@limit', ['name'=>'最多记录', 'value'=>$limit] );
+			}
+			if ( isset( $options['@order'] ) ) {
+				$order = $options['@order'];
+				$items->query('@limit',  ['name'=>'排序方式', 'value'=>$order] );
+			}
+
+			$filed_list_arr = array();
+			$filed_value = array();
+			foreach ($options as $k => $v) {
+				if ( $v != "" && isset($columns[$k])) {
+					array_push($filed_list_arr, $columns[$k]->valueString($v) );
+					$screen_name = $columns[$k]->get('screen_name');
+					if ( $screen_name == "" ) {
+						$screen_name = '未知字段';
+					}
+					$items->query( $k, ['name'=>$screen_name, 'value'=>$v] );
+				}
+			}
+
+			// 手写条件
+			if ( isset( $options['@where'] ) ) {
+				$other = $options['@where'];
+				array_push($filed_list_arr, $other );
+				$items->query( '@where',  ['@where'=>'更多条件', 'value'=>$options['@where']] );
+			}
+
+			$where = implode(' AND ', $filed_list_arr);
+		} else if ( is_string($options) ) {
+
+			// 处理LIMIT语法
+			if( preg_match("/([Ll]{1}[Ii]{1}[Mm]{1}[Ii]{1}[Tt]{1}[ ]+([0-9]+)[,]*([0-9]*))[ ]*/", $options, $match ) ) {
+
+				$limit_str = $match[0];
+				$offset = ( is_numeric($match[3]) ) ? $match[2] : 0;
+				$rows = ( is_numeric($match[3]) ) ? $match[3] : $match[2];
+				$limit = "$offset,$rows";
+				$options = str_replace($limit_str, '', $options );
+			}
+
+			$where = $options;
+		}
+
+
+		$record_limit =( $limit != null) ? "LIMIT $limit" : "LIMIT $perpage";
+		if ( $page !== null && is_numeric($page) ) {
+			$from = ($page == null)? 0 : ($page-1) * $perpage;
+			$record_limit = " LIMIT $from,$perpage";
+		}
+		$sql ="$where $order $record_limit";
+		$sql = ( trim($sql) != "" )? "WHERE $sql" : "";
+
+		// 查询记录
+		$resp = $this->select( $sql, $fields );
+		
+		$record_total = $resp['total'];
+		$rows = $resp['data'];
+		$items->pagination( $page, $perpage, $record_total );
+
+		foreach ($rows as $line ) {
+			$row = [];
+			foreach ($line as $column_name=>$value )  {
+				$row[$column_name]['value'] = $value;
+				$row[$column_name]['type'] = 'UNKNOWN';
+				$row[$column_name]['html'] = $value;
+
+				if ( isset( $columns[$column_name]) ) {
+					$screen_name = $columns[$column_name]->get('screen_name');
+					$row[$column_name]['type'] = $columns[$column_name]->toArray();
+					$row[$column_name]['html'] = $columns[$column_name]->valueHTML($value);
+					if ($screen_name != "") {
+						$row[$screen_name]['value'] = $value;
+						$row[$screen_name]['type'] = $row[$column_name]['type'] ;
+						$row[$screen_name]['html'] = $row[$column_name]['html'] ;
+						$row[$screen_name]['width'] = $row[$column_name]['width'] ;
+
+					}
+				}
+			}
+
+			$item = new Item( $row );
+			$items->push( $item );
+		}
+
+		return $items;
 	}
 
 
@@ -684,7 +828,7 @@ class Table {
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
-		$templete = (isset($option['templete']))? $option['templete'] : 'columns.container';
+		$templete = $option['templete'] = (isset($option['templete']))? $option['templete'] : 'columns.container';
 		$tpl = (isset($option['tpl']))? $option['tpl'] : $this->_tpl_filename($templete);
 		$allow_types = $this->C('type/public/list'); // 开放型字段列表
 
@@ -720,7 +864,7 @@ class Table {
 		$columns = (isset($option['columns']))? $option['columns'] : [];
 		if ( isset($option['columns'])) { unset( $option['columns']); }
 
-		$templete = (isset($option['templete']))? $option['templete'] : 'columns.container';
+		$templete = $option['templete'] = (isset($option['templete']))? $option['templete'] : 'columns.container';
 		$tpl = (isset($option['tpl']))? $option['tpl'] : $this->_tpl_filename($templete);
 		$allow_types = $this->C('type/public/list'); // 开放型字段列表
 
@@ -752,7 +896,7 @@ class Table {
 	 * @param  [type] $option [description]
 	 * @return [type]         [description]
 	 */
-	public function renderSearchForm( $option ) {
+	public function renderQueryForm( $option ) {
 		$this->errors = array();
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
@@ -761,9 +905,13 @@ class Table {
 		$columns = (isset($option['columns']))? $option['columns'] : $this->_sheet['columns'];
 		if ( isset($option['columns'])) { unset( $option['columns']); }
 
-		$templete = (isset($option['templete']))? $option['templete'] : 'search';
+		$templete = $option['templete'] = (isset($option['templete']))? $option['templete'] : 'query.form';
 		$tpl = (isset($option['tpl']))? $option['tpl'] : $this->_tpl_filename($templete);
+		
+		$option['display_only'] = (isset($option['display_only']))? $option['display_only'] : [];
+		$option['fillter'] = (isset($option['fillter']))? $option['fillter'] : [];
 		$option['display_submit'] = (isset($option['display_submit']))? $option['display_submit'] : 1;
+		$option['sheet_id'] = $this->_sheet_id;
 		
 		$data = ['items' =>[], 'instance'=>$option, 'item_only'=>false ];
 		$columns_sort = $this->_columns_sort( $columns );
@@ -778,8 +926,10 @@ class Table {
 
 			// display_hidden=0 不显示隐藏字段
 			if ( !$option['display_hidden'] && $type->isHidden() ) { 
-				continue;
+				array_push($data['instance']['fillter'], $field);
 			}
+
+
 			if ( !$type->isSearchable() ) { 
 				continue;
 			}
@@ -806,7 +956,7 @@ class Table {
 		$columns = (isset($option['columns']))? $option['columns'] : $this->_sheet['columns'];
 		if ( isset($option['columns'])) { unset( $option['columns']); }
 
-		$templete = (isset($option['templete']))? $option['templete'] : 'data.form';
+		$templete = $option['templete'] = (isset($option['templete']))? $option['templete'] : 'data.form';
 		$tpl = (isset($option['tpl']))? $option['tpl'] : $this->_tpl_filename($templete);
 
 		$option['fillter'] = (isset($option['fillter']))? $option['fillter'] : [];
