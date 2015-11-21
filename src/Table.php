@@ -450,8 +450,11 @@ class Table {
 			$row = [];
 			if ( !isset($line['_data_revision']) ||
 				 !isset($line['_schema_revision']) || 
-				 ( $line['_schema_revision'] !=$line['_data_revision'] ) ) {
+				 ( $line['_data_revision'] != $this->sheet()['revision'] ) ) {
 				$line = $this->get($line['_id'], true);
+				// echo "<pre>";	
+				// print_r($line);
+				// echo "</pre>";
 			}
 
 			foreach ($line as $column_name=>$value )  {
