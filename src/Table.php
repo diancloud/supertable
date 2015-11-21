@@ -482,6 +482,7 @@ class Table {
 
 		foreach ($rows as $line ) {
 			$row = [];
+			
 			if ( !isset($line['_data_revision']) ||
 				 !isset($line['_schema_revision']) || 
 				 ( $line['_data_revision'] != $this->sheet()['revision'] ) ) {

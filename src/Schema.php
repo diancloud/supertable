@@ -295,9 +295,9 @@ class Schema {
 		$data['name'] = $data['_spt_name'];
 		$data['version'] = $data['_spt_schema_version'];
 		$data['revision'] = $data['_spt_schema_revision'];
-		$data['create_at'] = $data['_spt_create_at'];
-		$data['update_at'] = $data['_spt_update_at'];
-		$data['is_deleted'] =$data['_spt_is_deleted'];
+		$data['_create_at'] = $data['_spt_create_at'];
+		$data['_update_at'] = $data['_spt_update_at'];
+		$data['_is_deleted'] =$data['_spt_is_deleted'];
 
 		foreach ($data['_spt_schema_json'] as $field=>$type ) {
 			$type = $this->_typeObj( $type )->bindField($data['_id'],$field);

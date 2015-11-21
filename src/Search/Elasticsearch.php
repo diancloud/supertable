@@ -73,6 +73,14 @@
 	 			'_spt_schema_revision' => array(
 	 				'type' => 'integer',
 	 			),
+
+	 			'_spt_create_at' => array(
+	 				'type' => 'date',
+	 			),
+	 			'_spt_update_at' => array(
+	 				'type' => 'date',
+	 			),
+
  				'_spt_data' => array(
 	 				 'type' => 'object',
 	 				 "enabled"=>false
@@ -152,6 +160,12 @@
  			'_spt_schema_revision' => array(
  				'type' => 'integer',
  			),
+ 			'_spt_create_at' => array(
+	 				'type' => 'date',
+	 		),
+	 		'_spt_update_at' => array(
+	 			'type' => 'date',
+	 		),
  			'_spt_data' => array(
  				 'type' => 'object',
  				 "enabled"=>false
@@ -239,7 +253,10 @@
  			'_spt_data' => $data,
  			'_spt_schema_revision' => $sheet['revision'],
  			'_spt_data_revision'  => $sheet['revision'],
+ 			'_spt_create_at' => $this->datetimeEncode( $data['_create_at']),
+ 			'_spt_update_at' => $this->datetimeEncode( $data['_update_at'])
  		);
+
 
  		$doc = array_merge($index_data['index'], $doc );
  		$docInputParam = array(
@@ -279,6 +296,8 @@
  			'_spt_data' => $data,
  			'_spt_schema_revision' => $sheet['revision'],
  			'_spt_data_revision'  => $sheet['revision'],
+ 			'_spt_create_at' => $this->datetimeEncode( $data['_create_at']),
+ 			'_spt_update_at' => $this->datetimeEncode( $data['_update_at'])
  		);
 
  		$doc = array_merge($index_data['index'], $doc );
@@ -371,6 +390,18 @@
 		$resp = $conn->performRequest('GET', '/_sql', array('sql'=>$sql));
 		return $resp;
 	}
+
+
+	private function datetimeEncode( $mysql_time ) {
+		if ( $mysql_time == null) return null;
+		return str_replace(' ', 'T', $mysql_time );
+	}
+
+	private function datetimeDecode( $es_time ) {
+		if ( $es_time == null) return null;
+		return str_replace('T', ' ', $es_time );
+	}
+
 
 
 	/**
@@ -490,6 +521,18 @@
 			unset($data['_spt_schema_revision']);
 		}
 
+		// 处理日期
+		if ( isset($data['_spt_create_at']) ) {
+			$data['_create_at'] = $this->datetimeDecode($data['_spt_create_at']);
+			unset($data['_spt_create_at']);
+		}
+
+		if ( isset($data['_spt_update_at']) ) {
+			$data['_update_at'] =  $this->datetimeDecode($data['_spt_update_at']);
+			unset($data['_spt_update_at']);
+		}
+
+
 		if ( is_array($data['_spt_data']) ){
 
 			$newData = $data['_spt_data'];
@@ -504,6 +547,14 @@
 
 			if ( isset($data['_schema_revision']) ) {
 				$newData['_schema_revision'] = $data['_schema_revision'];
+			}
+
+			//处理日期
+			if ( isset($data['_create_at']) ) {
+				$newData['_create_at'] = $data['_create_at'];
+			}
+			if ( isset($data['_update_at']) ) {
+				$newData['_update_at'] = $data['_update_at'];
 			}
 
 			if ( count($data) >= count($sheet['_spt_schema_json']) ) {
@@ -713,6 +764,19 @@
 					$field = $match[0];
 					$fieldr = explode('.',$field);
 					$field = $fieldr[0];
+
+					// 系统关键词 _spt_data_id , _spt_create_at, _spt_update_at 
+					if ( $field == '_id' ) {
+						return '_spt_data_id';
+					}
+
+					if ( $field == '_create_at' ) {
+						return '_spt_create_at';
+					}
+
+					if ( $field == '_update_at' ) {
+						return '_spt_update_at';
+					}
 
 					if ( !isset($_the_sheet['columns'][$field]) ) {
 						return join('.',$fieldr);
