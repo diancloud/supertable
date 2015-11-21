@@ -67,6 +67,12 @@
  				'_spt_data_id' => array(
  					 'type' => 'integer',
  				),
+ 				'_spt_data_revision' => array(
+ 					'type' => 'integer',
+	 			),
+	 			'_spt_schema_revision' => array(
+	 				'type' => 'integer',
+	 			),
  				'_spt_data' => array(
 	 				 'type' => 'object',
 	 				 "enabled"=>false
@@ -138,7 +144,13 @@
  		// 新建索引
  		$properties = array(
  			'_spt_data_id' => array(
- 				 'type' => 'integer',
+ 				'type' => 'integer',
+ 			),
+ 			'_spt_data_revision' => array(
+ 				'type' => 'integer',
+ 			),
+ 			'_spt_schema_revision' => array(
+ 				'type' => 'integer',
  			),
  			'_spt_data' => array(
  				 'type' => 'object',
@@ -225,8 +237,9 @@
  		$doc = array(
  			'_spt_data_id' =>$id,
  			'_spt_data' => $data,
+ 			'_spt_schema_revision' => $sheet['revision'],
+ 			'_spt_data_revision'  => $sheet['revision'],
  		);
-
 
  		$doc = array_merge($index_data['index'], $doc );
  		$docInputParam = array(
@@ -264,6 +277,8 @@
  		$doc = array(
  			'_spt_data_id' =>$id,
  			'_spt_data' => $data,
+ 			'_spt_schema_revision' => $sheet['revision'],
+ 			'_spt_data_revision'  => $sheet['revision'],
  		);
 
  		$doc = array_merge($index_data['index'], $doc );
@@ -341,7 +356,7 @@
 		$fields = $this->fieldFilter($fields, $sheet);
 
 		$sql = $this->sqlFilter("SELECT " . implode(',', $fields) . " FROM $index/$type $where", $sheet);
-		// echo " SQL = $sql \n";
+		// echo "<pre> SQL = $sql \n</pre>";
 		
 		$conn = $this->_client->transport->getConnection();
 		$resp = $conn->performRequest('GET', '/_sql', array('sql'=>$sql));
@@ -455,11 +470,24 @@
 	 */
 	private function indexRecover( $data, $sheet ) {
 
+
+
 		$source = array_merge($data, array());
 
 		if ( isset($data['_spt_data_id']) ) {
 			$data['_id'] = $data['_spt_data_id'];
 			unset($data['_spt_data_id']);
+		}
+
+		// 处理 Version
+		if ( isset($data['_spt_data_revision']) ) {
+			$data['_data_revision'] = $data['_spt_data_revision'];
+			unset($data['_spt_data_revision']);
+		}
+
+		if ( isset($data['_spt_schema_revision']) ) {
+			$data['_schema_revision'] = $data['_spt_schema_revision'];
+			unset($data['_spt_schema_revision']);
 		}
 
 		if ( is_array($data['_spt_data']) ){
@@ -468,6 +496,14 @@
 			unset($data['_spt_data']);
 			if ( isset($data['_id']) ) {
 				$newData['_id'] = $data['_id'];
+			}
+
+			if ( isset($data['_data_revision']) ) {
+				$newData['_data_revision'] = $data['_data_revision'];
+			}
+
+			if ( isset($data['_schema_revision']) ) {
+				$newData['_schema_revision'] = $data['_schema_revision'];
 			}
 
 			if ( count($data) >= count($sheet['_spt_schema_json']) ) {

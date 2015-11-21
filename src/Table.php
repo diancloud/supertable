@@ -443,10 +443,17 @@ class Table {
 		
 		$record_total = $resp['total'];
 		$rows = $resp['data'];
+		$rows_map = [];
 		$items->pagination( $page, $perpage, $record_total );
 
 		foreach ($rows as $line ) {
 			$row = [];
+			if ( !isset($line['_data_revision']) ||
+				 !isset($line['_schema_revision']) || 
+				 ( $line['_schema_revision'] !=$line['_data_revision'] ) ) {
+				$line = $this->get($line['_id'], true);
+			}
+
 			foreach ($line as $column_name=>$value )  {
 				$row[$column_name]['value'] = $value;
 				$row[$column_name]['type'] = 'UNKNOWN';
@@ -456,12 +463,12 @@ class Table {
 					$screen_name = $columns[$column_name]->get('screen_name');
 					$row[$column_name]['type'] = $columns[$column_name]->toArray();
 					$row[$column_name]['html'] = $columns[$column_name]->valueHTML($value);
+
 					if ($screen_name != "") {
 						$row[$screen_name]['value'] = $value;
 						$row[$screen_name]['type'] = $row[$column_name]['type'] ;
 						$row[$screen_name]['html'] = $row[$column_name]['html'] ;
 						$row[$screen_name]['width'] = $row[$column_name]['width'] ;
-
 					}
 				}
 			}
@@ -479,15 +486,19 @@ class Table {
 	 * @param  [type] $data_id [description]
 	 * @return [type]          [description]
 	 */
-	public function get( $data_id ) {
+	public function get( $data_id, $update_index=false ) {
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
+		
 		$data =  $this->_stor->getDataByID($data_id);
-		@$this->_search->updateData( $this->_sheet, $data_id, $data ); // 应该被优化掉
+		if ( $update_index ) {
+			$this->_search->updateData( $this->_sheet, $data_id, $data ); // 应该被优化掉
+		}
 		return $data;
 	}
 	
+
 
 	/**
 	 * 对表单提交的数据进行解码
@@ -897,6 +908,8 @@ class Table {
 	 * @return [type]         [description]
 	 */
 	public function renderQueryForm( $option ) {
+		// _xhprfo_start();
+
 		$this->errors = array();
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
@@ -937,6 +950,8 @@ class Table {
 		}
 
 		$html = $this->_render( $data, $tpl );
+
+		// _xhprof_end();
 
 		return ['status'=>'success','html'=>$html, 'data'=>$data];
 	}
