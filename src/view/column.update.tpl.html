@@ -146,37 +146,72 @@
             <div class="form-material text-right">
                 <label class="css-input  css-checkbox css-checkbox-info">
                     <input id="searchable" name="searchable"   value="1" 
-                        <?php if($data['searchable']):?> checked <?php endif; ?> 
+                        <?php if($option['searchable']):?> checked <?php endif; ?> 
                         type="checkbox" ><span></span> 作为检索条件
                     <i  class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"  
-                        data-original-title="开启这个选项，可以按照这个字段进行检" ></i>
+                        data-original-title="开启这个选项，可以按照这个字段进行检索" ></i>
                 </label>
             </div>
         </div>
 
-        <div class="col-sm-12  push-30-t">
-            <div class="form-material text-right">
-                <label class="css-input  css-checkbox css-checkbox-info">
-                    <input id="unique" name="unique"    value="1" 
-                        <?php if($data['unique']):?> checked <?php endif; ?> 
-                        type="checkbox" ><span></span> 不可重复
-                    <i  class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"  
-                        data-original-title="开启这个选项，这个字段的数值不能重复 （ 开启作为检索条件后生效 ）" ></i>
-                </label>
-            </div>
-        </div>
+                <div  class="col-sm-10  push-30-t push-30-l search-option hidden ">
+                    <div class="form-material text-right">
+                        <label class="css-input  css-checkbox css-checkbox-info">
+                            <input id="unique" name="unique"    value="1" 
+                                <?php if($option['unique']):?> checked <?php endif; ?> 
+                                type="checkbox" ><span></span> 不可重复
+                            <i  class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"  
+                                data-original-title="开启这个选项，这个字段的数值不能重复" ></i>
+                        </label>
+                    </div>
+                </div>
+
+
+                <div class="col-sm-10  push-30-t push-30-l  search-option hidden">
+                    <div class="form-material text-right">
+                        <label class="css-input  css-checkbox css-checkbox-info">
+                            <input id="matchable" name="matchable"   value="1" 
+                                <?php if($option['matchable']):?> checked <?php endif; ?> 
+                                type="checkbox" ><span></span> 模糊匹配
+                            <i  class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"  
+                                data-original-title="开启这个选项，检索时模糊匹配关键词，不开启时精确匹配关键词。 " ></i>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="col-sm-10  push-30-t push-30-l  search-option hidden">
+                    <div class="form-material text-right">
+                        <label class="css-input  css-checkbox css-checkbox-info">
+                            <input id="fulltext" name="fulltext"   value="1" 
+                                <?php if($option['fulltext']):?> checked <?php endif; ?> 
+                                type="checkbox" ><span></span> 全文检索
+                            <i  class="fa fa-question-circle" data-toggle="tooltip" data-placement="top"  
+                                data-original-title="开启这个选项，无需指该字段，也可以搜索到结果。" ></i>
+                        </label>
+                    </div>
+                </div>
+
     </div><!-- OPTION LIST  FROM GROUP END -->
 
 
     <div class="form-group">
         <!-- Hidden Info -->
         <input type="hidden" id="instance-sheet_id"  name="sheet_id"  value="<?=$instance['sheet_id']?>" >
-        <input type="hidden" id="instance-column_name"  name="column_name"  value="<?=$data['field_name']?>" >
-        <input type="hidden" id="instance-dropable"  name="dropable"  value="<?=$data['dropable']?>" >
+        <input type="hidden" id="instance-column_name"  name="column_name"  value="<?=$data['column_name']?>" >
+        
         <input type="hidden" id="instance-hidden"  name="hidden"  value="<?=$data['hidden']?>" >
+        <input type="hidden" id="instance-hidden_query"  name="hidden_query"  value="<?=$data['hidden_query']?>" >
+        <input type="hidden" id="instance-hidden_data"  name="hidden_data"  value="<?=$data['hidden_data']?>" >
+        <input type="hidden" id="instance-hidden_column"  name="hidden_column"  value="<?=$data['hidden_column']?>" >
+        <input type="hidden" id="instance-alterable"  name="alterable"  value="<?=$data['alterable']?>" >
+        <input type="hidden" id="instance-dropable"  name="dropable"  value="<?=$data['dropable']?>" >
         
         <div class="col-sm-12 push-15-t">
-            <button class="btn btn-success supertable-submit instance-<?=$instance['id']?>-submit" type="button"> 更新字段 </button>
+            <button 
+            <?php if (!$data['alterable']) :?>
+                disabled
+            <?php endif; ?>
+            class="btn btn-success supertable-submit instance-<?=$instance['id']?>-submit" type="button"> 更新字段 </button>
         </div>
     </div>
 
@@ -190,6 +225,23 @@ jQuery(function() {
         container: 'form[name="<?=$instance['name']?>"]',
         animation: false
     });
+
+    function switchSearchOption( obj ){
+        if ( $(obj).prop('checked') ) {
+            $('.search-option').removeClass('hidden');
+        } else {
+            $('.search-option').addClass('hidden');
+        }
+    }
+
+    // 检索条件联动
+    jQuery('#searchable').change(function(event) {
+        switchSearchOption(this);
+    });
+
+    switchSearchOption($('#searchable'));
+
+
     jQuery('form[name="<?=$instance['name']?>"]').supertable('columnCreate', {
         beforeSubmit: function(form) {
              return true;

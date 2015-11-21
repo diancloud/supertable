@@ -40,10 +40,7 @@ class Type {
 	}
 
 
-	public function setData( $data ) {
-		$this->_data = $data;
-		return $this;
-	}
+	
 
 	public function bindField( $schema_id, $field_name ) {
 
@@ -51,7 +48,7 @@ class Type {
 			throw new Exception("字段名称不正确，由字符、数字和下划线组成，且开头必须为字符。(column_name= $column_name) ");
 		}
 		$this->_option['schema_id'] = $schema_id;
-		$this->_option['field_name'] = $field_name;
+		// $this->_option['field_name'] = $field_name;
 		$this->_option['column_name'] = $field_name;
 		
 		return $this;
@@ -84,9 +81,48 @@ class Type {
 		return null;
 	}
 
+	
+	public function setData( $data ) {
+		$data = (is_array($data))? $data : [];
+		$this->_data = $data;
+		return $this;
+	}
 
 	public function setOption( $option ) {
-		$this->_option = $option;
+
+		$option = (is_array($option))? $option : [];
+		$data = $this->_data;
+		$opt  = array_merge($data, $option);
+
+		// 格式化数据
+		$option_after_filter = [
+
+			// 可供用户输入的选项
+		 	'required' => (isset($opt['required']))? $opt['required'] : 0, // 作为必填字段 , 0: 非必填 1: 必填
+		 	'summary' => (isset($opt['summary']))? $opt['summary'] : 0,  // 作为摘要数据 , 0: 非摘要 1: 摘要
+		 	'searchable' => (isset($opt['searchable']))? $opt['searchable'] : 0, // 作为检索条件 , 0: 无需检索 1: 需要检索
+		 		'unique' => (isset($opt['unique']))? $opt['unique'] : 0,  // 不可重复 , 0: 可以重复 1: 不能重复
+		 		'matchable' => (isset($opt['matchable']))? $opt['matchable'] : 0, // 匹配模式 , 0:精确匹配 1: 精确匹配
+		 		'fulltext' => (isset($opt['fulltext']))? $opt['fulltext'] : 0, // 全文检索 , 0:不支持全文 1: 支持全文检索
+
+		 	// 程序设定的选项
+		 	'order' => (isset($opt['order']))? $opt['order'] : 1,  // 字段排序 , 默认为 1， 数值越小越靠前
+		 	
+		 	'hidden' => (isset($opt['hidden']))? $opt['hidden'] : 0,  // 是否为隐藏字段，0:非隐藏字段 1:隐藏字段
+		 	'hidden_query' => (isset($opt['hidden_query']))? $opt['hidden_query'] : 0,  // 是否再搜索器中隐藏该字段， 0:不隐藏 1:隐藏
+		 	'hidden_data' => (isset($opt['hidden_data']))? $opt['hidden_data'] : 0,  // 是否再录入数据表单中隐藏该字段， 0:不隐藏 1:隐藏
+		 	'hidden_column' => (isset($opt['hidden_column']))? $opt['hidden_column'] : 0,  // 是否再修改数据表结构中隐藏该字段， 0:不隐藏 1:隐藏
+
+		 	'dropable' =>(isset($opt['dropable']))? $opt['dropable'] : 1,  // 是否可删除，0:不可删除 1:可删除
+		 	'alterable' => (isset($opt['alterable']))? $opt['alterable'] : 1, // 是否可修改，0:不可修改 1:可修改
+
+		 	// 绑定数据实例
+		 	'screen_name' => (isset($opt['screen_name']))? $opt['screen_name'] : null,  // 实例的: 字段屏幕显示名称
+		 	'column_name' => (isset($opt['column_name']))? $opt['column_name'] : null,  // 实例的: 字段名称
+		 	'schema_id' => (isset($opt['schema_id']))? $opt['schema_id'] : null,  // 实例的: 数据表ID
+		];
+
+		$this->_option = $option_after_filter;
 		return $this;
 	}
 
@@ -104,16 +140,6 @@ class Type {
 		$this->_data_format = $data_format;
 	}
 
-	public function isSearchable(){
-		if ( $this->_option['searchable'] )  {
-			return true;
-		}
-
-		if ( $this->_data['searchable'] )  {
-			return true;
-		}
-		return  false;
-	}
 
 	public function isRequired(){
 		if ( $this->_option['required'] )  {
@@ -153,6 +179,31 @@ class Type {
 		return  false;
 	}
 
+
+	public function isSearchable(){
+		if ( $this->_option['searchable'] )  {
+			return true;
+		}
+
+		if ( $this->_data['searchable'] )  {
+			return true;
+		}
+		return  false;
+	}
+
+	public function isMatchable() {
+		if ( $this->get('matchable') )  {
+			return true;
+		}
+		return  false;
+	}
+
+	public function isFulltext() {
+		if ( $this->get('fulltext') )  {
+			return true;
+		}
+		return  false;
+	}
 
 	public function isUnique() {
 		if ( $this->_option['unique'] )  {

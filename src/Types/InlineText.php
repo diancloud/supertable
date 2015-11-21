@@ -29,29 +29,7 @@ class InlineText extends Type {
 		$opts['minlength'] = (isset($opts['minlength']))? $opts['minlength'] : 1;
 		$opts['default'] = (isset($opts['default']))? $opts['default'] : "";
 		$opts['placeholder'] = (isset($opts['placeholder']))? $opts['placeholder'] : "";
-		
-		// OPTINONS 
-		$opts['required'] = (isset($opts['required']))? $opts['required'] : 0;
-		$opts['searchable'] = (isset($opts['searchable']))? $opts['searchable'] : 0;
-		$opts['summary'] = (isset($opts['summary']))? $opts['summary'] : 0;
-		$opts['unique'] = (isset($opts['unique']))? $opts['unique'] : 0;
-		$opts['order'] = (isset($opts['order']))? $opts['order'] : 1;
-		$opts['hidden'] = (isset($opts['hidden']))? $opts['hidden'] : 0;
-		$opts['dropable'] = (isset($opts['dropable']))? $opts['dropable'] : 1; // 能否移除 默认为1 可以移除
-		$opts['field_name'] = (isset($opts['field_name']))? $opts['field_name'] : "";
-		$opts['column_name'] = (isset($opts['column_name']))? $opts['column_name'] : "";
 
-		$option = [
-		 	'required' => $opts['required'],
-		 	'summary' => $opts['summary'],
-		 	'searchable' => $opts['searchable'],
-		 	'unique' => $opts['unique'],
-		 	'order' => $opts['order'],
-		 	'hidden' => $opts['hidden'],
-		 	'dropable' => $opts['dropable'],
-		 	'column_name' => $opts['column_name'],
-		 	'field_name' => $opts['field_name'],
-		];
 
 		$data = [
 			'screen_name' => $opts['screen_name'] ,
@@ -255,7 +233,7 @@ class InlineText extends Type {
 			'minlength' => '{screen_name}至少{minlength}个字',
 		];
 
-		parent::__construct( $data, $option );
+		parent::__construct( $data, $opts );
 		$this->setDataInput( $data_input );
 		$this->setDataMessage( $data_message );
 		$this->setDataFormat('string');

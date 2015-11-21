@@ -56,7 +56,7 @@ class BaseInt extends Type {
 		$opts['order'] = (isset($opts['order']))? $opts['order'] : 1;
 		$opts['hidden'] = (isset($opts['hidden']))? $opts['hidden'] : 1;
 		$opts['dropable'] = (isset($opts['dropable']))? $opts['dropable'] : 0; // 能否移除 默认为1 可以移除
-		$opts['field_name'] = (isset($opts['field_name']))? $opts['field_name'] : "";
+		// $opts['field_name'] = (isset($opts['field_name']))? $opts['field_name'] : "";
 		$opts['column_name'] = (isset($opts['column_name']))? $opts['column_name'] : "";
 
 		$option = [
