@@ -330,7 +330,25 @@ class Table {
 		}
 		return $this->selectSheet( $this->_sheet_id );
 	}
+
+	/**
+	 * 读取全文检索清单
+	 * @return [type] [description]
+	 */
+	public function getFullTextColumns( $columns = null ){
+		$columns = ( $columns ==null ) ? $this->sheet()['columns'] : $columns;
+		$fulltext_list_arr = [];
+		foreach ($columns as $k => $type) {
+			if ( $type->isFulltext() ) {
+				$field = $type->get('column_name');
+				$screen_name = $type->get('screen_name');
+				$fulltext_list_arr[$field] = $screen_name;
+			}
+		}
+		return $fulltext_list_arr;
+	}
 	
+
 
 	// === 数据 (Data) 相关操作 CRUD ==========================
 	
@@ -366,7 +384,7 @@ class Table {
 	 * @param  array  $fields [description]
 	 * @return [type]         [description]
 	 */
-	public function query(  $options, $page=null, $perpage=20, $fields=array(), $maxrows=0  ){
+	public function query( $options, $page=null, $perpage=20, $fields=array(), $maxrows=0  ){
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
@@ -394,8 +412,8 @@ class Table {
 			}
 
 			$filed_list_arr = array();
-			$filed_value = array();
 			foreach ($options as $k => $v) {
+				
 				if ( $v != "" && isset($columns[$k])) {
 					array_push($filed_list_arr, $columns[$k]->valueString($v) );
 					$screen_name = $columns[$k]->get('screen_name');
@@ -403,6 +421,22 @@ class Table {
 						$screen_name = '未知字段';
 					}
 					$items->query( $k, ['name'=>$screen_name, 'value'=>$v] );
+				}
+
+				if ( $v != "" &&  $k == '@fulltext' )  { // 全文检索
+
+					$fulltext_list_arr = [];
+					foreach ($columns as $k => $type) {
+						if ( $type->isFulltext() ) {
+							array_push($fulltext_list_arr, $columns[$k]->valueString($v) );
+						}
+					}
+
+					if ( count($fulltext_list_arr) > 0 ) {
+						$fulltext_str = implode(' OR ', $fulltext_list_arr);
+						array_push($filed_list_arr, "( $fulltext_str )" );
+						$items->query( $k, ['name'=>'全文检索', 'value'=>$v] );
+					}
 				}
 			}
 
@@ -1055,6 +1089,9 @@ class Table {
 
 		return $view_file;
 	}
+
+	
+
 
 
 	/**

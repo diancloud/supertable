@@ -163,7 +163,7 @@
  				$field = "{$field}_{$info['_version']}";
  				$properties[$field]['type'] = $info['format'];
  				// $properties[$field]['fields'][$ver] = array('type'=>$info['format']);
- 				if ( !isset($info['option']['fulltext']) && $info['format'] == 'string' ) {
+ 				if ( !$info['option']['matchable'] && $info['format'] == 'string' ) {
  					$properties[$field]['index'] = 'not_analyzed';
  				}
  			}
