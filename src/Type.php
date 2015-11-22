@@ -251,6 +251,7 @@ class Type {
 		$class_path = $this->_path['type'] . "/$name.php";
 		$class_name = "\\Tuanduimao\\Supertable\\Types\\$name";
 
+
 		// 从缓存中载入文件
 		if ( $this->_cache != null  && !defined('SUPERTABLE_DEBUG_ON') ) {
 			$cache_name = "{$cache_path}$class_path";
@@ -268,16 +269,6 @@ class Type {
 							->setCache( $this->_cache );
 				}
 			}
-
-			// 载入系统默认类型
-			if ( !class_exists($class_name) ) {
-				throw new Exception("Type Not Found (class_path=$class_path,  class_name=$class_name or $name ) ");	
-			}
-
-			return (new $class_name( $data, $option ))
-				->setPath($this->_path)
-				->setPublic( $this->_public )
-				->setCache( $this->_cache );
 		}
 
 
@@ -301,7 +292,7 @@ class Type {
 		}
 
 		// 载入系统默认类型
-		if ( class_exists($class_name) ) {
+		if ( !class_exists($class_name) ) {
 			throw new Exception("Type Not Found (class_path=$class_path,  class_name=$class_name or $name ) ");	
 		}
 
@@ -342,6 +333,15 @@ class Type {
 		return (string) $value;
 	}
 
+	/**
+	 * 对类型实例数值进行描述 （构建类型时，如需对传入数值解析， 可重载此方法）
+	 * @param  [type] $value [description]
+	 * @return [type]        [description]
+	 */
+	public function valueScreen( $value ) {
+		return (string) $value;
+	}
+	
 
 	/**
 	 * 对类型实例数值进行解码 （构建类型时，如需对传出数值解析， 可重载此方法）
@@ -351,6 +351,9 @@ class Type {
 	public function valueDecode( $value ) {
 		return $value;
 	}
+
+
+	
 
 
 	/**

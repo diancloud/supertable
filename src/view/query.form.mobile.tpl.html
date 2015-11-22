@@ -1,0 +1,24 @@
+<!-- 手机呈现 
+    <?php foreach ($items as $field => $info ) : ?>
+    	<?php if ( $info['html'] != null ) : ?>
+    		<div class="form-group hidden-lg hidden-sm hidden-md">
+    			<?=$info['html']?>
+    		</div>
+    	<?php else : 
+			$data = $info['data']['data'];
+			$data['width'] = (isset($data['width'])) ? $data['width'] : 6;
+		 ?>
+    	<div class="form-group hidden-lg hidden-sm hidden-md">
+			<div class="col-xs-12" >
+			    <div class="form-material">
+			        <input class="form-control" type="text" 
+			               value="<?=$data['default']?>" 
+			               id="<?=$data['name']?>" name="<?=$data['name']?>" placeholder="<?=$data['placeholder']?>">
+			        <label for="<?=$data['name']?>"><?=$data['screen_name']?></label>
+			    </div>
+			</div>
+		</div>	
+		<?PHP endif; ?>
+	<?php endforeach; ?>
+
+	-->

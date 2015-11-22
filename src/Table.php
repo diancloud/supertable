@@ -404,11 +404,11 @@ class Table {
 			// 处理LIMIT语法
 			if ( isset( $options['@limit'] ) ) {
 				$limit = $options['@limit'];
-				$items->query('@limit', ['name'=>'最多记录', 'value'=>$limit] );
+				$items->query('@limit', ['name'=>'最多记录', 'value'=>$limit, 'screen_value'=>$limit, 'encode_value'=>$limit] );
 			}
 			if ( isset( $options['@order'] ) ) {
 				$order = $options['@order'];
-				$items->query('@limit',  ['name'=>'排序方式', 'value'=>$order] );
+				$items->query('@order',  ['name'=>'排序方式', 'value'=>$order, 'screen_value'=>$order, 'encode_value'=>$order] );
 			}
 
 			$filed_list_arr = array();
@@ -420,7 +420,12 @@ class Table {
 					if ( $screen_name == "" ) {
 						$screen_name = '未知字段';
 					}
-					$items->query( $k, ['name'=>$screen_name, 'value'=>$v] );
+					$items->query( $k, [
+						'name'=>$screen_name, 
+						'value'=>$v, 
+						'screen_value'=>$columns[$k]->valueScreen($v), 
+						'encode_value'=>$columns[$k]->valueEncode($v)
+					]);
 				}
 
 				if ( $v != "" &&  $k == '@fulltext' )  { // 全文检索
@@ -435,7 +440,7 @@ class Table {
 					if ( count($fulltext_list_arr) > 0 ) {
 						$fulltext_str = implode(' OR ', $fulltext_list_arr);
 						array_push($filed_list_arr, "( $fulltext_str )" );
-						$items->query( $k, ['name'=>'全文检索', 'value'=>$v] );
+						$items->query( '@fulltext', ['name'=>'全文检索', 'value'=>$v, 'screen_value'=>$v, 'encode_value'=>$v ] );
 					}
 				}
 			}
@@ -444,7 +449,7 @@ class Table {
 			if ( isset( $options['@where'] ) ) {
 				$other = $options['@where'];
 				array_push($filed_list_arr, $other );
-				$items->query( '@where',  ['@where'=>'更多条件', 'value'=>$options['@where']] );
+				$items->query( '@where',  ['@where'=>'更多条件', 'value'=>$options['@where'],'screen_value'=>$options['@where'], 'encode_value'=>$options['@where']] );
 			}
 
 			$where = implode(' AND ', $filed_list_arr);
@@ -468,7 +473,9 @@ class Table {
 		if ( $page !== null && is_numeric($page) ) {
 			$from = ($page == null)? 0 : ($page-1) * $perpage;
 			$record_limit = " LIMIT $from,$perpage";
+			$items->query( '@page', ['name'=>'页码', 'value'=>$page, 'screen_value'=>$page, 'encode_value'=>$page ] );
 		}
+		
 		$sql ="$where $order $record_limit";
 		$sql = ( trim($sql) != "" )? "WHERE $sql" : "";
 
