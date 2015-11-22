@@ -799,6 +799,20 @@
 			$fieldr = explode('.',$field);
 			$field = $fieldr[0];
 
+			// 系统关键词 _spt_data_id , _spt_create_at, _spt_update_at 
+			if ( $field == '_id' ) {
+				return str_replace('_id', '_spt_data_id', $ostr);
+			}
+
+			if ( $field == '_create_at' ) {
+				return str_replace('_create_at', '_spt_create_at', $ostr);
+			}
+
+			if ( $field == '_update_at' ) {
+				return str_replace('_update_at', '_spt_update_at', $ostr);
+			}
+
+
 			if ( !isset($_the_sheet['columns'][$field]) ) {
 				// echo "Not Found: $field & NAME=$name ostr=$ostr \n";
 				return $ostr;

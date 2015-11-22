@@ -429,8 +429,8 @@ class Table {
 				}
 
 				if ( $v != "" &&  $k == '@fulltext' )  { // 全文检索
-
-					$fulltext_list_arr = [];
+					// $v = str_replace('-', '', $v);
+					$fulltext_list_arr = [ "_id='".intval($v)."'"];
 					foreach ($columns as $k => $type) {
 						if ( $type->isFulltext() ) {
 							array_push($fulltext_list_arr, $columns[$k]->valueString($v) );
@@ -475,7 +475,7 @@ class Table {
 			$record_limit = " LIMIT $from,$perpage";
 			$items->query( '@page', ['name'=>'页码', 'value'=>$page, 'screen_value'=>$page, 'encode_value'=>$page ] );
 		}
-		
+
 		$sql ="$where $order $record_limit";
 		$sql = ( trim($sql) != "" )? "WHERE $sql" : "";
 
