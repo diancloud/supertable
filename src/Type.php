@@ -31,6 +31,7 @@ class Type {
 	protected $_value = null;
 	protected $_public = array(); // 普通用户可通过工具编辑分类列表
 
+	private $_cache = null;
 	private $_path;
 	private $_instance;
 
@@ -230,8 +231,15 @@ class Type {
 		return $this;
 	}
 
+	public function setCache( $cache ) {
+		$this->_cache = $cache;
+		return $this;
+	}
+
+
 	/**
 	 * 载入类型定义类
+	 * @cache /_spt/type/$class_path
 	 * @param  [type] $name 类型名称 (区分大小写)
 	 * @param  [type] $data 自定义数据 ( 表单验证等 )
 	 * @param  [type] $option 字段选项
@@ -239,26 +247,68 @@ class Type {
 	 */
 	final public function load( $name, $data, $option ) {
 
+		$cache_path = "/_spt/type/";
 		$class_path = $this->_path['type'] . "/$name.php";
 		$class_name = "\\Tuanduimao\\Supertable\\Types\\$name";
+
+		// 从缓存中载入文件
+		if ( $this->_cache != null  && !defined('SUPERTABLE_DEBUG_ON') ) {
+			$cache_name = "{$cache_path}$class_path";
+			$class_content = $this->_cache->get($cache_name);
+			
+			// 优先载入用户定义的类型
+			if ( $class_content !== false ) {
+				if ( !class_exists($class_name) ){
+					eval("?>" . $class_content);
+				}
+				if ( class_exists($class_name) ) { 
+					return (new $class_name( $data, $option ))
+							->setPath($this->_path)
+							->setPublic( $this->_public )
+							->setCache( $this->_cache );
+				}
+			}
+
+			// 载入系统默认类型
+			if ( !class_exists($class_name) ) {
+				throw new Exception("Type Not Found (class_path=$class_path,  class_name=$class_name or $name ) ");	
+			}
+
+			return (new $class_name( $data, $option ))
+				->setPath($this->_path)
+				->setPublic( $this->_public )
+				->setCache( $this->_cache );
+		}
+
+
 
 		// 优先载入用户定义的类型
 		if ( file_exists($class_path) ) {
 			require_once( $class_path );
-			if ( class_exists($class_name) ) { 
-				return new $class_name( $data, $option );
+			if ( class_exists($class_name) ) {
+
+				// 将数据写入缓存
+				if ( $this->_cache != null ) {
+					$cache_name = "{$cache_path}$class_path";
+		        	$this->_cache->set($cache_name, file_get_contents($class_path) );
+		        }
+
+				return (new $class_name( $data, $option ))
+							->setPath($this->_path)
+							->setPublic( $this->_public )
+							->setCache( $this->_cache );
 			}
 		}
 
 		// 载入系统默认类型
-		if ( !class_exists($class_name) ) {
-			throw new Exception("Type Not Found (class_path=$class_path,  class_name=$class_name or $name ) ");
+		if ( class_exists($class_name) ) {
+			throw new Exception("Type Not Found (class_path=$class_path,  class_name=$class_name or $name ) ");	
 		}
 
-		// 创建实例
 		return (new $class_name( $data, $option ))
-					->setPath($this->_path)
-					->setPublic( $this->_public );
+			->setPath($this->_path)
+			->setPublic( $this->_public )
+			->setCache( $this->_cache );
 	}
 
 
@@ -410,10 +460,6 @@ class Type {
 		// echo "$templete {$tpl} \n";
 		// print_r($option);
 
-		if (!file_exists($tpl)  ) {  // 载入默认模板 form-item
-			$tpl = $this->getTplFile('form-item');
-		}
-
 		$typeName  = @end(@explode('\\', get_class($this)));
 		$option['sheet_id'] = $sheet_id;
 		$option['fillter'] = (isset($option['fillter']))? $option['fillter'] : [];
@@ -440,21 +486,62 @@ class Type {
 
 
 		$html = null;
-		if ( file_exists($tpl)) {
-			$html = $this->_render( $data, $tpl );
+		$html = $this->_render( $data, $tpl, true );
+		if ($html == null) {
+			$tpl = $this->getTplFile('form-item');
+			$html = $this->_render( $data, $tpl, true );
 		}
+
 
 		return ['status'=>'success','html'=>$html, 'data'=>$data];
 	}
 
 
-
+	/**
+	 * 根据给定模板名称，获取模板地址
+	 * @cache  /_spt/cache/view/*
+	 * @param  [type] $name 模板名称
+	 * @return string 模板路径地址
+	 */
 	public function getTplFile( $name ) {
+		$cache_name = "/_spt/cache/view/";
 
 		$data['_type'] = $class_name = get_class($this);
 		$namer = explode('\\', $class_name);
 		$view_name = end($namer);
 		$view_file =  $this->_path['templete'] . "/$view_name/$name.tpl.html";  // 用户自定义模板路径    eg: /data/my_view/InlineText/$name.tpl.html
+
+		// 检查模板再缓存中是否存在
+		if ( $this->_cache != null && !defined('SUPERTABLE_DEBUG_ON') ) {
+			$content = $this->_cache->get( "{$cache_name}$view_file" );
+			if ( $content !== false ) {
+				return $view_file;
+			}
+
+			$view_file =  $this->_path['templete'] . "/$name.tpl.html";
+			$content = $this->_cache->get( "{$cache_name}$view_file" );
+			if ( $content !== false ) {
+				return $view_file;
+			}
+
+			$view_file = __DIR__ . "/view/$view_name/$name.tpl.html";
+			$content = $this->_cache->get( "{$cache_name}$view_file" );
+			if ( $content !== false ) {
+				return $view_file;
+			}
+
+			$view_file = __DIR__ . "/view/$name.tpl.html"; 
+			$content = $this->_cache->get( "{$cache_name}$view_file" );
+			if ( $content !== false ) {
+				return $view_file;
+			}
+
+			// RESET viewfile
+			$view_file =  $this->_path['templete'] . "/$view_name/$name.tpl.html";  // 用户自定义模板路径    eg: /data/my_view/InlineText/$name.tpl.html
+		}
+
+
+
 		if ( !file_exists($view_file) ) {
 			$view_file =  $this->_path['templete'] . "/$name.tpl.html";  // 用户自定义模板路径    eg: /data/my_view/$name.tpl.html
 		}
@@ -473,25 +560,53 @@ class Type {
 
 	/**
 	 * 渲染模板
+	 * @cache /_spt/cache/view/$tpl
 	 * @param  [type] $data [description]
 	 * @param  [type] $name [description]
 	 * @return [type]       [description]
 	 */
-	protected function _render( $data,  $tpl=null ) {
+	protected function _render( $data,  $tpl=null, $allow_null=false ) {
+		$cache_name = "/_spt/cache/view/$tpl";
+		$view_content = false;
 		$data['_type'] = $class_name = get_class($this);
-
-		if ( !file_exists($tpl) ) {
-			throw new Exception("Templete Not Found! file=$tpl");
+		
+		// 读取缓存
+		if ( $this->_cache != null ) {
+			$view_content = $this->_cache->get($cache_name);
 		}
 
-		ob_start();
-		$html = "";
-		@extract( $data );
-		if ( file_exists($tpl) ) {
-			require( $tpl );
-		}
-		$content = ob_get_contents();
-        ob_end_clean();
+		if ( $view_content === false || defined('SUPERTABLE_DEBUG_ON') ) { // 从文件中载入模板
+
+			if ( !file_exists($tpl) ) {
+				if ( $allow_null ) return null;
+				throw new Exception("Templete Not Found! file=$tpl");
+			}
+			ob_start();
+			$html = "";
+			@extract( $data );
+
+			if ( file_exists($tpl) ) {
+				require( $tpl );
+			}
+			$content = ob_get_contents();
+	        ob_end_clean();
+
+	        // 将数据写入缓存
+			if ( $this->_cache != null ) {
+	        	$this->_cache->set($cache_name, file_get_contents($tpl) );
+	        }
+        
+        } else { // 从缓存中载入模板
+        	ob_start();
+			$html = "";
+			@extract( $data );
+			// include 'data:text/plain,' . urlencode($view_content);
+			// eval($view_content);
+			eval("?>" . $view_content . "<?php ");
+			$content = ob_get_contents();
+			ob_end_clean();
+        }
+
         return $content;
 	}
 

@@ -28,7 +28,7 @@ class Table {
 	
 	private $_stor = array();
 	private $_type = null;
-	private $_mc = null;
+	private $_cache = null;
 
 
 	public $errors = array();
@@ -942,16 +942,27 @@ class Table {
 
 	/**
 	 * 数据查询: 搜索器
+	 * @cache /_spt/queryform/$sheet_id/md5(json_encode($option))
 	 * @param  [type] $option [description]
 	 * @return [type]         [description]
 	 */
 	public function renderQueryForm( $option ) {
+		
 		// _xhprfo_start();
-
 		$this->errors = array();
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
+
+		// 从缓存中读取数据
+		if ( $this->_cache != null && !defined('SUPERTABLE_DEBUG_ON') ) {
+			$cache_name ="/_spt/queryform/{$this->_sheet_id}/" . md5(json_encode($option));
+			$result = $this->_cache->get($cache_name);
+			if ($result !== false ) {
+				return json_decode($result,true);
+			}
+		}
+
 
 		$columns = (isset($option['columns']))? $option['columns'] : $this->_sheet['columns'];
 		if ( isset($option['columns'])) { unset( $option['columns']); }
@@ -988,6 +999,10 @@ class Table {
 		}
 
 		$html = $this->_render( $data, $tpl );
+
+		if ( $this->_cache != null && is_string($cache_name)  ) {
+			$this->_cache->set($cache_name, json_encode(['status'=>'success','html'=>$html, 'data'=>$data]));
+		}
 
 		// _xhprof_end();
 
@@ -1055,44 +1070,88 @@ class Table {
 
 	/**
 	 * 渲染模板
+	 * @cache /_spt/cache/view/$tpl
 	 * @param  [type] $data [description]
 	 * @param  [type] $name [description]
 	 * @return [type]       [description]
 	 */
 	private function _render( $data,  $tpl=null ) {
-		if ( !file_exists($tpl) ) {
-			throw new Exception("Templete Not Found! file=$tpl");
+		$cache_name = "/_spt/cache/view/$tpl";
+		$view_content = false;
+
+		// 读取缓存
+		if ( $this->_cache != null ) {
+			$view_content = $this->_cache->get($cache_name);
 		}
-		ob_start();
-		$html = "";
-		@extract( $data );
-		if ( file_exists($tpl) ) {
-			require( $tpl );
-		}
-		$content = ob_get_contents();
-        ob_end_clean();
+
+	    if ( $view_content === false || defined('SUPERTABLE_DEBUG_ON') ) { // 从文件中载入模板
+
+			if ( !file_exists($tpl) ) {
+				throw new Exception("Templete Not Found! file=$tpl");
+			}
+			ob_start();
+			$html = "";
+			@extract( $data );
+			if ( file_exists($tpl) ) {
+				require( $tpl );
+			}
+			$content = ob_get_contents();
+	        ob_end_clean();
+
+	        // 将数据写入缓存
+			if ( $this->_cache != null ) {
+	        	$this->_cache->set($cache_name, file_get_contents($tpl) );
+	        }
+
+	    } else {
+	    	ob_start();
+			$html = "";
+			@extract( $data );
+			eval("?>" . $view_content . "<?php ");
+			$content = ob_get_contents();
+			ob_end_clean();
+	    }
+
         return $content;
 	}
 
 
 	/**
 	 * 获取模板路径
+	 * @cache  /_spt/cache/view/*
 	 * @param  [type] $name [description]
 	 * @return [type]       [description]
 	 */
 	private function _tpl_filename( $name ) {
 
+		$cache_name = "/_spt/cache/view/";
 		$path = $this->C('path');
 		$view_file =  $path['templete'] . "$name.tpl.html";
+
+		// 检查模板再缓存中是否存在
+		if ( $this->_cache != null && !defined('SUPERTABLE_DEBUG_ON') ) {
+			$content = $this->_cache->get( "{$cache_name}$view_file" );
+			if ( $content !== false ) {
+				return $view_file;
+			}
+
+			$view_file = __DIR__ . "/view/$name.tpl.html";
+			$content = $this->_cache->get( "{$cache_name}$view_file" );
+			if ( $content !== false ) {
+				return $view_file;
+			}
+
+			// reset viewfile
+			$view_file =  $path['templete'] . "$name.tpl.html";
+		}
+
+
 		if ( !file_exists($view_file) ) {
 			$view_file = __DIR__ . "/view/$name.tpl.html";
 		}
 
 		return $view_file;
 	}
-
-	
-
 
 
 	/**
@@ -1165,6 +1224,7 @@ class Table {
 	
 	public function type( $name=null, $data=array(), $option=array() ) {
 		
+		$this->_cacheInit();
 		if ( $name == null ) {
 			if ( is_a($this->_type, "Tuanduimao\Supertable\Type") ) {
 				return $this->_type;
@@ -1172,7 +1232,8 @@ class Table {
 
 			$this->_type = (new Type())
 								->setPath( $this->C('path') )
-								->setPublic( $this->C('type/public'));
+								->setPublic( $this->C('type/public'))
+								->setCache( $this->_cache );
 
 			return $this->_type;
 		}
@@ -1180,6 +1241,7 @@ class Table {
 		return (new Type())
 			 ->setPath( $this->C('path') )
 			 ->setPublic( $this->C('type/public'))
+			 ->setCache( $this->_cache )
 			 ->load( $name, $data, $option );
 
 	}
@@ -1281,6 +1343,7 @@ class Table {
 
 	/**
 	 * 系统初始化：( 在 bindBucket 和 bindIndex之后调用 )
+	 * 		0）创建缓存对象
 	 * 		1）创建数据库对象
 	 * 		2) 创建搜索引擎对象
 	 * 		3）创建类型对象
@@ -1288,10 +1351,11 @@ class Table {
 	 * @return [type] [description]
 	 */
 	protected function init() {
+		$this->_cacheInit();
 		$this->_storInit();
 		$this->_searchInit();
 		$this->type();
-		$this->_schema = new Schema( $this->_bucket,  $this->_stor, $this->_search, $this->_type, $this->_mc );
+		$this->_schema = new Schema( $this->_bucket,  $this->_stor, $this->_search, $this->_type, $this->_cache );
 	}
 
 
@@ -1365,6 +1429,21 @@ class Table {
 	}
 
 
+	/**
+	 * 初始化Cache引擎
+	 */
+	private function _cacheInit() {
+		if ( $this->_cache == null ){
+			$engine = $this->C('cache/engine');
+			$class_name = "\\Tuanduimao\\Supertable\\Cache\\{$engine}";
+			if ( !class_exists($class_name) ) {
+				$this->_cache = null;
+			} else {
+				$this->_cache  = new $class_name( $this->C('cache/option'));
+			}
+		}
+		return  $this;
+	}
 
 	private function runsql( $sql ) {
 		if ( $this->_sheet_id === null ) {
