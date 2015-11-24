@@ -265,6 +265,9 @@
  			'body' => $doc,
  		);
 
+ 		// var_dump($docInputParam);
+ 		
+
  		$result = $this->_client->index( $docInputParam );
  		if ( $result['_id'] != $id ) {
  			$this->_error = "Index: createData /$index/{$sheet['name']}/$id Error (".json_encode($result).")";
@@ -316,6 +319,8 @@
  			'type' => $type,
  			'body'=>"\n$updateString\n$docString\n"
  		);
+
+
 
  		$result = $this->_client->bulk( $docInputParam );
  		if ( $result['errors'] != false || count($result['items']) != 1) {
