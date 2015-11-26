@@ -1,0 +1,99 @@
+<?php foreach ($data['schema'] as $name => $shm ):  ?>
+
+<div class="col-lg-<?=$shm['input_width']?> col-md-<?=$shm['input_width']?> col-sm-<?=$shm['input_width']?> 
+       <?php 
+        $display_only_flag = ( count($instance['display_only'])  > 0 )? true : false;
+        if ( !$display_only_flag ) : ?>
+            <?php if ( in_array($data['column_name'], $instance['fillter']) || in_array($data['screen_name'], $instance['fillter']) ): ?>
+            hidden
+          <?php endif; ?>
+        <?php else: ?>
+
+          <?php if ( !in_array($data['column_name'], $instance['display_only']) && !in_array($data['screen_name'], $instance['display_only']) ): ?>
+            hidden
+          <?php endif; ?>
+        <?php endif;  ?>
+
+		col-xs-12" >
+    <div class="form-material">
+        <?php if ( $shm['input_type'] == 'text' ) :  ?>
+        <input class="form-control" type="text" 
+               value='<?=$shm['input_value']?>'
+               data-name='<?=$name?>'
+               data-group='<?=$data['column_name']?>'
+               id="<?="{$data['column_name']}-{$name}"?>" name="<?="{$data['column_name']}-{$name}"?>" placeholder="<?=$shm['placeholder']?>">
+        <?php elseif ( $shm['input_type'] == 'select' ) :  ?>
+
+        <select class="js-select2 form-control" 
+                data-group='<?=$data['column_name']?>'
+                data-name='<?=$name?>'
+                id="<?="{$data['column_name']}-{$name}"?>" name="<?="{$data['column_name']}-{$name}"?>" placeholder="<?=$shm['placeholder']?>"
+                style="width: 100%;" data-placeholder="<?=$shm['placeholder']?>">
+            <option></option><!-- Required for data-placeholder attribute to work with Select2 plugin -->
+            <?php foreach ($shm['input_option'] as $ovalue => $oinfo): ?>
+            <option 
+                <?php if ( $oinfo['selected'] ) :  ?>
+                  selected
+                <?php endif; ?>
+                value="<?=$ovalue?>" <?=($data['_type']==$ovalue)?'selected':''?> ><?=$oinfo['name']?></option>
+            <?php endforeach; ?> 
+        </select>
+        <?php elseif ( $shm['input_type'] == 'textarea' ) :  ?>
+          <input class="form-control" type="text" 
+               value='<?=$shm['input_value']?>'
+               data-name='<?=$name?>'
+               data-group='<?=$data['column_name']?>'
+               id="<?="{$data['column_name']}-{$name}"?>" name="<?="{$data['column_name']}-{$name}"?>" placeholder="<?=$shm['placeholder']?>">
+
+        <?php endif;  ?>
+
+        <label for="<?=$data['name']?>-$name" >
+            <?=$shm['screen_name']?>
+        </label>
+    </div>
+</div>
+
+<?php endforeach; ?>
+<input  type="hidden"  value='<?=$_value?>'  id="<?=$data['column_name']?>" name="<?=$data['column_name']?>" />
+
+<?php if (isset($instance["_handler"])):?> 
+<script type="text/javascript">
+  // JS 修改更新表单API
+  $('<?=$instance["_handler"]?>').registerAPI("<?=$data['column_name']?>", function( form, name, value ) {
+
+      if ( typeof value == 'undefined' ) {
+          var valueObj = {};
+          $('[data-group="'+name+'"]', form ).each( function( idx, elm ){
+              var n = $(elm).attr('data-name');
+              var v = $(elm).val();
+              valueObj[n] = v;
+          });
+
+          $('[name="'+name+'"]', form).attr('value',  JSON.stringify([valueObj]) );
+          return [valueObj];
+      }
+
+      if ( typeof value == 'object' ) {
+          $('[data-group="'+name+'"]', form ).each( function( idx, elm ){
+              var n = $(elm).attr('data-name');
+              // console.log( value[0][n], n , value );
+              $(elm).val(value[0][n]);
+          });
+          value = JSON.stringify(value);
+      }
+
+      if ( typeof value == 'string') {
+          valueObj = $.parseJSON(value);
+          $('[data-group="'+name+'"]', form ).each( function( idx, elm ){
+              var n = $(elm).attr('data-name');
+              // console.log( value[0][n], n , value );
+              $(elm).val(valueObj[0][n]);
+          });
+      }
+
+
+      $('[name="'+name+'"]', form).attr('value', value);
+      return true;
+  });
+</script>
+<?php endif;?>

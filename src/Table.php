@@ -415,17 +415,19 @@ class Table {
 			foreach ($options as $k => $v) {
 				
 				if ( $v != "" && isset($columns[$k])) {
-					array_push($filed_list_arr, $columns[$k]->valueString($v) );
-					$screen_name = $columns[$k]->get('screen_name');
-					if ( $screen_name == "" ) {
-						$screen_name = '未知字段';
+					if( trim($columns[$k]->valueString($v))  != "" ) {
+						array_push($filed_list_arr, $columns[$k]->valueString($v) );
+						$screen_name = $columns[$k]->get('screen_name');
+						if ( $screen_name == "" ) {
+							$screen_name = '未知字段';
+						}
+						$items->query( $k, [
+							'name'=>$screen_name, 
+							'value'=>$v, 
+							'screen_value'=>$columns[$k]->valueScreen($v), 
+							'encode_value'=>$columns[$k]->valueEncode($v)
+						]);
 					}
-					$items->query( $k, [
-						'name'=>$screen_name, 
-						'value'=>$v, 
-						'screen_value'=>$columns[$k]->valueScreen($v), 
-						'encode_value'=>$columns[$k]->valueEncode($v)
-					]);
 				}
 
 				if ( $v != "" &&  $k == '@fulltext' )  { // 全文检索
@@ -900,6 +902,12 @@ class Table {
 				continue;
 			}
 
+			//忽略 hidden_column = 1 的类型
+			if ( !$option['display_hidden'] && $type->option('hidden_column') ) { 
+				continue;
+			}
+			
+
 			$data['items'][$field] = $type->renderItem( $this->_sheet_id, $field, $option );
 		}
 		$html = $this->_render( $data, $tpl );
@@ -937,6 +945,12 @@ class Table {
 			if ( !in_array(@end(explode('\\', get_class($type))), $allow_types) ) { 
 				continue;
 			}
+
+			//忽略 hidden_column = 1 的类型
+			if ( !$option['display_hidden'] && $type->option('hidden_column') ) { 
+				continue;
+			}
+			
 
 			$data['items'][$field] = $type->renderItem( $this->_sheet_id, $field, $option );
 		}
@@ -1062,6 +1076,11 @@ class Table {
 			// display_hidden=0 不显示隐藏字段
 			if ( !$option['display_hidden'] && $type->isHidden() ) { 
 				array_push($data['instance']['fillter'], $field);
+			}
+
+			//忽略 hidden_column = 1 的类型
+			if ( !$option['display_hidden'] && $type->option('hidden_data') ) { 
+				continue;
 			}
 
 			$data['items'][$field] = $type->renderItem( $this->_sheet_id, $field, $option );

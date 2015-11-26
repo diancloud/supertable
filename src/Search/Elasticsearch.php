@@ -380,7 +380,7 @@
 		$fields = $this->fieldFilter($fields, $sheet);
 
 		$sql = $this->sqlFilter("SELECT " . implode(',', $fields) . " FROM $index/$type $where", $sheet);
-		// echo "<pre> SQL = $sql \n</pre>";
+		echo "<pre> SQL = $sql \n</pre>";
 		
 		$conn = $this->_client->transport->getConnection();
 		$resp = $conn->performRequest('GET', '/_sql', array('sql'=>$sql));

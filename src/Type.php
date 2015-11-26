@@ -62,6 +62,10 @@ class Type {
 		return null;
 	}
 
+	public function getOption(){
+		return $this->_option;
+	}
+
 	public function data( $name ) {
 		if ( isset($this->_data[$name])) {
 			return $this->_data[$name];
@@ -105,6 +109,7 @@ class Type {
 		 		'unique' => (isset($opt['unique']))? $opt['unique'] : 0,  // 不可重复 , 0: 可以重复 1: 不能重复
 		 		'matchable' => (isset($opt['matchable']))? $opt['matchable'] : 0, // 匹配模式 , 0:精确匹配 1: 精确匹配
 		 		'fulltext' => (isset($opt['fulltext']))? $opt['fulltext'] : 0, // 全文检索 , 0:不支持全文 1: 支持全文检索
+		 	'width' => (isset($opt['width']))? $opt['width'] : 6, // 控件宽度 , 12列 默认为 6
 
 		 	// 程序设定的选项
 		 	'order' => (isset($opt['order']))? $opt['order'] : 1,  // 字段排序 , 默认为 1， 数值越小越靠前
@@ -351,9 +356,6 @@ class Type {
 	public function valueDecode( $value ) {
 		return $value;
 	}
-
-
-	
 
 
 	/**
