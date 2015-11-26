@@ -146,6 +146,10 @@ class Type {
 		$this->_data_format = $data_format;
 	}
 
+	public function dataFormat() {
+		return $this->_data_format;
+	}
+
 
 	public function isRequired(){
 		if ( $this->_option['required'] )  {

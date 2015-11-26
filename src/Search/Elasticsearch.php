@@ -380,7 +380,7 @@
 		$fields = $this->fieldFilter($fields, $sheet);
 
 		$sql = $this->sqlFilter("SELECT " . implode(',', $fields) . " FROM $index/$type $where", $sheet);
-		echo "<pre> SQL = $sql \n</pre>";
+		// echo "<pre> SQL = $sql \n</pre>";
 		
 		$conn = $this->_client->transport->getConnection();
 		$resp = $conn->performRequest('GET', '/_sql', array('sql'=>$sql));
@@ -718,6 +718,7 @@
 				'[Mm][Aa][Xx]', // max
 				'[Mm][Ii][Nn]', // min
 				'[Aa][Vv][Gg]', // avg
+				'[Nn][Ee][Ss][Tt][Ee][Dd]', // nested
 				'|[Cc][Oo][Uu][Nn][Tt]' //count
 			)
 		);
@@ -729,12 +730,14 @@
 		$regGroupFields = "/{$key['group']}[ ]{1}[ ]*([a-zA-Z0-9\.\_]+)/";
 		$regWhereFields = "/(".implode('|', $key['where']).")[ ]{1}[ ]*([a-zA-Z0-9\.\_]+)/";   // WHERE语句中的 Field
 		$regFunctionFields = "/(".implode('|', $key['function']).")\(([a-zA-Z0-9\.\_]+)\)/";   // 函数中的 Field
+		$regNestedFirstFields = "/([Nn][Ee][Ss][Tt][Ee][Dd])\(\'([a-zA-Z0-9\.\_]+)\'/";   // 函数中的 Field
 
 		$GLOBALS['_the_sheet'] = $sheet;
 		$newSql = preg_replace_callback( array(
 				  $regSelectFields,$regDistinctFields, 
 				  $regGroupFields, $regWhereFields, 
-				  $regFunctionFields, $regOrderFields), function($match){
+				  $regFunctionFields, $regNestedFirstFields, 
+				  $regOrderFields), function($match){
 
 			$_the_sheet = $GLOBALS['_the_sheet'];
 			$type = $match[1];

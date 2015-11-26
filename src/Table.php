@@ -412,11 +412,17 @@ class Table {
 			}
 
 			$filed_list_arr = array();
+			$filed_list_nested = array();
 			foreach ($options as $k => $v) {
 				
 				if ( $v != "" && isset($columns[$k])) {
 					if( trim($columns[$k]->valueString($v))  != "" ) {
-						array_push($filed_list_arr, $columns[$k]->valueString($v) );
+						if ( $columns[$k]->dataFormat() == 'nested' ) {
+							array_push($filed_list_nested, $columns[$k]->valueString($v) );
+						} else {
+							array_push($filed_list_arr, $columns[$k]->valueString($v) );
+						}
+
 						$screen_name = $columns[$k]->get('screen_name');
 						if ( $screen_name == "" ) {
 							$screen_name = '未知字段';
@@ -446,6 +452,8 @@ class Table {
 					}
 				}
 			}
+
+			$filed_list_arr = array_merge($filed_list_arr, $filed_list_nested );
 
 			// 手写条件
 			if ( isset( $options['@where'] ) ) {

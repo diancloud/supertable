@@ -185,7 +185,7 @@ class BaseNested extends Type {
 			}
 
 			$qs =  implode(' OR  ', $rows );
-			$qs = ( $qs == "" ) ? "" : " ( $qs ) ";
+			$qs = ( $qs == "" ) ? "" : " nested('$column_name', $qs) ";
 			return $qs;
 		}
 		return "";
