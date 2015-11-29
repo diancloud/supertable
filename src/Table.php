@@ -572,6 +572,21 @@ class Table {
 		return $this;
 	}
 
+	/**
+	 * 对单个数据进行解码
+	 * @param  [type] $name  [description]
+	 * @param  [type] $value [description]
+	 * @return [type]        [description]
+	 */
+	public function decodeColumn( $name , $value ) {
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+		if ( isset($this->sheet()['columns'][$name]) ) {
+			$value = $this->sheet()['columns'][$name]->valueDecode( $value );
+		}
+		return $value;
+	}
 
 
 	/**
