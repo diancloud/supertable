@@ -487,7 +487,8 @@ class Table {
 		}
 
 		$sql ="$where $order $record_limit";
-		$sql = ( trim($sql) != "" )? "WHERE $sql" : "";
+		$sql = ( trim($where) != "" )? "WHERE $sql" : "$sql";
+
 
 		// 查询记录
 		$resp = $this->select( $sql, $fields );
@@ -514,7 +515,14 @@ class Table {
 				// echo "</pre>";
 			}
 
+
 			foreach ($line as $column_name=>$value )  {
+
+				if ( count($fields) > 0 && !in_array($column_name,$fields) ) {
+					continue;
+				} 
+
+
 				$row[$column_name]['value'] = $value;
 				$row[$column_name]['type'] = 'UNKNOWN';
 				$row[$column_name]['html'] = $value;
