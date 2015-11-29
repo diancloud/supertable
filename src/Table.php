@@ -491,7 +491,7 @@ class Table {
 
 		// 查询记录
 		$resp = $this->select( $sql, $fields );
-		
+
 		$record_total = $resp['total'];
 		$rows = $resp['data'];
 		$rows_map = [];
@@ -503,7 +503,12 @@ class Table {
 			if ( !isset($line['_data_revision']) ||
 				 !isset($line['_schema_revision']) || 
 				 ( $line['_data_revision'] != $this->sheet()['revision'] ) ) {
-				$line = $this->get($line['_id'], true);
+
+				if ( !isset($line['_function']) ) {
+					$line = $this->get($line['_id'], true);
+				} else {
+					unset($line['_function']);
+				}
 				// echo "<pre>";	
 				// print_r($line);
 				// echo "</pre>";

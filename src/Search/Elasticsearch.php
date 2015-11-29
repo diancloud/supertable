@@ -622,6 +622,7 @@
 		if ( is_array($result['aggregations']) ) {
 			foreach ($result['aggregations'] as $field => $arr ) {
 				$row_ext[$field] = $arr['value'];
+				$row_ext['_function'] = true;
 			}
 		}
 
