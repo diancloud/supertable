@@ -256,43 +256,17 @@ class Type {
 	 */
 	final public function load( $name, $data, $option ) {
 
-		$cache_path = "/_spt/type/";
 		$class_path = $this->_path['type'] . "/$name.php";
 		$class_name = "\\Tuanduimao\\Supertable\\Types\\$name";
-
-
-		// 从缓存中载入文件
-		if ( $this->_cache != null  && !defined('SUPERTABLE_DEBUG_ON') ) {
-			$cache_name = "{$cache_path}$class_path";
-			$class_content = $this->_cache->get($cache_name);
-			
-			// 优先载入用户定义的类型
-			if ( $class_content !== false ) {
-				if ( !class_exists($class_name) ){
-					eval("?>" . $class_content);
-				}
-				if ( class_exists($class_name) ) { 
-					return (new $class_name( $data, $option ))
-							->setPath($this->_path)
-							->setPublic( $this->_public )
-							->setCache( $this->_cache );
-				}
-			}
-		}
-
-
-
+		
 		// 优先载入用户定义的类型
 		if ( file_exists($class_path) ) {
-			require_once( $class_path );
+
+			if ( !class_exists($class_name) ) {
+				require_once( $class_path );
+			}
+
 			if ( class_exists($class_name) ) {
-
-				// 将数据写入缓存
-				if ( $this->_cache != null ) {
-					$cache_name = "{$cache_path}$class_path";
-		        	$this->_cache->set($cache_name, file_get_contents($class_path) );
-		        }
-
 				return (new $class_name( $data, $option ))
 							->setPath($this->_path)
 							->setPublic( $this->_public )
