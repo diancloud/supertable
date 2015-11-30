@@ -434,6 +434,23 @@ class Table {
 							'encode_value'=>$columns[$k]->valueEncode($v)
 						]);
 					}
+				} else if ( in_array($k, ['_id','_update_at','_create_at','_is_deleted'])) {
+					$key_map = [
+						'_id'=>'ID',
+						'_update_at'=>'更新时间',
+						'_create_at'=>'创建时间',
+						'_is_deleted'=>'删除时间',
+					];
+
+					$items->query( $k, [
+							'name'=>$key_map[$k], 
+							'value'=>$v, 
+							'screen_value'=>$v, 
+							'encode_value'=>$v,
+						]);
+
+					array_push($filed_list_arr, "$k='$v'" );
+
 				}
 
 				if ( $v != "" &&  $k == '@fulltext' )  { // 全文检索
@@ -488,7 +505,7 @@ class Table {
 
 		$sql ="$where $order $record_limit";
 		$sql = ( trim($where) != "" )? "WHERE $sql" : "$sql";
-
+	
 
 		// 查询记录
 		$resp = $this->select( $sql, $fields );
@@ -500,7 +517,7 @@ class Table {
 
 		foreach ($rows as $line ) {
 			$row = [];
-			
+			$function_flag = false;
 			if ( !isset($line['_data_revision']) ||
 				 !isset($line['_schema_revision']) || 
 				 ( $line['_data_revision'] != $this->sheet()['revision'] ) ) {
@@ -508,6 +525,7 @@ class Table {
 				if ( !isset($line['_function']) ) {
 					$line = $this->get($line['_id'], true);
 				} else {
+					$function_flag = true;
 					unset($line['_function']);
 				}
 				// echo "<pre>";	
@@ -518,9 +536,9 @@ class Table {
 
 			foreach ($line as $column_name=>$value )  {
 
-				if ( count($fields) > 0 && !in_array($column_name,$fields) ) {
+				if ( count($fields) > 0 && !in_array($column_name,$fields) && !$function_flag ) {
 					continue;
-				} 
+				}
 
 
 				$row[$column_name]['value'] = $value;

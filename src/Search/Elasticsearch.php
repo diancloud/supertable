@@ -417,7 +417,7 @@
 	 * @return [type]              [description]
 	 */
 	private function uniqueCheck( $name, $unique_data, $except_id=null, $map=[], $allow_null = true ) {
-	
+
 		$query =array(
 			'index' => $this->_index['index'],
 			'type'  => $this->_index['type'] . $name,
@@ -456,10 +456,16 @@
 
 
 			if ($hits['total'] != 0 ) {
-				$this->_errno = 1062;
-				$this->_errdt = (isset($map[$field]))? $map[$field] : $field;
-				$this->_error =  "Index: uniqueCheck /{$this->_index['index']}/$name/$field/$value duplicate ID={$hits['hits'][0]['_id']} Exisit ！(".json_encode($result).")";
-				return false;
+
+				if ( intval($hits['total']) == 1 &&  $except_id != null && $except_id == $hits['hits'][0]['_id'] ) {
+					//忽略错误 donoting
+				} else {
+
+					$this->_errno = 1062;
+					$this->_errdt = (isset($map[$field]))? $map[$field] : $field;
+					$this->_error =  "Index: uniqueCheck /{$this->_index['index']}/$name/$field/$value duplicate ID={$hits['hits'][0]['_id']} HITS={$hits['total']} Exisit ！(".json_encode($result).")";
+					return false;
+				}
 			}
 
 			// 清空查询条件
