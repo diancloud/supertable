@@ -56,7 +56,6 @@ class BaseString extends Type {
 		 	$opts['fulltext'] = (isset($opts['fulltext']))? $opts['fulltext'] : 0; // 全文检索 , 0:不支持全文 1: 支持全文检索
 
 		$opts['summary'] = (isset($opts['summary']))? $opts['summary'] : 0;
-		$opts['unique'] = (isset($opts['unique']))? $opts['unique'] : 0;
 		$opts['order'] = (isset($opts['order']))? $opts['order'] : 1;
 		$opts['hidden'] = (isset($opts['hidden']))? $opts['hidden'] : 0;
 		$opts['hidden_column'] = (isset($opts['hidden_column']))? $opts['hidden_column'] : 1;

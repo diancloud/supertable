@@ -51,26 +51,20 @@ class BaseInt extends Type {
 		$opts['screen_name'] = (isset($opts['screen_name']))? $opts['screen_name'] : 'BaseInt_' . time() . rand(100000,999999);
 		$opts['required'] = (isset($opts['required']))? $opts['required'] : 0;
 		$opts['searchable'] = (isset($opts['searchable']))? $opts['searchable'] : 1;
-		$opts['summary'] = (isset($opts['summary']))? $opts['summary'] : 0;
-		$opts['unique'] = (isset($opts['unique']))? $opts['unique'] : 0;
-		$opts['order'] = (isset($opts['order']))? $opts['order'] : 1;
-		$opts['hidden'] = (isset($opts['hidden']))? $opts['hidden'] : 1;
-		$opts['dropable'] = (isset($opts['dropable']))? $opts['dropable'] : 0; // 能否移除 默认为1 可以移除
-		// $opts['field_name'] = (isset($opts['field_name']))? $opts['field_name'] : "";
-		$opts['column_name'] = (isset($opts['column_name']))? $opts['column_name'] : "";
+		 	$opts['unique'] = (isset($opts['unique']))? $opts['unique'] : 0; // 不可重复 , 0: 可以重复 1: 不能重复
+		 	$opts['matchable'] = (isset($opts['matchable']))? $opts['matchable'] : 0; // 匹配模式 , 0:精确匹配 1: 精确匹配
+		 	$opts['fulltext'] = (isset($opts['fulltext']))? $opts['fulltext'] : 0; // 全文检索 , 0:不支持全文 1: 支持全文检索
 
-		$option = [
-			'screen_name' => $opts['screen_name'] ,
-		 	'required' => $opts['required'],
-		 	'summary' => $opts['summary'],
-		 	'searchable' => $opts['searchable'],
-		 	'unique' => $opts['unique'],
-		 	'order' => $opts['order'],
-		 	'hidden' => $opts['hidden'],
-		 	'dropable' => $opts['dropable'],
-		 	'column_name' => $opts['column_name'],
-		 	'field_name' => $opts['field_name'],
-		];
+		$opts['summary'] = (isset($opts['summary']))? $opts['summary'] : 0;
+		$opts['order'] = (isset($opts['order']))? $opts['order'] : 1;
+		$opts['hidden'] = (isset($opts['hidden']))? $opts['hidden'] : 0;
+		$opts['hidden_column'] = (isset($opts['hidden_column']))? $opts['hidden_column'] : 1;
+		$opts['hidden_data'] = (isset($opts['hidden_data']))? $opts['hidden_data'] : 1;
+		$opts['dropable'] = (isset($opts['dropable']))? $opts['dropable'] : 0; // 能否移除 默认为0 不可移除
+		$opts['alterable'] = (isset($opts['alterable']))? $opts['alterable'] : 0; // 能否移除 默认为0 不可移除
+		$opts['column_name'] = (isset($opts['column_name']))? $opts['column_name'] : "";
+		$opts['width'] = (isset($opts['width']))? $opts['width'] : 12;
+
 
 		$data = [
 			'maxvalue' => $opts['max'],
@@ -158,7 +152,7 @@ class BaseInt extends Type {
 			'max' => '{screen_name}不能大于{maxvalue}',
 		];
 
-		parent::__construct( $data, $option );
+		parent::__construct( $data, $opts );
 		$this->setDataInput( $data_input );
 		$this->setDataMessage( $data_message );
 		$this->setDataFormat('integer');
