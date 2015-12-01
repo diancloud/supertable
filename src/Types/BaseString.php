@@ -51,37 +51,31 @@ class BaseString extends Type {
 		$opts['screen_name'] = (isset($opts['screen_name']))? $opts['screen_name'] : 'BaseString_' . time() . rand(100000,999999);
 		$opts['required'] = (isset($opts['required']))? $opts['required'] : 0;
 		$opts['searchable'] = (isset($opts['searchable']))? $opts['searchable'] : 1;
+		 	$opts['unique'] = (isset($opts['unique']))? $opts['unique'] : 0; // 不可重复 , 0: 可以重复 1: 不能重复
+		 	$opts['matchable'] = (isset($opts['matchable']))? $opts['matchable'] : 0; // 匹配模式 , 0:精确匹配 1: 精确匹配
+		 	$opts['fulltext'] = (isset($opts['fulltext']))? $opts['fulltext'] : 0; // 全文检索 , 0:不支持全文 1: 支持全文检索
+
 		$opts['summary'] = (isset($opts['summary']))? $opts['summary'] : 0;
 		$opts['unique'] = (isset($opts['unique']))? $opts['unique'] : 0;
 		$opts['order'] = (isset($opts['order']))? $opts['order'] : 1;
-		$opts['hidden'] = (isset($opts['hidden']))? $opts['hidden'] : 1;
-		$opts['dropable'] = (isset($opts['dropable']))? $opts['dropable'] : 0; // 能否移除 默认为1 可以移除
-		// $opts['field_name'] = (isset($opts['field_name']))? $opts['field_name'] : "";
+		$opts['hidden'] = (isset($opts['hidden']))? $opts['hidden'] : 0;
+		$opts['hidden_column'] = (isset($opts['hidden_column']))? $opts['hidden_column'] : 1;
+		$opts['hidden_data'] = (isset($opts['hidden_data']))? $opts['hidden_data'] : 1;
+		$opts['dropable'] = (isset($opts['dropable']))? $opts['dropable'] : 0; // 能否移除 默认为0 不可移除
+		$opts['alterable'] = (isset($opts['alterable']))? $opts['alterable'] : 0; // 能否移除 默认为0 不可移除
 		$opts['column_name'] = (isset($opts['column_name']))? $opts['column_name'] : "";
-		
-		$option = [
-			'screen_name' => $opts['screen_name'] ,
-		 	'required' => $opts['required'],
-		 	'summary' => $opts['summary'],
-		 	'searchable' => $opts['searchable'],
-		 	'unique' => $opts['unique'],
-		 	'order' => $opts['order'],
-		 	'hidden' => $opts['hidden'],
-		 	'dropable' => $opts['dropable'],
-		 	'column_name' => $opts['column_name'],
-		 	'field_name' => $opts['field_name'],
-		];
+		$opts['width'] = (isset($opts['width']))? $opts['width'] : 12;
 		
 		$data = [
-			'maxvalue' => $opts['maxlength'],
-			'minvalue' => $opts['minlength'],
+			'maxlength' => $opts['maxlength'],
+			'minlength' => $opts['minlength'],
 			'default' => $opts['default'],
 			'placeholder' => $opts['placeholder'],
 		];
 
 		$data_input = [
 			
-			'maxvalue' => [
+			'maxlength' => [
 				'screen_name' => '最多字数',
 				'placeholder' => '最多可以输入字数',
 				'input_type' => 'text',
@@ -99,7 +93,7 @@ class BaseString extends Type {
 				],
 			],
 
-			'minvalue' => [
+			'minlength' => [
 				'screen_name' => '最少字数',
 				'placeholder' => '至少输入字数',
 				'input_type' => 'text',
@@ -123,8 +117,8 @@ class BaseString extends Type {
 				'input_type' => 'text',
 				'validation' => [
 					'required' => false,
-					'minwlength'=>'{minvalue}.value',
-					'maxwlength'=>'{maxvalue}.value',
+					'minwlength'=>'{minlength}.value',
+					'maxwlength'=>'{maxlength}.value',
 				],
 
 				'message' => [
@@ -154,11 +148,11 @@ class BaseString extends Type {
 		$data_message = [
 			'required' =>  '请填写{screen_name}',
 			'type' => '{screen_name}数据格式不正确',
-			'min' => '{screen_name}至少输入{minvalue}个字',
-			'max' => '{screen_name}最多输入{maxvalue}个字',
+			'min' => '{screen_name}至少输入{minlength}个字',
+			'max' => '{screen_name}最多输入{maxlength}个字',
 		];
 
-		parent::__construct( $data, $option );
+		parent::__construct( $data, $opts );
 		$this->setDataInput( $data_input );
 		$this->setDataMessage( $data_message );
 		$this->setDataFormat('string');
@@ -179,8 +173,8 @@ class BaseString extends Type {
 				'validation' => [
 					'required' => $this->_option['required'],
 					'type' => ['string','numeric'],
-					'minwlength' => $this->_data['minvalue'],
-					'maxwlength' => $this->_data['maxvalue'],
+					'minwlength' => $this->_data['minlength'],
+					'maxwlength' => $this->_data['maxlength'],
 				],
 
 				'message' => [
@@ -188,11 +182,11 @@ class BaseString extends Type {
 					'type' => $this->_message('type', ['screen_name'=>$name]),
 					'minwlength' => $this->_message('min', [
 						'screen_name'=>$name,
-						'minvalue'=>$this->_data['minvalue'],
+						'minlength'=>$this->_data['minlength'],
 					]),
 					'maxwlength' => $this->_message('max', [
 						'screen_name'=>$name,
-						'maxvalue'=>$this->_data['maxvalue'],
+						'maxlength'=>$this->_data['maxlength'],
 					]),
 				],
 			],
