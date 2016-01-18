@@ -210,7 +210,7 @@ class Mysql {
 
 		if ( $data == null ) {
 			if ($allow_null) return null;
-			throw new Exception("$schema_id 不存在 (SQL=$sql) ");
+			throw new Exception("$schema_name 不存在 (SQL=$sql) ");
 		}
 
 		$data['_spt_schema_json'] = json_decode($data['_spt_schema_json'], true);
@@ -520,7 +520,11 @@ class Mysql {
 	function putField( $schema_id, $name, $value ) {
 
 		$data = $this->getSchema( $schema_id, false );
-		$oldValue = $data['_spt_schema_json'][$name];unset($oldValue['_version']);
+		$oldValue = null;
+		if ( isset($data['_spt_schema_json'][$name]) ) {
+			$oldValue = $data['_spt_schema_json'][$name];unset($oldValue['_version']);
+		}
+
 		if ( json_encode($oldValue) == json_encode($value)) {
 			return array('errno'=>0, 'error'=>'$name not change, nothing done!', 'schema_id'=>$schema_id );
 		}
@@ -529,7 +533,7 @@ class Mysql {
 		$this->_schemaBackup[$schema_id] = $data;
 
 		// 更新字段版本号
-		$value['_version'] = intval($data['_spt_schema_json'][$name]['_version']) + 1;
+		$value['_version'] = isset($data['_spt_schema_json'][$name]['_version']) ? intval($data['_spt_schema_json'][$name]['_version']) + 1 : 1;
 		$data['_spt_schema_json'][$name] = $value;
 		$data['_spt_schema_revision'] = "increase";
 		$data['_spt_update_at'] = "now";
