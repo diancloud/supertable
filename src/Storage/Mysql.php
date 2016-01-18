@@ -816,7 +816,7 @@ class Mysql {
 		$table_name = $this->getDB('slave')->real_escape_string($table_name);
 		$sql = "DESC `$table_name` ";
 		$data = $this->getData( $sql, 'slave', 1146 );
-		if ( $data['errno'] == 1146 ) {
+		if ( isset($data['errno']) && $data['errno'] == 1146 ) {
 			return  false;
 		}
 		return true;
@@ -966,13 +966,22 @@ class Mysql {
 
 	private function getDB( $type='master') {
 
-		if ( is_a($this->dbs[$type], 'mysqli') ) {
+
+		if ( isset($this->dbs[$type]) && is_a($this->dbs[$type], 'mysqli') ) {
 			return $this->dbs[$type];
 		}
 
+
 		// 随机选择一个
-		$idx = intval(rand(0, count($conf)));
+		$idx = intval(rand(0, count($this->_opts[$type])-1));
 		$conf = $this->_opts[$type][$idx];
+
+			$conf['host'] = (isset( $conf['host']) ) ?  $conf['host'] : null;
+			$conf['user'] = (isset( $conf['user']) ) ?  $conf['user'] : null;
+			$conf['pass'] = (isset( $conf['pass']) ) ?  $conf['pass'] : null;
+			$conf['db_name'] = (isset( $conf['db_name']) ) ?  $conf['db_name'] : null;
+			$conf['socket'] = (isset( $conf['socket']) ) ?  $conf['socket'] : null;
+
 		$this->dbs[$type] = new Mysqli( $conf['host'], $conf['user'], $conf['pass'], $this->_opts['db_name'],  $conf['socket'] );
 		// 检测数据库连接
 		if ($this->dbs[$type]->connect_error) {
