@@ -310,7 +310,7 @@ class Mysql {
 		if ( $page !== null && is_numeric($page) ) {
 			
 
-			$sql_record_total = prepare( "SELECT count($primary_field) as cnt FROM `{$table}` WHERE $where", $filed_value );
+			$sql_record_total = $this->prepare( "SELECT count($primary_field) as cnt FROM `{$table}` WHERE $where", $filed_value );
 			$record_total = $this->getVar($sql_record_total);
 
 			if ( ($maxrows > 0 ) &&  ($record_total > $maxrows) ) {
@@ -325,7 +325,7 @@ class Mysql {
 		}
 
 		// 查询数据
-		$sql = prepare( "SELECT * FROM `{$table}` WHERE $where $order $record_limit", $filed_value );
+		$sql = $this->prepare( "SELECT * FROM `{$table}` WHERE $where $order $record_limit", $filed_value );
 		$rows = $this->getData( $sql );
 
 		if ( $rows == null ) { // 记录不存在
