@@ -170,7 +170,7 @@ class BaseInt extends Type {
 		if (is_numeric($value)) {
 			$value = intval($value);
 		}
-		$name = $this->_data['screen_name'];
+		$name = isset($this->_data['screen_name']) ? $this->_data['screen_name'] : null;
 		$name = ( $name != "" ) ? $name : $this->_option['screen_name'];
 		
 		$rule = [

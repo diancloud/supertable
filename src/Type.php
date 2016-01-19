@@ -220,7 +220,7 @@ class Type {
 			return true;
 		}
 
-		if ( $this->_data['unique'] )  {
+		if ( isset($this->_data['unique']) && $this->_data['unique'] )  {
 			return true;
 		}
 		return  false;
