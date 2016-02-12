@@ -173,7 +173,9 @@
  		);
 
  		foreach ($schema as $field => $info) {
- 			if ( $info['option']['searchable'] ) {
+
+
+ 			if ( isset($info['option']) && $info['option']['searchable'] ) {
  				$field = "{$field}_{$info['_version']}";
  				$properties[$field]['type'] = $info['format'];
  				// $properties[$field]['fields'][$ver] = array('type'=>$info['format']);
@@ -495,6 +497,12 @@
 				$name = "{$field}_{$ver}";
 				$field_map[$name] = $field;
 				$index_data[$name] = $value;
+
+				if ( $sheet['columns'][$field]->dataFormat()  == 'date' ) {
+					$index_data[$name] = $this->datetimeEncode($value);
+				}
+
+
 				if ($sheet['columns'][$field]->isUnique() ) {
 					$unique_data[$name] = $value;
 				}
@@ -581,6 +589,10 @@
 				$name = "{$field}_{$ver}";
 				if ( isset($data[$name]) ) {
 					$data[$field] = $source[$name];
+
+					if ( $sheet['columns'][$field]->dataFormat() == 'date'  ){
+						$data[$field]  = $this->datetimeDecode($data[$field]);
+					}
 					unset($data[$name]);
 				}
 			} else { // 不是索引
@@ -625,7 +637,7 @@
 		}
 
 		// 处理函数等数值
-		if ( is_array($result['aggregations']) ) {
+		if ( isset($result['aggregations']) && is_array($result['aggregations']) ) {
 			foreach ($result['aggregations'] as $field => $arr ) {
 				$row_ext[$field] = $arr['value'];
 				$row_ext['_function'] = true;

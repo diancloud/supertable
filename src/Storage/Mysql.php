@@ -379,8 +379,9 @@ class Mysql {
 		if (isset($this->_schemaBackup[$schema_id])) {
 			$this->updateSchema( $schema_id, $this->_schemaBackup[$schema_id] );
 		}
-		return $sheet_id;
+		return $schema_id;
 	}
+	
 
 	/**
 	 * API: 删除一个数据结构记录

@@ -245,7 +245,7 @@ class Schema {
 				$this->_stor->rollbackSchema( $schema_id );
 				throw new Exception("Search Error: " . $this->_search->error() );	
 			}
-		} catch(Exception $e ) {
+		} catch(Exception $e ) {			
 			$this->_stor->rollbackSchema( $schema_id );
 			throw $e;
 			// throw new Exception($e->getMessage());	
@@ -316,6 +316,10 @@ class Schema {
 
 			throw new Exception(" _typeObj 返回结果错误");
 		}
+
+		$type_schema['option'] = isset($type_schema['option']) ? $type_schema['option'] : [];
+		$type_schema['data'] = isset($type_schema['data']) ? $type_schema['data'] : [];
+
 		return $this->_type->load($type_schema['type'], $type_schema['data'], $type_schema['option']);
 	}
 
