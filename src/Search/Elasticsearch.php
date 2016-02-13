@@ -179,9 +179,26 @@
  				$field = "{$field}_{$info['_version']}";
  				$properties[$field]['type'] = $info['format'];
  				// $properties[$field]['fields'][$ver] = array('type'=>$info['format']);
+ 				// 
+ 				
+ 				if ( $info['format'] == 'array' && isset( $info['data']['schema']) ) {
+ 					
+ 					
+ 					$properties[$field]['type'] = $info['data']['schema'];
+
+ 					// $properties[$field]['properties'] =[];
+ 					/*['data' => [
+ 						'type'=>$info['data']['schema']
+ 					]];
+ 					unset($properties[$field]['type']);
+ 					print_r($properties);*/
+ 				}
+
+
  				if ( !$info['option']['matchable'] && $info['format'] == 'string' ) {
  					$properties[$field]['index'] = 'not_analyzed';
  				}
+
  			}
  		}
 

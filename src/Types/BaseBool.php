@@ -143,10 +143,11 @@ class BaseBool extends Type {
 
 		$v = new Validation();
 		$valueCheck[$name] = $value;
-		if ( $v->check($valueCheck, $rule, $errlist ) == false ) {
+		if ( $v->check($valueCheck, $rule, $errlist ) === false ) {
 			$this->errors = array_merge( $this->errors, $errlist );
 			return false;
 		}
+
 		
 		return true;
 	}

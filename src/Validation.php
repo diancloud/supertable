@@ -22,6 +22,9 @@ class Validation {
 	 * @return bool 成功返回 true, 失败返回 false
 	 */
 	public static function check( $data, $rule, & $errors, $parent=null ) {
+
+
+
 		$errors = array();
 		$check = new \Tuanduimao\Supertable\Validation();
 		if ( !is_array($data) ) {
@@ -69,7 +72,7 @@ class Validation {
 
 			// 是否有字段名称
 			if ( isset($ru['field_name']) && $ru['field_name'] != null  ) {
-				$field_name = $ru['field_name'];
+				$field_ename = $ru['field_name'];
 			}
 
 
@@ -80,17 +83,17 @@ class Validation {
 				$message = ( isset($message['required'])) ? $message['required']: "$name 未填写";
 			}
 
-			if ( $required && $value == null ) { // 必填字段，未填写数值 (报错， 忽略后续验证)
+			if ( $required && $value === null ) { // 必填字段，未填写数值 (报错， 忽略后续验证)
 				$error[] = array(
 					"message"=>$message, 
 					'method'=>'required', 
 					'format'=>true, 
-					'field' => $field_name,
+					'field' => $field_ename,
 					'name'=>$name,
 					'value'=>null,
 				);
 				continue;
-			} else if ( !$required  && $value == null ) {  // 非必填字段，未填写数值 (忽略后续验证)
+			} else if ( !$required  && $value === null ) {  // 非必填字段，未填写数值 (忽略后续验证)
 				unset($errors[$field_name]);
 				continue;
 			}
@@ -110,7 +113,7 @@ class Validation {
 						"message"=>"校验方法 ( Validation::$method ) 不存在", 
 						'method'=>$method, 
 						'format'=>$format, 
-						'field' => $field_name,
+						'field' => $field_ename,
 						'name'=>$name,
 						'value'=>$value,
 					];
@@ -122,7 +125,7 @@ class Validation {
 						"message"=>$message, 
 						'method'=>$method, 
 						'format'=>$format, 
-						'field' => $field_name,
+						'field' => $field_ename,
 						'name'=>$name,
 						'value'=>$value,
 					];

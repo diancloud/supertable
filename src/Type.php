@@ -152,11 +152,11 @@ class Type {
 
 
 	public function isRequired(){
-		if ( $this->_option['required'] )  {
+		if ( isset($this->_option['required']) && $this->_option['required'] )  {
 			return true;
 		}
 
-		if ( $this->_data['required'] )  {
+		if ( isset($this->_data['required'])  && $this->_data['required'] )  {
 			return true;
 		}
 		return  false;
