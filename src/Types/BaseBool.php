@@ -81,6 +81,8 @@ class BaseBool extends Type {
 					'max' => '{screen_name}({name})数值不能大于{value}',
 					'min' => '{screen_name}({name})数值不能少于{value}个字',
 				],
+
+
 			],
 
 			'placeholder' => [
@@ -134,6 +136,8 @@ class BaseBool extends Type {
 					'required' => $this->_message('required', ['screen_name'=>$name]),
 					'type' => $this->_message('type', ['screen_name'=>$name]),
 				],
+
+				'field_name' => $this->option('column_name')
 			],
 		];
 

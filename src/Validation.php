@@ -67,6 +67,11 @@ class Validation {
 				$field_name = $field;
 			}
 
+			// 是否有字段名称
+			if ( isset($ru['field_name']) && $ru['field_name'] != null  ) {
+				$field_name = $ru['field_name'];
+			}
+
 
 			// 验证必填字段
 			$required = (isset($validationList['required']))? $validationList['required'] : false;

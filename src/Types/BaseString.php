@@ -188,6 +188,8 @@ class BaseString extends Type {
 						'maxlength'=>$this->_data['maxlength'],
 					]),
 				],
+
+				'field_name' => $this->option('column_name')
 			],
 		];
 

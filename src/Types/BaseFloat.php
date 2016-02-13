@@ -190,6 +190,8 @@ class BaseFloat extends Type {
 						'maxvalue'=>$this->_data['maxvalue'],
 					]),
 				],
+
+				'field_name' => $this->option('column_name')
 			],
 		];
 

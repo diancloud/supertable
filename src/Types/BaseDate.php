@@ -171,46 +171,25 @@ class BaseDate extends Type {
 		$this->cleanError();
 		// $value = $this->valueEncode( $value );
 		// echo "Value == $value \n";
-
-		return true;
-
-
-
 		$name = $this->_data['screen_name'];
 		$name = ( $name != "" ) ? $name : $this->_option['screen_name'];
-		$schema = $this->get('schema');
+		$field_name =  ( $this->option('column_name') == null ) ? $name : $this->option('column_name');
 
-		if ( $value == null )  {
-			if ( $this->isRequired() ) {
-				$message = $this->_message('required', array('screen_name'=>$this->_data['screen_name']) );
-				$this->errors = array_merge($this->errors, [ "$name"=>[['method'=>'required','message'=>$message]] ] );
-				return false;
-			}
+		if ( preg_match_all('/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/', $value, $matchs ) ) {
 			return true;
 		}
+		$this->errors = array_merge( $this->errors, ["$name"=>[
+				'message'=>'日期格式不正确',
+				'method'=>'validation',
+				'format'=>'^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$',
+				'field' => $field_name,
+				'name'=> $name,
+				'value' => $value
+			]
+		]);
 
-		if ( !is_array($value) ) {
-			$message = $this->_message('type', array('screen_name'=>$this->_data['screen_name']) );
-			$this->errors = array_merge($this->errors, [ "$name"=>[['method'=>'required','message'=>$message]] ] );
-			return false;
-		}
+		return false;
 
-
-		$result = true;
-		if ( count(array_keys($schema)) >  0 ) {
-			foreach ($value as $idx => $val ) {
-				$rule = [];
-				$rule["$name.$idx"] = [ '_LIST' => $schema ];
-				$v = new Validation();
-				$valueCheck["$name.$idx"] = $val;
-				if ( $v->check($valueCheck, $rule, $errlist ) == false ) {
-					$this->errors = array_merge( $this->errors, $errlist );
-					$result =  false;
-				}
-			}
-		}
-
-		return $result;
 	}
 
 }

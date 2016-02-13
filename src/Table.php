@@ -367,7 +367,6 @@ class Table {
 		try {
 			$data = $this->_search->selectSQL( $this->_sheet, $where, $fields );
 		} catch( Exception $e) {
-			print_r($e);
 			throw new Exception($e->getMessage());
 		}
 
