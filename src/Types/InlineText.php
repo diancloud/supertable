@@ -27,7 +27,7 @@ class InlineText extends Type {
 		$opts['width'] = (isset($opts['width']))? $opts['width'] : "50";
 		$opts['maxlength'] = (isset($opts['maxlength']))? $opts['maxlength'] : 50; 
 		$opts['minlength'] = (isset($opts['minlength']))? $opts['minlength'] : 1;
-		$opts['default'] = (isset($opts['default']))? $opts['default'] : "";
+		$opts['default'] = (isset($opts['default']))? $opts['default'] : null;
 		$opts['placeholder'] = (isset($opts['placeholder']))? $opts['placeholder'] : "";
 
 

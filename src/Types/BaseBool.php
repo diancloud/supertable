@@ -40,7 +40,7 @@ class BaseBool extends Type {
 		$opts = array_merge($data, $option );
 
 		// FORMINPUT DATA
-		$opts['default'] = (isset($opts['default']))? $opts['default'] : false;
+		$opts['default'] = (isset($opts['default']))? $opts['default'] : null;
 		$opts['placeholder'] = (isset($opts['placeholder']))? $opts['placeholder'] : 'SuperTable BaseBool ';	
 
 		// OPTINONS 

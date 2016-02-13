@@ -621,7 +621,14 @@ class Mysql {
 		$data_json = [];
 		foreach ($sheet['columns'] as $field => $type ) {
 			if ( isset($data[$field])) {
+				// echo "\n\t TField: $field  " . var_export( $data[$field], true ) . "\n";
 				$data_json[$field] = $data[$field];
+			} else {
+				$default = $type->data('default');
+				if ( $default !== null ) {
+					$data_json[$field] = $default;
+				}
+				// echo "\n\t field: $field THE DEFAULT :  " . var_export($default, true). "\n";
 			}
 		}
 

@@ -89,7 +89,7 @@ class BaseDate extends Type {
 		$opts = array_merge($data, $option );
 
 		// FORMINPUT DATA
-		$opts['default'] = (isset($opts['default']))? $opts['default'] : "";
+		$opts['default'] = (isset($opts['default']))? $opts['default'] : null;
 		$opts['placeholder'] = (isset($opts['placeholder']))? $opts['placeholder'] : 'SuperTable BaseDate';
 
 
@@ -178,6 +178,33 @@ class BaseDate extends Type {
 		if ( preg_match_all('/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/', $value, $matchs ) ) {
 			return true;
 		}
+
+		$rule = [
+			"$name" => [
+				'validation' => [
+					'required' => $this->_option['required'],
+					'match' => '/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/',
+				],
+				'message' => [
+					'required' => $this->_message('required', ['screen_name'=>$name]),
+					'match' => $this->_message('type', ['screen_name'=>$name]),
+				],
+
+				'field_name' => $this->option('column_name')
+			],
+		];
+
+		$v = new Validation();
+		$valueCheck[$name] = $value;
+		if ( $v->check($valueCheck, $rule, $errlist ) === false ) {
+			$this->errors = array_merge( $this->errors, $errlist );
+			return false;
+		}
+
+		return true;
+
+		/*
+
 		$this->errors = array_merge( $this->errors, ["$name"=>[
 				'message'=>'日期格式不正确',
 				'method'=>'validation',
@@ -186,7 +213,7 @@ class BaseDate extends Type {
 				'name'=> $name,
 				'value' => $value
 			]
-		]);
+		]); */
 
 		return false;
 

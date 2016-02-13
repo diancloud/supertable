@@ -44,7 +44,7 @@ class BaseFloat extends Type {
 		// FORMINPUT DATA
 		$opts['max'] = (isset($opts['max']))? $opts['max'] : 9223372036854775807;
 		$opts['min'] = (isset($opts['min']))? $opts['min'] : -9223372036854775807;
-		$opts['default'] = (isset($opts['default']))? $opts['default'] : "";
+		$opts['default'] = (isset($opts['default']))? $opts['default'] : null;
 		$opts['placeholder'] = (isset($opts['placeholder']))? $opts['placeholder'] : 'SuperTable BaseFloat';	
 
 		// OPTINONS 

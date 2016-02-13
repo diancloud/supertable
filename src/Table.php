@@ -816,6 +816,8 @@ class Table {
 
 		} else {  // 校验必填
 			foreach ($this->_sheet['columns'] as $name=>$type ) {
+
+				
 				if ( !$type->validation( $data[$name] ) ) {
 					$errflag = true;
 					$this->errors = array_merge($this->errors, $type->errors);

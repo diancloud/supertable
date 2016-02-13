@@ -91,7 +91,7 @@ class BaseObject extends Type {
 		// FORMINPUT DATA
 		$opts['schema'] = ( isset($opts['schema']))? $opts['schema'] : [];
 		$opts['schema'] = ( is_string($opts['schema']))? json_decode($opts['schema'], true) : $opts['schema'];
-		$opts['default'] = (isset($opts['default']))? $opts['default'] : "";
+		$opts['default'] = (isset($opts['default']))? $opts['default'] : null;
 		$opts['placeholder'] = (isset($opts['placeholder']))? $opts['placeholder'] : 'SuperTable BaseObject (Array)';
 
 
