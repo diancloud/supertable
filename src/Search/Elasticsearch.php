@@ -763,6 +763,7 @@
 		$regDistinctFields= "/{$key['distinct']}[ ]{1}[ ]*([a-zA-Z0-9\.\_]+)/";
 		$regSelectFields = "/({$key['select']})(.+){$key['from']}/"; // SELECT语句中的 Field
 		$regOrderFields = "/{$key['order']}[ ]{1}[ ]*(.+)/";
+		$regOrderFields2 = "/[@]*{$key['order']}[ ]{1}[ ]*(.+)/";
 		$regGroupFields = "/{$key['group']}[ ]{1}[ ]*([a-zA-Z0-9\.\_]+)/";
 		$regWhereFields = "/(".implode('|', $key['where']).")[ ]{1}[ ]*([a-zA-Z0-9\.\_]+)/";   // WHERE语句中的 Field
 		$regFunctionFields = "/(".implode('|', $key['function']).")\(([a-zA-Z0-9\.\_]+)\)/";   // 函数中的 Field
@@ -773,10 +774,12 @@
 				  $regSelectFields,$regDistinctFields, 
 				  $regGroupFields, $regWhereFields, 
 				  $regFunctionFields, $regNestedFirstFields, 
-				  $regOrderFields), function($match){
+				  $regOrderFields2), function($match){
 
 			$_the_sheet = $GLOBALS['_the_sheet'];
 			$type = $match[1];
+
+		
 
 			// 处理SELECT 中的数据
 			if ( strtolower($type) == 'select' ) {
@@ -802,12 +805,23 @@
 
 				},$match[0]);
 				return $match[0];
-			} else if ( strtolower($type) == 'order' ) {
-				$match[0] = preg_replace_callback( "/([a-zA-Z0-9\.\_]+)/", function($match) {
+			} else if ( strtolower($type) == 'order' ||  strtolower($type) == '@order' ) {
+
+					//  echo "<pre>";
+					//  echo "=====: \n";
+					//  print_r($match);
+					//  echo "END ===== \n\n";
+					//  echo "</pre>";
+
+				$match[0] = preg_replace_callback( "/([@]*[a-zA-Z0-9\.\_]+)/", function($match) {
 					$_the_sheet = $GLOBALS['_the_sheet'];
 					$field = $match[0];
 					$fieldr = explode('.',$field);
 					$field = $fieldr[0];
+					
+					// echo "<pre>";
+					// print_r($field);
+					// echo "</pre>";
 
 					// 系统关键词 _spt_data_id , _spt_create_at, _spt_update_at 
 					if ( $field == '_id' ) {
@@ -821,6 +835,15 @@
 					if ( $field == '_update_at' ) {
 						return '_spt_update_at';
 					}
+
+					if ( $field == '@order' ) {
+						return 'order';
+					}
+
+					if ( $field == 'order' ) {
+						return 'order';
+					}
+
 
 					if ( !isset($_the_sheet['columns'][$field]) ) {
 						return join('.',$fieldr);
@@ -873,6 +896,10 @@
 			return $ostr;
 		},$sql);
 		unset($GLOBALS['_the_sheet']);
+
+		// echo "<pre>";
+		// echo $newSql;
+		// echo "</pre>";
 
 		return $newSql;
 	}
