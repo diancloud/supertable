@@ -364,11 +364,11 @@ class Table {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
 
-		try {
+		// try {
 			$data = $this->_search->selectSQL( $this->_sheet, $where, $fields );
-		} catch( Exception $e) {
+		/* } catch( Exception $e) {
 			throw new Exception($e->getMessage());
-		}
+		} */
 
 		if ( $data == false ) {
 			return false;

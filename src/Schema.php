@@ -67,7 +67,9 @@ class Schema {
 			}
 		} catch(Exception $e ) {
 			$this->_stor->deleteSchema( $schema_id );
-			throw new Exception($e->getMessage());	
+			// throw new Exception($e->getMessage());	
+			throw $e;
+			
 		}
 
 		return $schema_id;
@@ -145,7 +147,8 @@ class Schema {
 				throw new Exception("Search Error: " . $this->_search->error() );	
 			}
 		} catch(Exception $e ) {
-			throw new Exception($e->getMessage());	
+			//throw new Exception($e->getMessage());	
+			throw $e;
 		}
 
 		// 删除记录
@@ -191,7 +194,9 @@ class Schema {
 			}
 		} catch(Exception $e ) {
 			$this->_stor->rollbackSchema( $schema_id );
-			throw new Exception($e->getMessage());	
+			// throw new Exception($e->getMessage());	
+			throw $e;
+			
 		}
 
 		return $schema_id;
@@ -217,7 +222,9 @@ class Schema {
 			}
 		} catch(Exception $e ) {
 			$this->_stor->rollbackSchema( $schema_id );
-			throw new Exception($e->getMessage());	
+			// throw new Exception($e->getMessage());	
+			throw $e;
+			
 		}
 
 		return $schema_id;
