@@ -584,6 +584,10 @@ class Mysql {
 		return $row;
 	}
 
+	function getTableNextID() {
+		return $this->_getTableNextID();
+	}
+
 	function createData( $data, $sheet ) {
 		$sheet_id = $sheet['_id'];
 		$table_name = $this->_table['data'];
@@ -670,6 +674,17 @@ class Mysql {
 		$row['_is_deleted'] = $row['_spt_is_deleted'];
 		return $row;
 	}
+
+
+	private function _getTableNextID() {
+		$table_name = $this->_table['data'];
+		$sql = $this->prepare("SELECT AUTO_INCREMENT as last_id FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME=?s", array($table_name) );
+		$last_id = $this->getVar($sql);
+		if ( $last_id == null ) {
+			throw new Exception("no data!");
+		}
+		return intval($last_id);
+	}	
 
 
 	private function _create( $table_name, $data, $scheme_table ) {
@@ -939,6 +954,7 @@ class Mysql {
 
 	private function getVar( $sql , $type='slave', $ignore = array() ) {
 		$data = $this->getLine( $sql , $type, $ignore );
+		if ( $data == null ) return $data;
 
 		return $data[ @reset(@array_keys( $data )) ];
 	}

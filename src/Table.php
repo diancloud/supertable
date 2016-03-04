@@ -585,6 +585,18 @@ class Table {
 	}
 	
 
+	/**
+	 *  读取当前的数据表(Sheet)的下一个自增ID数值
+	 * @return [type] [description]
+	 */
+	public function nextid() {
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+		return $this->_stor->getTableNextID();
+	}
+
+
 
 	/**
 	 * 对表单提交的数据进行解码
