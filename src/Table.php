@@ -359,7 +359,7 @@ class Table {
 	 * @param  string|array  $fields 返回字段，多个用","分割 EG: "name,mobile,company" 或者 array('name','mobile', 'company')
 	 * @return array  符合条件的记录集合 array('data'=>array(...), 'total'=>9109); 
 	 */
-	public function select( $where, $fields=array() ) {
+	public function select( $where="", $fields=array() ) {
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
