@@ -378,6 +378,62 @@ class Table {
 	}
 
 
+
+	/**
+	 * 在当前数据表(Sheet)中检索，返回一行数据
+	 * @param  [type] $where [description]
+	 * @param  array  $field [description]
+	 * @return [type]        [description]
+	 */
+	public function getLine( $where="", $field=array() ) {
+			
+		if ( $where == "" ) {
+			$where = "WHERE 1 LIMIT 1";
+		}
+
+		$resp = $this->select($where, $field);
+		
+		if ( $resp === false ) {
+			return null;
+		}
+
+		if ( !isset($resp['total']) ||  !isset($resp['data']) ) {
+			throw new Exception('返回结果集异常', 500);
+		}
+
+		if ( intval($resp['total']) == 0  ) {
+			return null;
+		}
+
+		return end($resp['data']);
+	}
+
+
+
+	/**
+	 * 在当前数据表(Sheet)中检索，返回一个行中，一个变量的数据
+	 * @param  [type] $where      [description]
+	 * @param  [type] $field_name [description]
+	 * @return [type]             [description]
+	 */
+	public function getVar( $field_name, $where="" ) {
+		
+		$resp = $this->getLine($where, [$field_name]);
+		if ( empty($resp) ) {
+			return null;
+		}
+
+		if ( !isset($resp[$field_name]) ) {
+			return null;
+		}
+
+		return $resp[$field_name];
+
+	}
+
+
+
+
 	/**
 	 * 在当前的数据(Sheet)中检索 (从索引库中查询，数据有不到一秒延迟)
 	 * @param  [type] $option [description]
