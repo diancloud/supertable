@@ -868,6 +868,10 @@ class Table {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
 
+		if ( !is_array($data) ) {
+			throw new Exception("输入数据异常 data格式错误", 500);	
+		}
+
 		$errflag = false;
 		if ( $input_only ) {  // 仅校验输入字段
 			foreach ($data as $field=>$value ) {

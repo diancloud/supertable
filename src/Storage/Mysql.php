@@ -616,6 +616,11 @@ class Mysql {
 	}
 
 	function updateData( $id, $data , $sheet ) {
+
+		if ( !is_array($data) ) {
+			throw new Exception("data 不是数组", 500);
+		}
+
 		$sheet_id = $sheet['_id'];
 		$table_name = $this->_table['data'];
 		$data_old = $this->_getDataByID($id);
