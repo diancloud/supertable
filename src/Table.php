@@ -832,7 +832,7 @@ class Table {
 	 * @param  [type] $data_id [description]
 	 * @return [type]          [description]
 	 */
-	public function delete( $data_id ) {
+	public function delete( $data_id, $mark_only=false ) {
 
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
@@ -846,7 +846,8 @@ class Table {
 		}
 
 		// 删除数据
-		$this->_stor->deleteData( $data_id );
+		return $this->_stor->deleteData( $data_id, $mark_only );
+
 		return true;
 	}
 

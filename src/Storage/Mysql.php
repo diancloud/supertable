@@ -599,9 +599,20 @@ class Mysql {
 		return $this->_create($table_name, $data, $this->_data_table );
 	}
 
-	function deleteData( $id ) {
+	function deleteData( $id, $mark_only=false ) {
 		$table_name = $this->_table['data'];
-		return $this->_delete( $table_name, $id, $this->_data_table );
+		if ( $mark_only === false ) {
+			$rows = $this->_delete( $table_name, $id, $this->_data_table );
+			if ( $rows > 0 ) {
+				return true;
+			}
+
+		} else{
+			$this->_update($table_name, ['_spt_id'=>$id,'_spt_is_deleted'=>1], $this->_data_table );
+			return true;
+		}
+
+		return false;
 	}
 
 	function updateData( $id, $data , $sheet ) {
