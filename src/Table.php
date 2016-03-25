@@ -432,6 +432,18 @@ class Table {
 	}
 
 
+	/**
+	 * 在当前的数据(Sheet)中检索, 返回一位数组 (从索引库中查询，数据有不到一秒延迟) 
+	 * @param  [type]  $options [description]
+	 * @param  [type]  $page    [description]
+	 * @param  integer $perpage [description]
+	 * @param  array   $fields  [description]
+	 * @param  integer $maxrows [description]
+	 * @return [type]           [description]
+	 */
+	public function vquery( $options, $page=null, $perpage=20, $fields=array(), $maxrows=0 ) {
+		return $this->query( $options, $page, $perpage, $fields, $maxrows, true );
+	}
 
 
 	/**
@@ -440,7 +452,7 @@ class Table {
 	 * @param  array  $fields [description]
 	 * @return [type]         [description]
 	 */
-	public function query( $options, $page=null, $perpage=20, $fields=array(), $maxrows=0  ){
+	public function query( $options, $page=null, $perpage=20, $fields=array(), $maxrows=0, $simpleReturn=false  ){
 		if ( $this->_sheet_id === null ) {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
@@ -572,7 +584,7 @@ class Table {
 		$items->pagination( $page, $perpage, $record_total );
 
 		foreach ($rows as $line ) {
-			$row = [];
+			$row = []; $srow=[];
 			$function_flag = false;
 			if ( !isset($line['_data_revision']) ||
 				 !isset($line['_schema_revision']) || 
@@ -589,7 +601,6 @@ class Table {
 				// echo "</pre>";
 			}
 
-
 			foreach ($line as $column_name=>$value )  {
 
 				if ( count($fields) > 0 && !in_array($column_name,$fields) && !$function_flag ) {
@@ -597,6 +608,7 @@ class Table {
 				}
 
 
+				$srow[$column_name] = $value;
 				$row[$column_name]['value'] = $value;
 				$row[$column_name]['type'] = 'UNKNOWN';
 				$row[$column_name]['html'] = $value;
@@ -615,7 +627,12 @@ class Table {
 				}
 			}
 
-			$item = new Item( $row );
+			if ( $simpleReturn === true) {
+				$item = new Item( $srow );	
+			} else {
+				$item = new Item( $row );
+			}
+			
 			$items->push( $item );
 		}
 
