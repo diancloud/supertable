@@ -1025,8 +1025,13 @@ class Mysql {
 			$conf['pass'] = (isset( $conf['pass']) ) ?  $conf['pass'] : null;
 			$conf['db_name'] = (isset( $conf['db_name']) ) ?  $conf['db_name'] : null;
 			$conf['socket'] = (isset( $conf['socket']) ) ?  $conf['socket'] : null;
+		
+		try {
+			$this->dbs[$type] = new Mysqli( $conf['host'], $conf['user'], $conf['pass'], $this->_opts['db_name'],  $conf['socket'] );
+		} catch( Exception $e ) {
+			throw new Exception($e->getMessage(), $e->getCode() );
+		}
 
-		$this->dbs[$type] = new Mysqli( $conf['host'], $conf['user'], $conf['pass'], $this->_opts['db_name'],  $conf['socket'] );
 		// 检测数据库连接
 		if ($this->dbs[$type]->connect_error) {
 		    throw new Exception('Connect Error (' . $this->dbs[$type]->connect_errno . ') '
