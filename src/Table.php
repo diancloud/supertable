@@ -1551,11 +1551,15 @@ class Table {
 
 
 	// ====== 以下部分为私有函数
-	private function indexName( $index_only=false ) {
+	public function indexName( $index_only=false, $version=false ) {
 		$index = $this->_index['index'];
 		if ( $index_only ) {
 			return $index;
 		}
+		if ( $version === true ) {
+			$index = $index . "_" . $this->_sheet['_spt_schema_version'];
+		}
+
  		$type = $this->_index['type'] . $this->_sheet['name'];
  		$table = "$index/$type";
  		return $table;
