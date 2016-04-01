@@ -364,11 +364,18 @@ class Table {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
 
-		// try {
+		//try {
 			$data = $this->_search->selectSQL( $this->_sheet, $where, $fields );
-		/* } catch( Exception $e) {
-			throw new Exception($e->getMessage());
-		} */
+		//} catch( Exception $e) {
+
+
+//			throw new Exception($e->getMessage());
+//		}
+//		
+		if ( isset($data['code']) && isset($data['message']) && isset($data['extra']) ) {
+			return $data;
+		}
+
 
 		if ( $data == false ) {
 			return false;
@@ -560,6 +567,11 @@ class Table {
 				$options = str_replace($limit_str, '', $options );
 			}
 
+			// 处理ORDER语法
+			if ( preg_match("/([Oo][Rr][Dd][Ee][Rr])[ ]{1}[ ]*[Bb][Yy][ ]+[0-9a-zA-Z_]+[ ]+[Dd]*[Ee]*[Ss]*[Cc]*[Aa]*[Ss]*[Cc]*/", $options, $match) ) {
+				$order = $match[0];
+				$options = str_replace($order, '', $options );
+			}
 			$where = $options;
 		}
 
@@ -572,11 +584,16 @@ class Table {
 		}
 
 		$sql ="$where $order $record_limit";
-		$sql = ( trim($where) != "" )? "WHERE $sql" : "$sql";
+		$sql = ( trim($where) != "" )? "WHERE  $sql" : "$sql";
 	
 
 		// 查询记录
 		$resp = $this->select( $sql, $fields );
+		if (isset($resp['code']) && isset($resp['message']) && isset($resp['extra']) ) {
+			$items->push( new Item($resp));
+			return $items;
+		}
+
 
 		$record_total = $resp['total'];
 		$rows = $resp['data'];

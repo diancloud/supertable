@@ -402,9 +402,19 @@
 		// echo "<pre> SQL = $sql \n</pre>";
 		
 		$conn = $this->_client->transport->getConnection();
-		$resp = $conn->performRequest('GET', '/_sql', array('sql'=>$sql));
+		try {
+			$resp = $conn->performRequest('GET', '/_sql', array('sql'=>$sql));
+		} catch( \Elasticsearch\Common\Exceptions\ServerErrorResponseException $e ) {
+			
+			if ( strpos($e->getMessage(), 'SqlParseException') > 0 
+					||  strpos($e->getMessage(), 'ParserException') 
+					||  strpos($e->getMessage(), 'illegal sql expr')  ) {
+				return ['code'=>500, 'message'=>'SQL语法不正确', 'extra'=>['sql'=>$sql, 'where'=>$where, 'table'=>$table]];
+			} else {
+				throw $e;
+			}
+		}
 		return $this->resultFilter( $resp, $sheet );
-
 	}
 
 
