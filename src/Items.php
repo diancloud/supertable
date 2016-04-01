@@ -43,6 +43,7 @@ class Items {
 	 */
 	function pagination( $page, $perpage, $total )  {
 
+		$perpage = ( intval($perpage) == 0 ) ? 20 :$perpage;
 		$this->_total = $total;
 		$this->_perpage = $perpage;
 		$this->_totalpage = ceil( $total / $perpage );
