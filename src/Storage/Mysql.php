@@ -411,9 +411,8 @@ class Mysql {
 
 		if ( $mark_only == true ) {
 			$affected_rows = 0;
-			$sqlSchema = $this->prepare("UPDATE {$table['schema']} SET `_spt_is_deleted`='1' WHERE  `$primary_field` = ?s LIMIT 1 ", $schema_id);
+			$sqlSchema = $this->prepare("UPDATE {$table['schema']} SET `_spt_is_deleted`='1', _spt_name=CONCAT('_DEL_', _spt_id ,'_', _spt_name) WHERE  `$primary_field` = ?s LIMIT 1 ", $schema_id);
 			$sqlData =  $this->prepare("UPDATE {$table['data']} SET `_spt_is_deleted`='1' WHERE  `_spt_schema_id` = ?s", $schema_id);
-
 			$this->run_sql($sqlSchema, 'master');
 			$affected_rows = $affected_rows + $this->affected_rows();
 			$this->run_sql($sqlData, 'master');
