@@ -317,11 +317,11 @@
  		$fixobjflag = false; // 
  		if ( $fixobjtype === true && count($index_data['object']) > 0 ) {
  			$fixobjflag = true;
+ 			$_spt_data = null; 
  			foreach ($index_data['object'] as $name=>$value ) {
  				$index_data['index'][$name] = null;
  			}
  		} // 修复Object 类型更新问题 END 
-
 
  		if( $this->uniqueCheck($sheet['name'], $index_data['unique'], $id, $index_data['map'] ) == false ) {
  			return false;
@@ -329,7 +329,7 @@
 
  		$doc = array(
  			'_spt_data_id' =>$id,
- 			'_spt_data' => $data,
+ 			'_spt_data' => ($fixobjflag ===true)? null : $data,
  			'_spt_schema_revision' => $sheet['revision'],
  			'_spt_data_revision'  => $sheet['revision'],
  			'_spt_create_at' => $this->datetimeEncode( $data['_create_at']),
@@ -432,7 +432,15 @@
 				throw $e;
 			}
 		}
-		return $this->resultFilter( $resp, $sheet );
+
+		$result = $this->resultFilter( $resp, $sheet );;
+
+		// echo "<pre>";
+		// print_r($resp);
+		// print_r($result['data'][0]['menu']);
+		// echo "</pre>";
+
+		return $result;
 	}
 
 
