@@ -304,10 +304,24 @@
 	 * @param  [type] $data  [description]
 	 * @return [type]        [description]
 	 */
-	function updateData( $sheet, $id, $data ) {
+	function updateData( $sheet, $id, $data, $fixobjtype=true ) {
+		
+		
+
 		$index = $this->_index['index'];
  		$type = $this->_index['type'] . $sheet['name'];
  		$index_data = $this->getIndexData( $data, $sheet );
+
+ 		// 修复Object 类型更新问题 
+ 		// PS: 如果有object类型的数据，需要更新两次，第一次设定为Null 第二次更新为新数据
+ 		$fixobjflag = false; // 
+ 		if ( $fixobjtype === true && count($index_data['object']) > 0 ) {
+ 			$fixobjflag = true;
+ 			foreach ($index_data['object'] as $name=>$value ) {
+ 				$index_data['index'][$name] = null;
+ 			}
+ 		} // 修复Object 类型更新问题 END 
+
 
  		if( $this->uniqueCheck($sheet['name'], $index_data['unique'], $id, $index_data['map'] ) == false ) {
  			return false;
@@ -339,13 +353,17 @@
  			'body'=>"\n$updateString\n$docString\n"
  		);
 
-
-
  		$result = $this->_client->bulk( $docInputParam );
  		if ( $result['errors'] != false || count($result['items']) != 1) {
  			$this->_error = "Index: updateData /$index/{$sheet['name']}/$id Error (".json_encode($result).")";
  			return false;
  		}
+
+ 		// 修复Object 类型更新问题
+ 		if ( $fixobjflag === true ) { 
+ 			return $this->updateData( $sheet, $id, $data, false );
+ 		} // 修复Object 类型更新问题 END 
+
  		return true;
 	}
 
@@ -514,7 +532,9 @@
 	private function getIndexData( $data, $sheet ) {
 		$index_data = array();
 		$unique_data = array();
+		$object_data = [];
 		$field_map = array();
+		
 		foreach ($data as $field => $value ) {
 			if ( !isset($sheet['columns'][$field]) ) {
 				continue;
@@ -533,9 +553,14 @@
 				if ($sheet['columns'][$field]->isUnique() ) {
 					$unique_data[$name] = $value;
 				}
+
+				if ( $sheet['columns'][$field]->dataFormat()  == 'object' ) {
+					$object_data[$name] = $value;
+				}
+
 			}
 		}
-		return array('index'=>$index_data, 'unique'=>$unique_data, 'map'=>$field_map );
+		return array('index'=>$index_data, 'unique'=>$unique_data, 'map'=>$field_map, 'object'=>$object_data );
 	}
 
 
