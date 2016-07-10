@@ -157,6 +157,57 @@ class Schema {
 
 
 	/**
+	 * 删除Sheet 索引
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
+	public function deleteSheetIndex( $id ){
+
+		try {
+			$schema = $this->_stor->getSchema( $id );
+		} catch(Exception $e ) {
+			//throw new Exception($e->getMessage());	
+			throw $e;
+		}
+		
+		return $this->_search->deleteType( $schema['_spt_name'] );
+	}
+
+
+	/**
+	 * 创建Sheet 索引
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
+	public function createSheetIndex( $id ) {
+		try {
+			$schema = $this->_stor->getSchema( $id );
+		} catch(Exception $e ) {
+			//throw new Exception($e->getMessage());	
+			throw $e;
+		}
+
+		return $this->_search->createType( $schema['_spt_name'], $schema['_spt_schema_version'] );
+	}
+
+
+	/**
+	 * 重建Sheet 索引
+	 * @param  [type] $id [description]
+	 * @return [type]     [description]
+	 */
+	public function rebuildSheetIndex( $id ) {
+
+		if( $this->deleteSheetIndex($id) !== false) {
+			return $this->createSheetIndex( $id );
+		}
+
+		return false;
+	}
+
+
+
+	/**
 	 * 读取一个字段
 	 * 
 	 * @param [type] $name [description]

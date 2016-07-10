@@ -583,6 +583,68 @@ class Mysql {
 		return $row;
 	}
 
+	
+	/**
+	 * 遍历所有数据集
+	 * @param  [type]  $callback      [description]
+	 * @param  array   $reference     [description]
+	 * @param  integer $pagelimit     [description]
+	 * @param  boolean $except_delete [description]
+	 * @return [type]                 [description]
+	 */
+	function dataEach( $callback, $reference=[], $except_delete=true, $pagelimit=500 ) {
+		
+		if ( !is_callable($callback) ) {
+			throw new Exception("callback not function!");
+		}
+
+		$table_name = $this->_table['data'];
+		$primary_key = $this->_data_table['primary']['COLUMN_NAME'];
+
+		$from = 0;
+		$rsCount = 1;
+		while( $rsCount > 0 ) {
+			if ( $except_delete ) {
+				$sql = "SELECT * FROM `$table_name` WHERE  `_spt_is_deleted`='0' LIMIT $from, $pagelimit";
+			} else {
+				$sql = "SELECT * FROM `$table_name` LIMIT $from, $pagelimit";
+			}
+
+			$data = $this->getData( $sql );
+			$rsCount = count($data);
+			$from = $from + $pagelimit;
+
+			foreach ($data as $idx=>$row ) {
+
+				$data = json_decode($row['_spt_data_json'], true );
+				if( json_last_error() !== JSON_ERROR_NONE) {
+					throw new Exception("Storage: updateData JSON Parser Error( " . json_last_error_msg() . ')'. $_spt_data_json);
+				}
+				
+				$row = array_merge($data, $row);
+
+				// FixData
+				$row['_id'] = $row[$primary_key];
+				$row['_sheet_id'] =  $row['_spt_schema_id'];
+				$row['_create_at'] = $row['_spt_create_at'];
+				$row['_update_at'] = $row['_spt_update_at'];
+				$row['_is_deleted'] = $row['_spt_is_deleted'];
+
+				unset($row['_spt_id']);
+				unset($row['_spt_data_json']);
+				unset($row['_spt_schema_id']);
+				unset($row['_spt_create_at']);
+				unset($row['_spt_update_at']);
+				unset($row['_spt_is_deleted']);
+
+				$callback( $idx, $row, $reference );
+			}
+		}
+
+	}
+
+
+
 	function getTableNextID() {
 		return $this->_getTableNextID();
 	}

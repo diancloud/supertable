@@ -604,10 +604,10 @@ class Type {
 		$typeName  = @end(@explode('\\', get_class($this)));
 		return array(
 			'format' => $this->_data_format,
-			'type' => @end(@explode('\\', get_class($this))),
+			'type' => $typeName,
 			'option' => $this->_option,
 			'_data' =>$this->_data,
-			'data' => array_merge($this->_data, $this->_option, array('_type'=>$typeName)),
+			'data' => array_merge($this->_data, $this->_option, ['_type'=>$typeName, '_format'=>$this->_data_format]),
 		);
 	}
 

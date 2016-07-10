@@ -673,6 +673,25 @@ class Table {
 		}
 		return $data;
 	}
+
+
+	/**
+	 * 遍历当前数据表(Sheet) (实时，从存储引擎中直接提取)
+	 * @param  [type]  $callback      [description]
+	 * @param  array   $reference     [description]
+	 * @param  boolean $except_delete [description]
+	 * @param  integer $pagelimit     [description]
+	 * @return [type]                 [description]
+	 */
+	public function dataEach( $callback, $reference=[], $except_delete=true, $pagelimit=500 ) {
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		$this->_stor->dataEach($callback, $reference, $except_delete, $pagelimit );
+	}
+
+	
 	
 
 	/**
@@ -862,7 +881,7 @@ class Table {
 
 
 	/**
-	 * 再当前数据表(Sheet)中，删除一条记录
+	 * 在当前数据表(Sheet)中，删除一条记录
 	 * @param  [type] $data_id [description]
 	 * @return [type]          [description]
 	 */
@@ -884,6 +903,102 @@ class Table {
 
 		return true;
 	}
+
+
+
+
+
+
+	// ==== 索引操作函数
+
+	/**
+	 * 重建整张表数据表索引
+	 */
+	 public function rebuildIndex( $ignore_error = true  ) {
+
+	 	if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		if ( $this->_schema->rebuildSheetIndex($this->_sheet_id) === false ) {
+			throw new Exception("DELETE INDEX ERROR @rebuildIndex" . "(".$this->_search->errno().")");	
+		}
+
+		$this->_stor->dataEach(function( $idx, $row , $ref ){
+			$ref['self']->createIndex( $row, $ref['ignore_error'] );
+		},['self'=>$this, 'ignore_error'=>$ignore_error]);
+
+	 }
+
+
+	 /**
+	 * 在当前的数据表(Sheet)中，插入一条记录索引
+	 * @param  [type] $data Array('field'=>'value' ... )
+	 * @return [type]       [description]
+	 */
+	public function createIndex( $data, $ignore_error = true ) {
+
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("createIndex Error: No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		if ( !isset($data['_id']) || empty($data['_id']) ){
+			throw new Exception("createIndex Error: no data id");
+		}
+
+
+		// 根据数据结构，检查数据是否合法
+		if ( $this->validation( $data ) === false ) {
+			return false;
+		}
+		try {
+			// 添加索引
+			if ( $this->_search->createData( $this->_sheet, $data['_id'], $data ) == false ){
+
+				if ( $this->_search->errno() == "1062" ) {
+					$column = $this->_search->errdt();
+					if (isset($this->sheet()['columns'][$column]) ) {
+						$screen_name = $this->sheet()['columns'][$column]->get('screen_name');
+						 $this->errors = array_merge( $this->errors, [$screen_name=>[
+								[ 
+								  "message"=>"{$screen_name}已存在", 
+								  'method'=>'unique', 
+								  'format'=>'unique', 
+								  'field' => $column,
+								  'name'=>$screen_name,
+								  'value'=>$data[$column], 
+								]
+							]
+						]);
+					} else {
+						$this->errors =  array_merge( $this->errors, ['未知数据'=>[[
+							"message"=>"数据有重复", 
+							'method'=>'unique', 
+							'format'=>'unique', 
+							'field' => '<unknown>',
+							'name'=>'未知数据',
+							'value'=>'未知数据',
+						]]]);
+					}
+
+				} else {
+					array_push( $this->errors, $this->_search->error() );
+				}
+
+				return false;
+			}
+		} catch( Exception $e  ){
+
+			if ( $ignore_error === true ) {
+				return false;
+			} else {
+				throw $e;
+			}
+		}
+
+		return true;
+	}
+
 
 
 
@@ -957,391 +1072,7 @@ class Table {
 	}
 
 
-	// === 页面渲染相关Helper ==========================
-	// 1. Column 创建、修改表单 （ HTML + JS组件 ) renderColumn*
-	// 2. Column 创建、修改、删除和查询处理  actionColumn*
-	// 3. Data 创建、修改和查询(列表)表单  （ HTML + JS组件 )  renderData*
-	// 4. Data 创建、修改、删除和查询处理  actionData*
 	
-
-	/**
-	 * Column 创建Column表单和JS组件 
-	 * @param  string $type_name 类型名称，默认为 inlineText
-	 * @param  string $tpl       自定义模板文件，默认为NULL，该类型默认模板
-	 * @return array  表单HTML代码和类型数据  ['status'=>'success','data'=>[...], 'html'=>'<div>...</div>' ]
-	 */
-	public function renderColumnCreate( $type_name='inlineText', $option=array() ) {
-
-		$this->errors = array();
-		if ( $this->_sheet_id === null ) {
-			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
-		}
-
-		$Type = $this->type($type_name);
-		return $Type->renderCreate( $this->_sheet_id, $option );
-	}
-
-
-
-	/**
-	 * Column 更新Column 表单和JS组件 
-	 * @param  string $column_name 字段名称
-	 * @param  string $tpl       自定义模板文件，默认为NULL，该类型默认模板
-	 * @return string html代码
-	 */
-	public function renderColumnUpdate( $data, $option=array() ) {
-		$this->errors = array();
-		if ( $this->_sheet_id === null ) {
-			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
-		}
-
-		$field_name = $data['column_name'];
-		if ( $data['render_only'] == true && $field_name != "" ) { // 直接渲染
-			$type_name = $data['_type'];
-			$Type = $this->type( $type_name, $data );
-			$Type->bindField($this->_sheet_id, $field_name );
-
-
-		} else if( isset($this->_sheet['columns'][$field_name]) ) {  // 渲染服务器数据
-			$Type = $this->_sheet['columns'][$field_name];			
-		}
-
-		return $Type->renderUpdate( $this->_sheet_id, $option );
-	}
-
-
-	/**
-	 * Column  预览Column表单和JS组件 
-	 * @param  string $type_name 类型名称，默认为 inlineText
-	 * @param  array  $data 用户提交的数据
-	 * @param  string $tpl       自定义模板文件，默认为NULL，该类型默认模板
-	 * @return string html代码
-	 */
-	public function renderColumnPreview( $data, $option=array() ) {
-		$this->errors = array();
-		if ( $this->_sheet_id === null ) {
-			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
-		}
-		
-		$field_name = $data['column_name'];
-
-		if ( $data['render_only'] == true && $field_name != "" ) { // 直接渲染
-			$type_name = $data['_type'];
-			$Type = $this->type( $type_name, $data );
-			$Type->bindField($this->_sheet_id, $field_name );
-
-		} else if( isset($this->_sheet['columns'][$field_name]) ) {  // 渲染服务器数据
-			$Type = $this->_sheet['columns'][$field_name];
-		}
-
-		return $Type->renderPreview( $this->_sheet_id, $option );
-	}
-
-
-
-	/**
-	 * Column  查询Column 列表页面和JS组件
-	 * @param  [type] $tpl [description]
-	 * @return String HTML 代码
-	 */
-	public function renderColumnQuery( $option ) {
-		$this->errors = array();
-		if ( $this->_sheet_id === null ) {
-			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
-		}
-		$templete = $option['templete'] = (isset($option['templete']))? $option['templete'] : 'columns.container';
-		$tpl = (isset($option['tpl']))? $option['tpl'] : $this->_tpl_filename($templete);
-		$allow_types = $this->C('type/public/list'); // 开放型字段列表
-
-		$data = ['items' => [], 'instance'=>$option];
-		foreach ($this->_sheet['columns'] as $field=>$type ) {
-			// display_hidden=0 不显示隐藏字段
-			if ( !$option['display_hidden'] && $type->option('hidden') ) { 
-				continue;
-			}
-
-			//忽略非开放字段类型
-			if ( !in_array(@end(explode('\\', get_class($type))), $allow_types) ) { 
-				continue;
-			}
-
-			//忽略 hidden_column = 1 的类型
-			if ( !$option['display_hidden'] && $type->option('hidden_column') ) { 
-				continue;
-			}
-			
-
-			$data['items'][$field] = $type->renderItem( $this->_sheet_id, $field, $option );
-		}
-		$html = $this->_render( $data, $tpl );
-		return ['status'=>'success','html'=>$html, 'data'=>$data];
-	}
-
-	/**
-	 * Column  查询Column Items 列表页面和JS组件 (仅显示Item)
-	 * @param  [type] $option [description]
-	 * @return [type]         [description]
-	 */
-	public function renderColumnQueryItem( $option ) {
-		$this->errors = array();
-		if ( $this->_sheet_id === null ) {
-			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
-		}
-
-		$columns = (isset($option['columns']))? $option['columns'] : [];
-		if ( isset($option['columns'])) { unset( $option['columns']); }
-
-		$templete = $option['templete'] = (isset($option['templete']))? $option['templete'] : 'columns.container';
-		$tpl = (isset($option['tpl']))? $option['tpl'] : $this->_tpl_filename($templete);
-		$allow_types = $this->C('type/public/list'); // 开放型字段列表
-
-
-		$data = ['items' =>[], 'instance'=>$option, 'item_only'=>true ];
-		foreach ( $columns as $field=>$type ) {
-			
-			// display_hidden=0 不显示隐藏字段
-			if ( !$option['display_hidden'] && $type->option('hidden') ) { 
-				continue;
-			}
-
-			//忽略非开放字段类型
-			if ( !in_array(@end(explode('\\', get_class($type))), $allow_types) ) { 
-				continue;
-			}
-
-			//忽略 hidden_column = 1 的类型
-			if ( !$option['display_hidden'] && $type->option('hidden_column') ) { 
-				continue;
-			}
-			
-
-			$data['items'][$field] = $type->renderItem( $this->_sheet_id, $field, $option );
-		}
-		$html = $this->_render( $data, $tpl );
-
-		return ['status'=>'success','html'=>$html, 'data'=>$data];
-	}
-
-
-
-	/**
-	 * 数据查询: 搜索器
-	 * @cache /_spt/queryform/$sheet_id/md5(json_encode($option))
-	 * @param  [type] $option [description]
-	 * @return [type]         [description]
-	 */
-	public function renderQueryForm( $option ) {
-		
-		// _xhprfo_start();
-		$this->errors = array();
-		if ( $this->_sheet_id === null ) {
-			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
-		}
-
-		// 从缓存中读取数据
-		if ( $this->_cache != null && !defined('SUPERTABLE_DEBUG_ON') ) {
-			$cache_name ="/_spt/queryform/{$this->_sheet_id}/" . md5(json_encode($option));
-			$result = $this->_cache->get($cache_name);
-			if ($result !== false ) {
-				return json_decode($result,true);
-			}
-		}
-
-
-		$columns = (isset($option['columns']))? $option['columns'] : $this->_sheet['columns'];
-		if ( isset($option['columns'])) { unset( $option['columns']); }
-
-		$templete = $option['templete'] = (isset($option['templete']))? $option['templete'] : 'query.form';
-		$tpl = (isset($option['tpl']))? $option['tpl'] : $this->_tpl_filename($templete);
-		
-		$option['display_only'] = (isset($option['display_only']))? $option['display_only'] : [];
-		$option['fillter'] = (isset($option['fillter']))? $option['fillter'] : [];
-		$option['display_submit'] = (isset($option['display_submit']))? $option['display_submit'] : 1;
-		$option['sheet_id'] = $this->_sheet_id;
-		
-		$data = ['items' =>[], 'instance'=>$option, 'item_only'=>false ];
-		$columns_sort = $this->_columns_sort( $columns );
-
-		foreach ( $columns_sort as $idx=>$column ) {
-			$field = $column['field'];
-			$type = $column['type'];
-			
-			if ( !method_exists($type, 'isSearchable') ) {
-				continue;
-			}
-
-			// display_hidden=0 不显示隐藏字段
-			if ( !$option['display_hidden'] && $type->isHidden() ) { 
-				array_push($data['instance']['fillter'], $field);
-			}
-
-
-			if ( !$type->isSearchable() ) { 
-				continue;
-			}
-			$data['items'][$field] = $type->renderItem( $this->_sheet_id, $field, $option );
-		}
-
-		$html = $this->_render( $data, $tpl );
-
-		if ( $this->_cache != null && is_string($cache_name)  ) {
-			$this->_cache->set($cache_name, json_encode(['status'=>'success','html'=>$html, 'data'=>$data]));
-		}
-
-		// _xhprof_end();
-
-		return ['status'=>'success','html'=>$html, 'data'=>$data];
-	}
-
-
-	/**
-	 * 数据增加/修改表单
-	 * @param  [type] $option [description]
-	 * @return [type]         [description]
-	 */
-	public function renderDataForm( $option ) {
-		$this->errors = array();
-		if ( $this->_sheet_id === null ) {
-			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
-		}
-
-		$columns = (isset($option['columns']))? $option['columns'] : $this->_sheet['columns'];
-		if ( isset($option['columns'])) { unset( $option['columns']); }
-
-		$templete = $option['templete'] = (isset($option['templete']))? $option['templete'] : 'data.form';
-		$tpl = (isset($option['tpl']))? $option['tpl'] : $this->_tpl_filename($templete);
-
-		$option['fillter'] = (isset($option['fillter']))? $option['fillter'] : [];
-		$option['display_submit'] = (isset($option['display_submit']))? $option['display_submit'] : 0;
-		$option['sheet_id'] = $this->_sheet_id;
-
-		// 读取数值
-		$option['value'] = (is_numeric($option['_id']))? $this->get($option['_id']) : [];
-		
-
-		$data = ['items' =>[], 'instance'=>$option, 'item_only'=>false ];
-		$columns_sort = $this->_columns_sort( $columns );
-
-		foreach ( $columns_sort as $idx=>$column ) {
-			$field = $column['field'];
-			$type = $column['type'];
-			
-			if ( !method_exists($type, 'isSearchable') ) {
-				continue;
-			}
-
-			// 给已有数据赋值
-			if ( isset($option['value'][$field]) ) {
-				$type->setValue( $option['value'][$field] );
-			}
-
-
-			// display_hidden=0 不显示隐藏字段
-			if ( !$option['display_hidden'] && $type->isHidden() ) { 
-				array_push($data['instance']['fillter'], $field);
-			}
-
-			//忽略 hidden_column = 1 的类型
-			if ( !$option['display_hidden'] && $type->option('hidden_data') ) { 
-				continue;
-			}
-
-			$data['items'][$field] = $type->renderItem( $this->_sheet_id, $field, $option );
-		}
-
-
-		$html = $this->_render( $data, $tpl );
-		return ['status'=>'success','html'=>$html, 'data'=>$data];
-		
-	}
-
-
-
-	/**
-	 * 渲染模板
-	 * @cache /_spt/cache/view/$tpl
-	 * @param  [type] $data [description]
-	 * @param  [type] $name [description]
-	 * @return [type]       [description]
-	 */
-	private function _render( $data,  $tpl=null ) {
-		$cache_name = "/_spt/cache/view/$tpl";
-		$view_content = false;
-
-		// 读取缓存
-		if ( $this->_cache != null ) {
-			$view_content = $this->_cache->get($cache_name);
-		}
-
-	    if ( $view_content === false || defined('SUPERTABLE_DEBUG_ON') ) { // 从文件中载入模板
-
-			if ( !file_exists($tpl) ) {
-				throw new Exception("Templete Not Found! file=$tpl");
-			}
-			ob_start();
-			$html = "";
-			@extract( $data );
-			if ( file_exists($tpl) ) {
-				require( $tpl );
-			}
-			$content = ob_get_contents();
-	        ob_end_clean();
-
-	        // 将数据写入缓存
-			if ( $this->_cache != null ) {
-	        	$this->_cache->set($cache_name, file_get_contents($tpl) );
-	        }
-
-	    } else {
-	    	ob_start();
-			$html = "";
-			@extract( $data );
-			eval("?>" . $view_content . "<?php ");
-			$content = ob_get_contents();
-			ob_end_clean();
-	    }
-
-        return $content;
-	}
-
-
-	/**
-	 * 获取模板路径
-	 * @cache  /_spt/cache/view/*
-	 * @param  [type] $name [description]
-	 * @return [type]       [description]
-	 */
-	private function _tpl_filename( $name ) {
-
-		$cache_name = "/_spt/cache/view/";
-		$path = $this->C('path');
-		$view_file =  $path['templete'] . "$name.tpl.html";
-
-		// 检查模板再缓存中是否存在
-		if ( $this->_cache != null && !defined('SUPERTABLE_DEBUG_ON') ) {
-			$content = $this->_cache->get( "{$cache_name}$view_file" );
-			if ( $content !== false ) {
-				return $view_file;
-			}
-
-			$view_file = __DIR__ . "/view/$name.tpl.html";
-			$content = $this->_cache->get( "{$cache_name}$view_file" );
-			if ( $content !== false ) {
-				return $view_file;
-			}
-
-			// reset viewfile
-			$view_file =  $path['templete'] . "$name.tpl.html";
-		}
-
-
-		if ( !file_exists($view_file) ) {
-			$view_file = __DIR__ . "/view/$name.tpl.html";
-		}
-
-		return $view_file;
-	}
-
 
 	/**
 	 * 对字段进行排序
