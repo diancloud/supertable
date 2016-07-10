@@ -688,7 +688,7 @@ class Table {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
 
-		$this->_stor->dataEach($callback, $reference, $except_delete, $pagelimit );
+		$this->_stor->dataEach( $this->_sheet_id, $callback, $reference, $except_delete, $pagelimit );
 	}
 
 	
@@ -924,7 +924,7 @@ class Table {
 			throw new Exception("DELETE INDEX ERROR @rebuildIndex" . "(".$this->_search->errno().")");	
 		}
 
-		$this->_stor->dataEach(function( $idx, $row , $ref ){
+		$this->_stor->dataEach($this->_sheet_id, function( $idx, $row , $ref ){
 			$ref['self']->createIndex( $row, $ref['ignore_error'] );
 		},['self'=>$this, 'ignore_error'=>$ignore_error]);
 

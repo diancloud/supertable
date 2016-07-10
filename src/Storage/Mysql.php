@@ -592,7 +592,7 @@ class Mysql {
 	 * @param  boolean $except_delete [description]
 	 * @return [type]                 [description]
 	 */
-	function dataEach( $callback, $reference=[], $except_delete=true, $pagelimit=500 ) {
+	function dataEach( $schema_id, $callback, $reference=[], $except_delete=true, $pagelimit=500 ) {
 		
 		if ( !is_callable($callback) ) {
 			throw new Exception("callback not function!");
@@ -605,9 +605,12 @@ class Mysql {
 		$rsCount = 1;
 		while( $rsCount > 0 ) {
 			if ( $except_delete ) {
-				$sql = "SELECT * FROM `$table_name` WHERE  `_spt_is_deleted`='0' LIMIT $from, $pagelimit";
+				$sql = $this->prepare("SELECT * FROM `$table_name` WHERE  `_spt_is_deleted`='0' AND  `_spt_schema_id`=?s LIMIT $from, $pagelimit", $schema_id);
+				// $sql = "SELECT * FROM `$table_name` WHERE  `_spt_is_deleted`='0'  LIMIT $from, $pagelimit";
+
 			} else {
-				$sql = "SELECT * FROM `$table_name` LIMIT $from, $pagelimit";
+				$sql = $this->prepare("SELECT * FROM `$table_name` WHERE   `_spt_schema_id`=?s LIMIT $from, $pagelimit", $schema_id);
+				// $sql = "SELECT * FROM `$table_name` LIMIT $from, $pagelimit";
 			}
 
 			$data = $this->getData( $sql );
