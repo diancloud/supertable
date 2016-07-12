@@ -577,7 +577,7 @@ class Table {
 
 
 		$record_limit =( $limit != null) ? "LIMIT $limit" : "LIMIT $perpage";
-		if ( $page !== null && is_numeric($page) ) {
+		if ( $page !== null && is_numeric($page) && $limit == null ) {
 			$from = ($page == null)? 0 : ($page-1) * $perpage;
 			$record_limit = " LIMIT $from,$perpage";
 			$items->query( '@page', ['name'=>'页码', 'value'=>$page, 'screen_value'=>$page, 'encode_value'=>$page ] );
