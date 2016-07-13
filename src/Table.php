@@ -803,7 +803,14 @@ class Table {
 
 
 
+	/**
+	 * 在当前的数据表(Sheet)中，更新一条记录
+	 * @param  [type] $uni_key [description]
+	 * @param  [type] $data    [description]
+	 * @return [type]          [description]
+	 */
 	public function updateBy( $uni_key, $data ) {
+
 
 	}
 
