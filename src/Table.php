@@ -871,16 +871,15 @@ class Table {
 	 * @return 成功返回 true , 失败返回false
 	 */
 	public function save( $data, $uni_key = '_id' ) {
-
+		
 		$data_id = (isset($data['_id']))? $data['_id'] : null;
 		$data_key = (isset($data[$uni_key]))? $data[$uni_key] : null;
 
 		if ( $data_key != null && $uni_key != '_id' && $data_id == null ) {
-			$_id = $this->getVar('_id', "WHERE $uni_key='". $data_key . "'");
+			$_id = $this->getVar('_id', "WHERE $uni_key='". $data_key . "' LIMIT 1");
 			if ( $_id !== null ){
 				$data_id = $_id;
 				$data['_id'] = $_id;
-				// echo "update $uni_key : $_id $data_key \n";
 			}
 		}
 
@@ -894,6 +893,26 @@ class Table {
 
 
 	/**
+	 * 在当前的数据表(Sheet)中，删除一条记录
+	 * @param  string  $data_key  数据唯一键值
+	 * @param  string  $uni_key   唯一主键名称, 默认为数据表ID _id
+	 * @param  boolean $mark_only 标记删除，默认为true
+	 * @return 成功返回 true, 失败返回 false
+	 */
+	public function remove( $data_key, $uni_key = '_id', $mark_only=true ) {
+		
+		$_id = $data_key;
+		if (  $uni_key != '_id'  ) {
+			$_id = $this->getVar('_id', "WHERE $uni_key='". $data_key . "' LIMIT 1");
+		}
+
+		return $this->delete( $_id, $mark_only );
+	}
+
+
+
+
+	/**
 	 * 在当前数据表(Sheet)中，删除一条记录
 	 * @param  [type] $data_id [description]
 	 * @return [type]          [description]
@@ -904,7 +923,6 @@ class Table {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
 
-
 		// 更新索引
 		if ( $this->_search->deleteData( $this->_sheet, $data_id ) == false ){
 			array_push( $this->errors, $this->_search->error() );
@@ -913,7 +931,6 @@ class Table {
 
 		// 删除数据
 		return $this->_stor->deleteData( $data_id, $mark_only );
-
 		return true;
 	}
 
