@@ -801,6 +801,13 @@ class Table {
 		return $newData;
 	}
 
+
+
+	public function updateBy( $uni_key, $data ) {
+
+	}
+
+
 	/**
 	 * 在当前的数据表(Sheet)中，更新一条记录
 	 * @param  [type] $id   [description]
@@ -910,8 +917,6 @@ class Table {
 	}
 
 
-
-
 	/**
 	 * 在当前数据表(Sheet)中，删除一条记录
 	 * @param  [type] $data_id [description]
@@ -933,10 +938,6 @@ class Table {
 		return $this->_stor->deleteData( $data_id, $mark_only );
 		return true;
 	}
-
-
-
-
 
 
 	// ==== 索引操作函数
