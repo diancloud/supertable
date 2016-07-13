@@ -810,8 +810,21 @@ class Table {
 	 * @return [type]          [description]
 	 */
 	public function updateBy( $uni_key, $data ) {
+		$data_id = (isset($data['_id']))? $data['_id'] : null;
+		$data_key = (isset($data[$uni_key]))? $data[$uni_key] : null;
+		if ( $data_key == null && $data_id == null ) {
+			throw new Exception("Unknown witch row should be update! $uni_key is null");
+		}
 
+		if ( $uni_key != '_id' ) {
+			$data_id = $this->getVar('_id', "WHERE $uni_key='". $data_key . "' LIMIT 1");
+			if ( $data_id === null ){
+				throw new Exception("row not exists! data_id = null");
+			}
+		}
 
+		$data['_id']  = $data_id;
+		return $this->update( $data_id, $data );
 	}
 
 
