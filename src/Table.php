@@ -968,14 +968,13 @@ class Table {
 		}
 
 		// 更新索引
-		if ( $this->_search->deleteData( $this->_sheet, $data_id ) == false ){
+		if ( $this->_search->deleteData( $this->_sheet, $data_id ) === false && $this->_search->errno() != 404 ){
 			array_push( $this->errors, $this->_search->error() );
 			return false; 
 		}
 
 		// 删除数据
 		return $this->_stor->deleteData( $data_id, $mark_only );
-		return true;
 	}
 
 

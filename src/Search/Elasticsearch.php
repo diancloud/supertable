@@ -513,7 +513,7 @@
 		$cache_path = "unique:{$this->_index['index']}:{$this->_index['type']}{$name}:";
 		foreach ($unique_data as $field => $value) {
 			$cache_name = $cache_path . $field. ':' . trim($value);
-			$resp = $this->_cache->set($cache_name, $id, 300 ); // 缓存300秒内的数据
+			$resp = $this->_cache->set($cache_name, $id, 90 ); // 缓存 90秒内的数据
 			if ( $resp === false ) {
 				$result = false;
 			}
