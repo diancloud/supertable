@@ -863,14 +863,27 @@ class Table {
 		return $newData;
 	}
 
-
+	
 	/**
 	 * 在当前的数据表(Sheet)中，更新一条记录( 如果不存在则创建 )
-	 * @param  [type] $data [description]
-	 * @return [type]       [description]
+	 * @param  array  $data    数据
+	 * @param  string $uni_key 唯一主键名称, 默认是数据表ID
+	 * @return 成功返回 true , 失败返回false
 	 */
-	public function save( $data ) {
+	public function save( $data, $uni_key = '_id' ) {
+
 		$data_id = (isset($data['_id']))? $data['_id'] : null;
+		$data_key = (isset($data[$uni_key]))? $data[$uni_key] : null;
+
+		if ( $data_key != null && $uni_key != '_id' && $data_id == null ) {
+			$_id = $this->getVar('_id', "WHERE $uni_key='". $data_key . "'");
+			if ( $_id !== null ){
+				$data_id = $_id;
+				$data['_id'] = $_id;
+				// echo "update $uni_key : $_id $data_key \n";
+			}
+		}
+
 		if ( $data_id != null ) {
 			unset($data['_id']);
 			return $this->update( $data_id, $data );
