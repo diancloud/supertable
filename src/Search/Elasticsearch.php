@@ -20,6 +20,7 @@
  class Elasticsearch {
  	
  	private $_stor;
+ 	private $_cache;
  	private $_client=null;
 
  	private $_bucket;
@@ -38,14 +39,13 @@
  	 * @param [type] $option 服务器配置信息 array('host'=>array("127.0.0.1:9200") )
  	 * @param [type] $db    
  	 */
- 	function __construct( $bucket, $index, $option, $stor ) {
+ 	function __construct( $bucket, $index, $option, $stor, $cache ) {
  		$this->_stor = $stor;
  		$this->_bucket = $bucket;
  		$this->_index = $index;
  		$this->_option = $option;
- 		$this->_stor;
+ 		$this->_cache = $cache;
  		$this->_client = new ESClient( $option );
-
  	}
 
  	/**
@@ -293,6 +293,7 @@
  			return false;
  		}
 
+ 		$this->uniqueCached($result['_id'], $sheet['name'], $index_data['unique']);
  		return true;
 	}
 
@@ -306,8 +307,6 @@
 	 */
 	function updateData( $sheet, $id, $data, $fixobjtype=true ) {
 		
-		
-
 		$index = $this->_index['index'];
  		$type = $this->_index['type'] . $sheet['name'];
  		$index_data = $this->getIndexData( $data, $sheet );
@@ -364,6 +363,8 @@
  			return $this->updateData( $sheet, $id, $data, false );
  		} // 修复Object 类型更新问题 END 
 
+
+ 		$this->uniqueCached($id, $sheet['name'], $index_data['unique']);
  		return true;
 	}
 
@@ -465,6 +466,65 @@
 
 
 	/**
+	 * 使用唯一主键换取数据表ID 
+	 * @param  [type] $uni_key [description]
+	 * @param  [type] $value   [description]
+	 * @return [type]          [description]
+	 */
+	public function uniqueToID( $sheet, $uni_key, $value ) {
+		$fields = $this->fieldFilter([$uni_key], $sheet);
+		$field = current($fields);
+		$name = $sheet['name'];
+
+		// 唯一索引缓存池名称
+		if ( $this->_cache !== null ) {
+			$cache_path = "unique:{$this->_index['index']}:{$this->_index['type']}{$name}:";
+			$cache_name = $cache_path . $field. ':' . trim($value);
+			$data_id = $this->_cache->get($cache_name);
+			if (  $data_id !== false ) {
+				return $data_id;
+			}
+		}
+
+		$resp = $this->selectSQL($sheet,  "WHERE $uni_key='". $value . "' LIMIT 1", ['_id'] );
+		if ( $resp['total'] != 1 ) {
+			return null;
+		}
+
+		return current(current($resp['data']));
+	}
+
+
+	/**
+	 * 缓存唯一主键数值
+	 * @param  int $id    数据表ID
+	 * @param  string $name sheet名称
+	 * @param  array  $unique_data 索引数据
+	 * @return 成功返回 true, 失败返回false
+	 */
+	private function uniqueCached( $id, $name, $unique_data  ) {
+		if ( $this->_cache === null ) {
+			return false;
+		}
+
+		$result = true;
+
+		// 唯一索引缓存池名称
+		$cache_path = "unique:{$this->_index['index']}:{$this->_index['type']}{$name}:";
+		foreach ($unique_data as $field => $value) {
+			$cache_name = $cache_path . $field. ':' . trim($value);
+			$resp = $this->_cache->set($cache_name, $id, 300 ); // 缓存300秒内的数据
+			if ( $resp === false ) {
+				$result = false;
+			}
+		}
+		return $result;
+	}
+
+
+
+
+	/**
 	 * 检查唯一数值
 	 * @param  [type] $name        [description]
 	 * @param  [type] $unique_data [description]
@@ -478,12 +538,33 @@
 			'type'  => $this->_index['type'] . $name,
 		);
 
+		// 唯一索引缓存池名称
+		$cache_path = "unique:{$this->_index['index']}:{$this->_index['type']}{$name}:";
+
 		foreach ($unique_data as $field => $value) {
 
 			if ( $allow_null && trim($value) == "" ) {
 				continue;
 			}
-			
+
+			if ( !is_string($value) ) {
+				continue;
+			}
+
+			// 检查缓存池中是否有重复数据
+			$cache_name = $cache_path . $field . ':'. trim($value);
+			if ( $this->_cache != null ) {
+				$data_id = $this->_cache->get($cache_name);
+				
+				if (  $data_id !== false && $data_id !== $except_id ) {
+					// echo $cache_name . "=". var_export($data_id, true). "\n";
+					$this->_errno = 1062;
+					$this->_errdt = (isset($map[$field]))? $map[$field] : $field;
+					$this->_error = "Index: uniqueCheck /{$this->_index['index']}/$name/$field Error";
+					return false;
+				}
+			}
+
 
 			// $query['body']['query']['term'][$field] = $value;
 			if ( $except_id != null ) {

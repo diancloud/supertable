@@ -440,6 +440,21 @@ class Table {
 
 
 	/**
+	 * 使用唯一主键换取数据表ID 
+	 * @param  string $uni_key 唯一主键名称
+	 * @param  string $value   唯一主键数值
+	 * @return 成功返回数据表ID , 未找到返回null
+	 */
+	public function uniqueToID( $uni_key, $value ) {
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		return $this->_search->uniqueToID( $this->_sheet, $uni_key, $value );
+	}
+
+
+	/**
 	 * 在当前的数据(Sheet)中检索, 返回一位数组 (从索引库中查询，数据有不到一秒延迟) 
 	 * @param  [type]  $options [description]
 	 * @param  [type]  $page    [description]
@@ -805,9 +820,9 @@ class Table {
 
 	/**
 	 * 在当前的数据表(Sheet)中，更新一条记录
-	 * @param  [type] $uni_key [description]
-	 * @param  [type] $data    [description]
-	 * @return [type]          [description]
+	 * @param  string $uni_key [description]
+	 * @param  array $data    [description]
+	 * @return 成功返回true,  失败返回false
 	 */
 	public function updateBy( $uni_key, $data ) {
 		$data_id = (isset($data['_id']))? $data['_id'] : null;
@@ -817,8 +832,8 @@ class Table {
 		}
 
 		if ( $uni_key != '_id' ) {
-			$data_id = $this->getVar('_id', "WHERE $uni_key='". $data_key . "' LIMIT 1");
-			if ( $data_id === null ){
+			$data_id =  $this->uniqueToID( $uni_key, $data_key );
+			if ( $data_id === null  ){
 				throw new Exception("row not exists! data_id = null");
 			}
 		}
@@ -852,8 +867,8 @@ class Table {
 
 		// 更新索引
 		if ( $this->_search->updateData( $this->_sheet, $data_id, $newData ) == false ){
-			array_push( $this->errors, $this->_search->error() );
-
+			
+			// array_push( $this->errors, $this->_search->error() );
 			if ( $this->_search->errno() == "1062" ) {
 				$column = $this->_search->errdt();
 				if (isset($this->sheet()['columns'][$column]) ) {
@@ -903,15 +918,19 @@ class Table {
 		$data_key = (isset($data[$uni_key]))? $data[$uni_key] : null;
 
 		if ( $data_key != null && $uni_key != '_id' && $data_id == null ) {
-			$_id = $this->getVar('_id', "WHERE $uni_key='". $data_key . "' LIMIT 1");
-			if ( $_id !== null ){
+
+			$_id =  $this->uniqueToID( $uni_key, $data_key );
+			// echo "\t _id: $_id\n";
+			if ( $_id !== null ) {
 				$data_id = $_id;
 				$data['_id'] = $_id;
 			}
+			// echo "_id is null  ? $uni_key: $data_key, $_id , $data_id ";
 		}
 
 		if ( $data_id != null ) {
 			unset($data['_id']);
+			// echo "update \n";
 			return $this->update( $data_id, $data );
 		} else {
 			return $this->create( $data );
@@ -930,7 +949,7 @@ class Table {
 		
 		$_id = $data_key;
 		if (  $uni_key != '_id'  ) {
-			$_id = $this->getVar('_id', "WHERE $uni_key='". $data_key . "' LIMIT 1");
+			$_id =  $this->uniqueToID( $uni_key, $data_key );
 		}
 
 		return $this->delete( $_id, $mark_only );
@@ -1398,7 +1417,7 @@ class Table {
 			throw new Exception("$class_name not exists!");
 		}
 
-		$this->_search = new $class_name( $this->_bucket, $this->_index, $this->C('search/option'), $this->_stor );
+		$this->_search = new $class_name( $this->_bucket, $this->_index, $this->C('search/option'), $this->_stor, $this->_cache );
 
 		return $this;
 	}
