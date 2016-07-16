@@ -834,7 +834,9 @@ class Table {
 		if ( $uni_key != '_id' ) {
 			$data_id =  $this->uniqueToID( $uni_key, $data_key );
 			if ( $data_id === null  ){
-				throw new Exception("row not exists! data_id = null");
+				// throw new Exception("row not exists! data_id = null");
+				array_push( $this->errors, ['code'=>404, 'message'=>"row not exists! data_id = null"] );
+				return false;
 			}
 		}
 
