@@ -62,11 +62,11 @@ class Schema {
 		try {
 			$newSchema = $this->_stor->getSchema( $schema_id );
 			if ( $this->_search->createType( $name, $newSchema['_spt_schema_version'] ) === false ) {
-				$this->_stor->deleteSchema( $schema_id );
+				$this->_stor->deleteSchema( $schema_id, true );
 				throw new Exception("Search Error: " . $this->_search->error() );	
 			}
 		} catch(Exception $e ) {
-			$this->_stor->deleteSchema( $schema_id );
+			$this->_stor->deleteSchema( $schema_id, true );
 			// throw new Exception($e->getMessage());	
 			throw $e;
 			
