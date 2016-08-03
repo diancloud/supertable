@@ -53,7 +53,7 @@ class Schema {
 	 * 
 	 * @return Int Sheet ID 
 	 */
-	public function createSheet( $name, $data = array() ) {
+	public function createSheet( $name, $data = array(), $allow_exists=false ) {
 		
 		// 创建空数据表结构
 		$schema_id = $this->_stor->createSchema( $name, $data );
@@ -61,7 +61,7 @@ class Schema {
 		// 创建新的索引类型
 		try {
 			$newSchema = $this->_stor->getSchema( $schema_id );
-			if ( $this->_search->createType( $name, $newSchema['_spt_schema_version'] ) === false ) {
+			if ( $this->_search->createType( $name, $newSchema['_spt_schema_version'], $allow_exists ) === false ) {
 				$this->_stor->deleteSchema( $schema_id, true );
 				throw new Exception("Search Error: " . $this->_search->error() );	
 			}

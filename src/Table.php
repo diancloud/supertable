@@ -150,7 +150,7 @@ class Table {
 			throw new Exception("数据表名称格式不正确，由字符、数字和下划线组成，且开头必须为字符。(name= $name) ");
 		}
 
-		$sheet_id = $this->_schema->createSheet( $name, $data );
+		$sheet_id = $this->_schema->createSheet( $name, $data, true );
 		if ( $create_only) {
 			return $sheet_id;
 		}
