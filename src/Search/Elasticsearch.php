@@ -92,6 +92,17 @@
  		$typeExistsParam = array( 'index'=>$index,  'type'=>$type);
  		if ( $this->_client->indices()->existsType($typeExistsParam) ) {
  			if ( $allow_exists ) {
+
+ 				// 检查 Align
+ 				$aliasParam = array( 'index'=>$index, 'name'=>$alias );
+		 		if ( !$this->_client->indices()->existsAlias($aliasParam) ) {
+		 			$result = $this->_client->indices()->putAlias( $aliasParam);
+		 			if (!$result['acknowledged']) {
+		 				$this->_error = "Index: Create $alias > $index Error (".json_encode($result).")";
+			 			return false;
+			 		}
+		 		}
+
  				return true;
  			}
  			$this->_error = "Index: $index/$name has exists! ";
