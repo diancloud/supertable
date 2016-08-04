@@ -871,7 +871,7 @@ class Mysql {
 		$table_name = $this->getDB('slave')->real_escape_string($table_name);
 		$sql = "SELECT *  FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '$table_name' ";
 		$data = $this->getData( $sql, 'slave');
-		
+
 		$primary_key = '_spt_id';
 		foreach ($data as $row ) {
 			$field = $row['COLUMN_NAME'];
@@ -1018,8 +1018,8 @@ class Mysql {
 		    throw new Exception('Query Error (' . $this->dbs[$type]->error . ' SQL='. $sql .') '
 		            . $this->dbs[$type]->errno );
 		}
-
-		while ($row = $result->fetch_array(MYSQL_ASSOC) ) {
+		
+		while ($row = $result->fetch_array(MYSQLI_ASSOC) ) {
 			array_push($data, $row);
 		}
 
