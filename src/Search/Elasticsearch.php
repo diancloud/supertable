@@ -567,7 +567,7 @@
 			if ( $this->_cache != null ) {
 				$data_id = $this->_cache->get($cache_name);
 				
-				if (  $data_id !== false && $data_id !== $except_id ) {
+				if (  $data_id !== false && $data_id != $except_id ) {
 					// echo $cache_name . "=". var_export($data_id, true). "\n";
 					$this->_errno = 1062;
 					$this->_errdt = (isset($map[$field]))? $map[$field] : $field;
