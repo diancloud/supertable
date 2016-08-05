@@ -1087,11 +1087,12 @@ class Mysql {
 			$conf['host'] = (isset( $conf['host']) ) ?  $conf['host'] : null;
 			$conf['user'] = (isset( $conf['user']) ) ?  $conf['user'] : null;
 			$conf['pass'] = (isset( $conf['pass']) ) ?  $conf['pass'] : null;
+			$conf['port'] = (isset( $conf['port']) ) ?  $conf['port'] : 3306;
 			$conf['db_name'] = (isset( $conf['db_name']) ) ?  $conf['db_name'] : null;
 			$conf['socket'] = (isset( $conf['socket']) ) ?  $conf['socket'] : null;
 		
 		try {
-			$this->dbs[$type] = new Mysqli( $conf['host'], $conf['user'], $conf['pass'], $this->_opts['db_name'],  $conf['socket'] );
+			$this->dbs[$type] = new Mysqli( $conf['host'], $conf['user'], $conf['pass'], $this->_opts['db_name'], $conf['port'], $conf['socket'] );
 		} catch( Exception $e ) {
 			throw new Exception($e->getMessage(), $e->getCode() );
 		}
