@@ -190,8 +190,12 @@ class Table {
 			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
 		}
 
-		return $this->_schema->deleteSheet( $this->_sheet_id, $mark_only );
+		$resp = $this->_schema->deleteSheet( $this->_sheet_id, $mark_only );
+		if ( $resp == true) {
+			$this->clearCacheSheet();
+		}
 
+		return $resp;
 	}
 
 
