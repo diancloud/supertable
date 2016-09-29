@@ -512,7 +512,7 @@
 	 */
 	public function clearCache(){ 
 		$ret = true;
-		$cache = ["unique:{$this->_index['index']}:{$this->_index['type']}{$name}:"];
+		$cache = ["unique:{$this->_index['index']}:{$this->_index['type']}{$name}"];
 		if ( $this->_cache !== null ) {
 			foreach ($cache as $c ) {
 				if ( $this->_cache->delete($c) === false ) {
