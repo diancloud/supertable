@@ -422,8 +422,8 @@ class Mysql {
 		} else {
 
 			$affected_rows = 0;
-			$sqlSchema = $this->prepare("DELETE {$table['schema']}  WHERE  `$primary_field` = ?s LIMIT 1 ", $schema_id);
-			$sqlData =  $this->prepare("DELETE {$table['data']}  WHERE  `_spt_schema_id` = ?s", $schema_id );
+			$sqlSchema = $this->prepare("DELETE FROM {$table['schema']}  WHERE  `$primary_field` = ?s LIMIT 1 ", $schema_id);
+			$sqlData =  $this->prepare("DELETE FROM {$table['data']}  WHERE  `_spt_schema_id` = ?s", $schema_id );
 			$this->run_sql($sqlSchema, 'master');
 			$affected_rows = $affected_rows + $this->affected_rows();
 			$this->run_sql($sqlData, 'master');
