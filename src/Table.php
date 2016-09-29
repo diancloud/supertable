@@ -195,6 +195,22 @@ class Table {
 	}
 
 
+
+	/**
+	 * 清空当前 Sheet 缓存
+	 * @return [type] [description]
+	 */
+	public function clearCacheSheet() {
+		if ( $this->_sheet_id === null ) {
+			throw new Exception("No sheet selected. Please Run selectSheet() or createSheet() first!");
+		}
+
+		// 清空缓存
+		return $this->_search->clearCache();
+	}
+
+
+
 	// === 数据表列结构 (Sheet Column) 相关操作 CRUD ==========================
 	
 	/**
@@ -350,6 +366,9 @@ class Table {
 	
 
 
+	
+
+
 	// === 数据 (Data) 相关操作 CRUD ==========================
 	
 
@@ -452,6 +471,7 @@ class Table {
 
 		return $this->_search->uniqueToID( $this->_sheet, $uni_key, $value );
 	}
+
 
 
 	/**

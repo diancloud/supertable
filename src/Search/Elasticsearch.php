@@ -507,6 +507,25 @@
 
 
 	/**
+	 * 清除缓存
+	 * @return [type] [description]
+	 */
+	public function clearCache(){ 
+		$ret = true;
+		$cache = ["unique:{$this->_index['index']}:{$this->_index['type']}{$name}:"];
+		if ( $this->_cache !== null ) {
+			foreach ($cache as $c ) {
+				if ( $this->_cache->delete($c) === false ) {
+					$ret = false;
+				}
+			}
+		}
+		return $ret;
+	}
+
+
+
+	/**
 	 * 缓存唯一主键数值
 	 * @param  int $id    数据表ID
 	 * @param  string $name sheet名称
@@ -531,6 +550,9 @@
 		}
 		return $result;
 	}
+
+
+
 
 
 

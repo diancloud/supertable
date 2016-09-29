@@ -66,4 +66,15 @@ class Memcached {
 		if ( !$this->isConnect ) return false;
 		return $this->mmc->delete($key,$timeout);
 	}
+
+
+	/**
+	 * 删除一组键值 
+	 * @param  [type] $keys [description]
+	 * @return [type]       [description]
+	 */
+	public function delete( $keys  ){
+		if ( !$this->isConnect ) return false;
+		return $this->mmc->delete($keys, 0);
+	}
 }

@@ -116,4 +116,13 @@ class Redis {
 		$ret = $this->redis->delete("{$this->prefix}{$key}");
 		return ( $ret === 1 )? true  : false;
 	}
+
+	/**
+	 * 删除一组键值
+	 */
+	public function delete( $keys ){
+		if ( empty($this->redis) ) return false;
+		$keylist = $this->redis->keys("{$this->prefix}{$keys}*");
+		return $this->redis->delete($keylist);
+	}
 }
