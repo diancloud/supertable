@@ -406,6 +406,29 @@
 			return false;
 		}
 
+
+		// 标记改ID数据已被删除
+		if ( $this->_cache !== null ) {
+			$cache_path = "unique:{$this->_index['index']}:{$this->_index['type']}{$name}:";
+			$delete_cache = $cache_path . 'delete:' . $id;
+			$resp = $this->_cache->set($delete_cache, time(), 90 ); // 缓存 90秒内的数据
+			return $resp;
+		}
+		
+
+		// 清空索引
+		// if ( is_array($sheet['columns']) ) {
+
+		// 	foreach ($sheet['columns'] as $type) {
+		// 		if ( $type->isUnique() ) {
+		// 			$index_data[]
+		// 		}
+		// 	}
+		// }
+		// $index_data = $this->getIndexData( $data, $sheet );
+
+
+
 		return true;
 	}
 
@@ -590,11 +613,16 @@
 				$data_id = $this->_cache->get($cache_name);
 				
 				if (  $data_id !== false && $data_id != $except_id ) {
-					// echo $cache_name . "=". var_export($data_id, true). "\n";
-					$this->_errno = 1062;
-					$this->_errdt = (isset($map[$field]))? $map[$field] : $field;
-					$this->_error = "Index: uniqueCheck /{$this->_index['index']}/$name/$field Error";
-					return false;
+						
+					// 验证删除标记 （ 该记录删除后，在缓存中增加一个标记 )
+					$delete_cache = $cache_path . 'delete:' . $data_id;
+					if ( $this->_cache->get($delete_cache) === false ) {
+						// echo $cache_name . "=". var_export($data_id, true). "\n";
+						$this->_errno = 1062;
+						$this->_errdt = (isset($map[$field]))? $map[$field] : $field;
+						$this->_error = "Index: uniqueCheck /{$this->_index['index']}/$name/$field Error";
+						return false;
+					}
 				}
 			}
 
