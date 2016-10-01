@@ -384,6 +384,7 @@
 
 		$index = $this->_index['index'];
  		$type = $this->_index['type'] . $sheet['name'];
+ 		$name = $sheet['name'];
  		$conn = $this->_client->transport->getConnection();
 		$resp = $conn->performRequest('DELETE', "/$index/$type/$id");
 
@@ -405,7 +406,6 @@
 			$this->_error =  "Index: deleteData Error( "  . json_encode($resp);
 			return false;
 		}
-
 
 		// 标记改ID数据已被删除
 		if ( $this->_cache !== null ) {
