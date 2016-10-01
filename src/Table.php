@@ -1005,6 +1005,21 @@ class Table {
 
 
 	// ==== 索引操作函数
+	
+
+	/**
+	 * 默认延迟时长
+	 * @return [type] [description]
+	 */
+	public static function wait( $ms = null ) {
+
+		$default_ms = 1000; // 应该根据当前索引服务器情况，自动设定
+		$ms = (empty($ms)) ? $default_ms : intval($ms);
+		usleep( $ms );
+		return;
+	}
+
+
 
 	/**
 	 * 重建整张表数据表索引
