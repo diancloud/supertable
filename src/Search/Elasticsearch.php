@@ -1010,7 +1010,8 @@
 
 					// 系统关键词 _spt_data_id , _spt_create_at, _spt_update_at 
 					if ( $field == '_id' ) {
-						return '_spt_data_id';
+						return '_id';
+						// return '_spt_data_id';
 					}
 
 					if ( $field == '_create_at' ) {
